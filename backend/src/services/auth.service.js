@@ -1,10 +1,9 @@
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
+const { UserRole, UserStatus } = require('@prisma/client');
 const prisma = require('../config/prisma');
 const { signToken } = require('../utils/jwt.util');
 const AppError = require('../utils/appError');
-const { ROLES } = require('../constants/roles');
-const { USER_STATUS } = require('../constants/userStatus');
 
 const SALT_ROUNDS = 10;
 
@@ -32,7 +31,7 @@ async function register({ email, password, fullName, phone, role }) {
       passwordHash,
       fullName,
       phone,
-      role: role || ROLES.USER,
+      role: role || UserRole.user,
       isGuest: false,
     },
   });
@@ -46,7 +45,7 @@ async function login({ email, password }) {
   if (!user || !user.passwordHash) {
     throw new AppError(401, 'Invalid email or password');
   }
-  if (user.status === USER_STATUS.LOCKED) {
+  if (user.status === UserStatus.locked) {
     throw new AppError(403, 'This account has been locked');
   }
 
@@ -61,13 +60,12 @@ async function login({ email, password }) {
 // REQ_14: guest quick login - book without registering first
 async function guestLogin({ email, fullName, phone }) {
   let user = await prisma.user.findUnique({ where: { email } });
-
   if (user && !user.isGuest) {
     throw new AppError(409, 'This email already has an account, please log in instead');
   }
 
   if (user) {
-    if (user.status === USER_STATUS.LOCKED) {
+    if (user.status === UserStatus.locked) {
       throw new AppError(403, 'This account has been locked');
     }
     user = await prisma.user.update({
@@ -83,7 +81,7 @@ async function guestLogin({ email, fullName, phone }) {
         passwordHash,
         fullName,
         phone,
-        role: ROLES.USER,
+        role: UserRole.user,
         isGuest: true,
       },
     });

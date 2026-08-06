@@ -8,7 +8,7 @@ Cập nhật lần cuối: 2026-08-06. Tick `[x]` khi xong, đừng xoá dòng �
 - [x] `backend/.env`, `frontend/.env` được tạo (còn thiếu `CLOUDINARY_*` thật, xem README)
 - [x] `npm install` backend (dùng `--legacy-peer-deps` vì xung đột peer-dep có sẵn giữa `cloudinary`/`multer-storage-cloudinary`)
 - [x] ESLint + Prettier config (`backend/.eslintrc.json`, `.prettierrc.json`, script `lint`/`format`)
-- [x] `constants/roles.js`, `constants/userStatus.js` — bỏ chuỗi thô role/status rải rác trong code
+- [x] Bỏ chuỗi thô role/status rải rác trong code — dùng thẳng enum sinh sẵn từ `@prisma/client` (`UserRole`, `UserStatus`, `ListingCategory`...), không tạo file `constants/` riêng vì trùng lặp
 - [x] `config/env.js` — validate `DATABASE_URL`/`JWT_SECRET` lúc khởi động, thiếu thì báo lỗi rõ thay vì lỗi ngầm
 - [ ] Điền `CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET` thật (cần cho REQ_02)
 - [ ] Cài đặt seed data mẫu (`prisma/seed.js` — script đã khai trong `package.json` nhưng file chưa tồn tại)
@@ -24,8 +24,8 @@ Cập nhật lần cuối: 2026-08-06. Tick `[x]` khi xong, đừng xoá dòng �
   → `services/auth.service.js`, `controllers/auth.controller.js`, `routes/auth.routes.js`
 - [x] **REQ_14** — Guest quick login (đặt phòng không cần đăng ký trước)
   → cùng file với REQ_01, hàm `guestLogin`
-- [ ] **REQ_02** — Host tạo / sửa / xoá listing, upload ảnh qua Cloudinary
-  → stub: `services/listing.service.js`, `controllers/listing.controller.js`, `routes/listing.routes.js`, middleware `upload.middleware.js` đã có sẵn
+- [x] **REQ_02** — Host tạo / sửa / xoá listing, upload ảnh qua Cloudinary
+  → `services/listing.service.js`, `controllers/listing.controller.js`, `routes/listing.routes.js`, `validators/listing.validator.js`. Đã test 401/403/422/404/409 + chặn xoá listing đã có booking. Upload ảnh thật cần `CLOUDINARY_*` thật trong `.env` (còn placeholder)
 - [ ] **REQ_03** — Admin duyệt / đình chỉ listing (`pending` → `approved`/`suspended`)
   → stub: `controllers/admin.controller.js`, `routes/admin.routes.js`
 - [ ] **REQ_04** — Admin quản lý user (khoá / mở khoá tài khoản)

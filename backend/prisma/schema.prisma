@@ -46,6 +46,14 @@ enum PaymentStatus {
   simulated_success
 }
 
+enum ListingCategory {
+  apartment
+  house
+  villa
+  homestay
+  hotel_room
+}
+
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -69,8 +77,8 @@ model Listing {
   hostId         String        @map("host_id")
   title          String
   description    String?       @db.Text
-  category       String?
-  address        String?
+  category       ListingCategory?
+  address        String
   latitude       Decimal?      @db.Decimal(10, 7)
   longitude      Decimal?      @db.Decimal(10, 7)
   defaultPrice   Decimal       @map("default_price") @db.Decimal(12, 2)

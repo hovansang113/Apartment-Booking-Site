@@ -1,23 +1,53 @@
 const { body } = require('express-validator');
-const { ROLES } = require('../constants/roles');
+const { UserRole } = require('@prisma/client');
+
+const EMAIL_MAX = 191; // matches VARCHAR(191) column
+const NAME_MAX = 191; // matches VARCHAR(191) column
+const PASSWORD_MIN = 8;
+const PASSWORD_MAX = 72; // bcrypt silently ignores bytes beyond 72
+
+const emailRule = body('email')
+  .trim()
+  .notEmpty()
+  .withMessage('Email is required')
+  .isEmail()
+  .withMessage('Invalid email')
+  .isLength({ max: EMAIL_MAX })
+  .withMessage(`Email must be at most ${EMAIL_MAX} characters`)
+  .normalizeEmail();
+
+const newPasswordRule = body('password')
+  .isLength({ min: PASSWORD_MIN, max: PASSWORD_MAX })
+  .withMessage(`Password must be between ${PASSWORD_MIN} and ${PASSWORD_MAX} characters`)
+  .matches(/^(?=.*[A-Za-z])(?=.*\d).+$/)
+  .withMessage('Password must contain at least one letter and one number');
+
+const fullNameRule = body('fullName')
+  .trim()
+  .notEmpty()
+  .withMessage('Full name is required')
+  .isLength({ max: NAME_MAX })
+  .withMessage(`Full name must be at most ${NAME_MAX} characters`);
+
+const phoneRule = body('phone')
+  .optional({ checkFalsy: true })
+  .trim()
+  .isMobilePhone('any')
+  .withMessage('Invalid phone number');
 
 const registerRules = [
-  body('email').isEmail().withMessage('Invalid email').normalizeEmail(),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('fullName').trim().notEmpty().withMessage('Full name is required'),
-  body('phone').optional({ checkFalsy: true }).isString(),
-  body('role').optional().isIn([ROLES.USER, ROLES.HOST]).withMessage('Invalid role'),
+  emailRule,
+  newPasswordRule,
+  fullNameRule,
+  phoneRule,
+  body('role').optional({ checkFalsy: true }).isIn([UserRole.user, UserRole.host]).withMessage('Invalid role'),
 ];
 
 const loginRules = [
-  body('email').isEmail().withMessage('Invalid email').normalizeEmail(),
+  emailRule,
   body('password').notEmpty().withMessage('Password is required'),
 ];
 
-const guestLoginRules = [
-  body('email').isEmail().withMessage('Invalid email').normalizeEmail(),
-  body('fullName').trim().notEmpty().withMessage('Full name is required'),
-  body('phone').optional({ checkFalsy: true }).isString(),
-];
+const guestLoginRules = [emailRule, fullNameRule, phoneRule];
 
 module.exports = { registerRules, loginRules, guestLoginRules };
