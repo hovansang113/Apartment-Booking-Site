@@ -87,4 +87,4 @@ Chạy tại `http://localhost:5173`.
 
 1. Setup MySQL local (hoặc dùng Docker) → chạy `prisma migrate dev`
 2. Code dần từng REQ theo sprint đã chia trong sheet — mỗi file stub đều có comment REQ tương ứng để dễ tra cứu
-3. REQ_09 (chống trùng lịch) là phần logic quan trọng nhất — nên dùng Prisma transaction (`prisma.$transaction`) khi approve booking để tránh race condition
+3. REQ_09 (chống trùng lịch) là phần logic quan trọng nhất — booking giờ tự động `approved` ngay khi tạo (không cần host duyệt), nên phải dùng Prisma transaction (`prisma.$transaction`) ngay lúc **tạo booking** (kiểm tra `listing_calendar` còn trống rồi mới insert) để tránh race condition, thay vì kiểm tra ở bước approve

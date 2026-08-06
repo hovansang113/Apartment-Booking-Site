@@ -10,7 +10,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "prisma:seed": "node prisma/seed.js"
+    "prisma:seed": "node prisma/seed.js",
+    "lint": "eslint src",
+    "format": "prettier --write \"src/**/*.js\""
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
@@ -28,7 +30,10 @@
     "multer-storage-cloudinary": "^4.0.0"
   },
   "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
     "nodemon": "^3.1.7",
+    "prettier": "^3.3.3",
     "prisma": "^5.20.0"
   }
 }

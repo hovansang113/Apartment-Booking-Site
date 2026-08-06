@@ -124,7 +124,7 @@ model Booking {
   checkIn         DateTime      @map("check_in") @db.Date
   checkOut        DateTime      @map("check_out") @db.Date
   totalPrice      Decimal       @map("total_price") @db.Decimal(12, 2)
-  status          BookingStatus @default(pending)
+  status          BookingStatus @default(approved)
   contactName     String        @map("contact_name")
   contactEmail    String        @map("contact_email")
   contactPhone    String?       @map("contact_phone")

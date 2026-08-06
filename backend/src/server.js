@@ -1,4 +1,7 @@
 const app = require('./app');
+const { validateEnv } = require('./config/env');
+
+validateEnv();
 
 const PORT = process.env.PORT || 5000;
 
