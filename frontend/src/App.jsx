@@ -8,8 +8,10 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import HostListingsPage from './pages/host/HostListingsPage';
 import HostListingFormPage from './pages/host/HostListingFormPage';
+import HostBookingsPage from './pages/host/HostBookingsPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 import AdminListingsPage from './pages/admin/AdminListingsPage';
+import MyBookingsPage from './pages/user/MyBookingsPage';
 
 function MainLayout({ children }) {
   return (
@@ -30,6 +32,13 @@ export default function App() {
         <Route path="/auth/login" element={<LoginPage />} />
         <Route path="/auth/register" element={<RegisterPage />} />
 
+        {/* Bookings */}
+        <Route path="/bookings" element={
+          <ProtectedRoute>
+            <MainLayout><MyBookingsPage /></MainLayout>
+          </ProtectedRoute>
+        } />
+
         {/* Admin */}
         <Route path="/admin" element={
           <ProtectedRoute roles={['admin']}>
@@ -41,6 +50,11 @@ export default function App() {
         <Route path="/host/listings" element={
           <ProtectedRoute roles={['host']}>
             <MainLayout><HostListingsPage /></MainLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/host/bookings" element={
+          <ProtectedRoute roles={['host']}>
+            <MainLayout><HostBookingsPage /></MainLayout>
           </ProtectedRoute>
         } />
         <Route path="/host/listings/new" element={

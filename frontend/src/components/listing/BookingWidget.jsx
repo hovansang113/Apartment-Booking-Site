@@ -1,113 +1,185 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { StarIcon } from '../common/icons';
+import { useAuth } from '../../context/AuthContext';
+import { createBooking } from '../../services/bookingService';
+import { guestLogin } from '../../services/authService';
+import api from '../../services/api';
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
+  style: 'currency', currency: 'VND', maximumFractionDigits: 0,
 });
 
-function nightsBetween(checkIn, checkOut) {
+function calcNights(checkIn, checkOut) {
   if (!checkIn || !checkOut) return 0;
   const ms = new Date(checkOut) - new Date(checkIn);
-  const nights = Math.round(ms / (1000 * 60 * 60 * 24));
-  return nights > 0 ? nights : 0;
+  return Math.max(0, Math.round(ms / (1000 * 60 * 60 * 24)));
 }
 
-// REQ_07 (tao booking) chua co API that — nut Dat phong chi hien thong bao tam.
-export default function BookingWidget({ listing }) {
-  const [checkIn, setCheckIn] = useState('');
-  const [checkOut, setCheckOut] = useState('');
-  const [guests, setGuests] = useState(1);
+export default function BookingWidget({ listing, checkIn, checkOut, onChangeCheckIn, onChangeCheckOut }) {
+  const { user, login: authLogin } = useAuth();
+  const navigate = useNavigate();
+  const [showForm, setShowForm] = useState(false);
 
-  const nights = useMemo(() => nightsBetween(checkIn, checkOut), [checkIn, checkOut]);
-  const subtotal = nights * listing.pricePerNight;
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    defaultValues: {
+      contactName: user?.fullName ?? '',
+      contactEmail: user?.email ?? '',
+    },
+  });
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (nights === 0) {
-      toast.error('Vui lòng chọn ngày nhận và trả phòng');
-      return;
-    }
-    toast('Tính năng đặt phòng đang được phát triển, quay lại sau nhé!');
+  const nights = calcNights(checkIn, checkOut);
+  const total = nights * Number(listing.defaultPrice);
+
+  const mutation = useMutation({
+    mutationFn: async (values) => {
+      let token = user ? localStorage.getItem('token') : null;
+
+      // Chưa đăng nhập → tạo tài khoản guest rồi lấy token
+      if (!user) {
+        const { user: guestUser, token: guestToken } = await guestLogin({
+          email: values.contactEmail,
+          fullName: values.contactName,
+          phone: values.contactPhone,
+        });
+        authLogin(guestUser, guestToken);
+        token = guestToken;
+      }
+
+      // Gọi API đặt phòng với token (set thẳng vào header nếu cần)
+      const { data } = await api.post('/bookings', {
+        listingId: listing.id,
+        checkIn: values.checkIn,
+        checkOut: values.checkOut,
+        contactName: values.contactName,
+        contactEmail: values.contactEmail,
+        contactPhone: values.contactPhone,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return data.data;
+    },
+    onSuccess: () => {
+      toast.success('Đặt phòng thành công!');
+      navigate('/bookings');
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Đặt phòng thất bại'),
+  });
+
+  function onSubmit(values) {
+    mutation.mutate({ ...values });
   }
 
+  const today = new Date().toISOString().split('T')[0];
+
   return (
-    <div className="rounded-xl border border-neutral-200 p-6 shadow-lg">
-      <div className="flex items-baseline justify-between">
-        <p>
-          <span className="text-lg font-semibold">{currencyFormatter.format(listing.pricePerNight)}</span>{' '}
-          <span className="text-neutral-500">/ đêm</span>
-        </p>
-        <span className="flex items-center gap-1 text-sm">
-          <StarIcon className="h-3.5 w-3.5" />
-          {listing.rating.toFixed(2)}
+    <div className="sticky top-24 rounded-2xl border border-neutral-200 p-6 shadow-md">
+      <div className="mb-4 flex items-baseline gap-1">
+        <span className="text-2xl font-bold text-neutral-900">
+          {currencyFormatter.format(listing.defaultPrice)}
         </span>
+        <span className="text-neutral-500 text-sm">/ đêm</span>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-4">
-        <div className="grid grid-cols-2 overflow-hidden rounded-lg border border-neutral-300">
-          <label className="border-r border-neutral-300 px-3 py-2">
-            <span className="block text-[10px] font-semibold uppercase text-neutral-700">
-              Nhận phòng
-            </span>
-            <input
-              type="date"
-              value={checkIn}
-              onChange={(e) => setCheckIn(e.target.value)}
-              className="w-full bg-transparent text-sm outline-none"
-            />
-          </label>
-          <label className="px-3 py-2">
-            <span className="block text-[10px] font-semibold uppercase text-neutral-700">
-              Trả phòng
-            </span>
-            <input
-              type="date"
-              value={checkOut}
-              onChange={(e) => setCheckOut(e.target.value)}
-              className="w-full bg-transparent text-sm outline-none"
-            />
-          </label>
-          <label className="col-span-2 border-t border-neutral-300 px-3 py-2">
-            <span className="block text-[10px] font-semibold uppercase text-neutral-700">Khách</span>
-            <select
-              value={guests}
-              onChange={(e) => setGuests(Number(e.target.value))}
-              className="w-full bg-transparent text-sm outline-none"
-            >
-              {Array.from({ length: listing.guestCapacity }, (_, i) => i + 1).map((n) => (
-                <option key={n} value={n}>
-                  {n} khách
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <button
-          type="submit"
-          className="mt-4 w-full rounded-lg bg-brand-600 py-3 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
-        >
-          Đặt phòng
-        </button>
-
-        {nights > 0 && (
-          <div className="mt-4 space-y-2 text-sm text-neutral-700">
-            <div className="flex justify-between">
-              <span>
-                {currencyFormatter.format(listing.pricePerNight)} x {nights} đêm
-              </span>
-              <span>{currencyFormatter.format(subtotal)}</span>
+      {!showForm ? (
+        <>
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <div className="border border-neutral-300 rounded-lg p-2">
+              <p className="text-xs font-semibold text-neutral-500 uppercase">Nhận phòng</p>
+              <input
+                type="date"
+                min={today}
+                value={checkIn}
+                onChange={(e) => onChangeCheckIn(e.target.value)}
+                className="w-full text-sm text-neutral-900 outline-none mt-0.5"
+              />
             </div>
-            <div className="flex justify-between border-t border-neutral-200 pt-2 font-semibold text-neutral-900">
-              <span>Tổng cộng</span>
-              <span>{currencyFormatter.format(subtotal)}</span>
+            <div className="border border-neutral-300 rounded-lg p-2">
+              <p className="text-xs font-semibold text-neutral-500 uppercase">Trả phòng</p>
+              <input
+                type="date"
+                min={checkIn || today}
+                value={checkOut}
+                onChange={(e) => onChangeCheckOut(e.target.value)}
+                className="w-full text-sm text-neutral-900 outline-none mt-0.5"
+              />
             </div>
           </div>
-        )}
-      </form>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (!checkIn || !checkOut) { toast.error('Vui lòng chọn ngày nhận và trả phòng'); return; }
+              if (nights < 1) { toast.error('Ngày trả phòng phải sau ngày nhận phòng'); return; }
+              setShowForm(true);
+            }}
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-xl transition-colors"
+          >
+            Đặt phòng
+          </button>
+
+          {nights > 0 && (
+            <div className="mt-4 space-y-2 text-sm text-neutral-700">
+              <div className="flex justify-between">
+                <span>{currencyFormatter.format(listing.defaultPrice)} × {nights} đêm</span>
+                <span>{currencyFormatter.format(total)}</span>
+              </div>
+              <div className="flex justify-between font-semibold border-t border-neutral-200 pt-2">
+                <span>Tổng cộng</span>
+                <span>{currencyFormatter.format(total)}</span>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="bg-neutral-50 rounded-lg p-3 text-sm text-neutral-700 flex justify-between">
+            <span>{checkIn} → {checkOut}</span>
+            <span className="font-semibold">{nights} đêm · {currencyFormatter.format(total)}</span>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-1">Họ tên *</label>
+            <input
+              {...register('contactName', { required: 'Bắt buộc' })}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+            {errors.contactName && <p className="text-red-500 text-xs mt-1">{errors.contactName.message}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-1">Email *</label>
+            <input
+              type="email"
+              {...register('contactEmail', { required: 'Bắt buộc' })}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+            {errors.contactEmail && <p className="text-red-500 text-xs mt-1">{errors.contactEmail.message}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-1">Số điện thoại</label>
+            <input
+              {...register('contactPhone')}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="0901234567"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setShowForm(false)}
+              className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-xl text-sm hover:bg-gray-50">
+              Quay lại
+            </button>
+            <button type="submit" disabled={mutation.isPending}
+              className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors">
+              {mutation.isPending ? 'Đang đặt...' : 'Xác nhận đặt phòng'}
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

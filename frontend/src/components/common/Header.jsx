@@ -76,8 +76,18 @@ export default function Header() {
                       </Link>
                     )}
                     {user.role === 'host' && (
-                      <Link to="/host/listings" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
-                        Quản lý phòng
+                      <>
+                        <Link to="/host/listings" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
+                          Quản lý phòng
+                        </Link>
+                        <Link to="/host/bookings" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
+                          Quản lý booking
+                        </Link>
+                      </>
+                    )}
+                    {user.role === 'user' && (
+                      <Link to="/bookings" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
+                        Đặt phòng của tôi
                       </Link>
                     )}
                     <button

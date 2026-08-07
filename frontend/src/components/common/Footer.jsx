@@ -2,7 +2,7 @@ export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-neutral-200 bg-white text-sm text-neutral-500">
+    <footer className="border-t border-neutral-200 bg-neutral-100 text-sm text-neutral-500">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         {/* Main links */}

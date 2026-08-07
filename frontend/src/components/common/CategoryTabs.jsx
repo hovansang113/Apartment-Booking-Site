@@ -13,7 +13,7 @@ export const CATEGORIES = [
 export default function CategoryTabs({ active, onChange }) {
   return (
     <nav aria-label="Danh mục chỗ ở" className="border-b border-neutral-200 bg-white">
-      <ul className="mx-auto flex max-w-7xl list-none gap-6 overflow-x-auto px-4 py-3 scrollbar-hide sm:px-6 lg:px-8">
+      <ul className="mx-auto flex max-w-7xl list-none gap-8 overflow-x-auto px-4 py-2 scrollbar-hide sm:px-6 lg:px-8 justify-start sm:justify-center">
         {CATEGORIES.map((cat) => {
           const isActive = active === cat.key;
           return (
