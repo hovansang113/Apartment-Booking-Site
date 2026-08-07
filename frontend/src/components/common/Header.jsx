@@ -103,7 +103,7 @@ export default function Header() {
                       Đăng nhập
                     </Link>
                     <Link to="/auth/register" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
-                      Đăng ký
+                      Đăng ký làm chủ nhà
                     </Link>
                   </>
                 )}

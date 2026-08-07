@@ -10,8 +10,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({ defaultValues: { role: 'user' } });
-  const role = watch('role');
+  const { register, handleSubmit, formState: { errors } } = useForm({ defaultValues: { role: 'host' } });
 
   async function onSubmit(values) {
     setLoading(true);
@@ -30,25 +29,10 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 w-full max-w-md p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Đăng ký</h1>
-        <p className="text-gray-500 text-sm mb-6">Tạo tài khoản mới trên Stayhub</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Đăng ký chủ nhà</h1>
+        <p className="text-gray-500 text-sm mb-6">Tạo tài khoản chủ nhà để đăng phòng cho thuê trên Stayhub</p>
 
-        {/* Role selector */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          {[{ value: 'user', label: 'Người dùng' }, { value: 'host', label: 'Chủ nhà' }].map((r) => (
-            <label
-              key={r.value}
-              className={`flex items-center justify-center gap-2 border rounded-lg py-2.5 cursor-pointer text-sm font-medium transition-colors ${
-                role === r.value
-                  ? 'border-teal-500 bg-teal-50 text-teal-700'
-                  : 'border-gray-200 text-gray-500 hover:border-gray-300'
-              }`}
-            >
-              <input type="radio" {...register('role')} value={r.value} className="hidden" />
-              {r.label}
-            </label>
-          ))}
-        </div>
+        <input type="hidden" {...register('role')} value="host" />
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>

@@ -38,7 +38,7 @@ const registerRules = [
   newPasswordRule,
   fullNameRule,
   phoneRule,
-  body('role').optional({ checkFalsy: true }).isIn([UserRole.user, UserRole.host]).withMessage('Invalid role'),
+  body('role').optional({ checkFalsy: true }).isIn([UserRole.host]).withMessage('Invalid role'),
 ];
 
 const loginRules = [
