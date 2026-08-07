@@ -17,8 +17,8 @@ function issueSession(user) {
   return { user: sanitizeUser(user), token };
 }
 
-// REQ_01: register a user/host account
-async function register({ email, password, fullName, phone, role }) {
+// REQ_01: register a host account (regular users don't self-register — see REQ_14 guest login)
+async function register({ email, password, fullName, phone }) {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     throw new AppError(409, 'Email is already in use');
@@ -31,7 +31,7 @@ async function register({ email, password, fullName, phone, role }) {
       passwordHash,
       fullName,
       phone,
-      role: role || UserRole.user,
+      role: UserRole.host,
       isGuest: false,
     },
   });

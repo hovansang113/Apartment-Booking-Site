@@ -1,5 +1,4 @@
 const { body } = require('express-validator');
-const { UserRole } = require('@prisma/client');
 
 const EMAIL_MAX = 191; // matches VARCHAR(191) column
 const NAME_MAX = 191; // matches VARCHAR(191) column
@@ -33,13 +32,7 @@ const phoneRule = body('phone')
   .isMobilePhone('any')
   .withMessage('Invalid phone number');
 
-const registerRules = [
-  emailRule,
-  newPasswordRule,
-  fullNameRule,
-  phoneRule,
-  body('role').optional({ checkFalsy: true }).isIn([UserRole.host]).withMessage('Invalid role'),
-];
+const registerRules = [emailRule, newPasswordRule, fullNameRule, phoneRule];
 
 const loginRules = [
   emailRule,

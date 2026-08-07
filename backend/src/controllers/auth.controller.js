@@ -3,8 +3,8 @@ const { created, ok } = require('../utils/response.util');
 
 // REQ_01 - register, login, issue JWT
 async function register(req, res) {
-  const { email, password, fullName, phone, role } = req.body;
-  const result = await authService.register({ email, password, fullName, phone, role });
+  const { email, password, fullName, phone } = req.body;
+  const result = await authService.register({ email, password, fullName, phone });
   return created(res, result, 'Registered successfully');
 }
 
