@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import Seo from '../../components/common/Seo';
 import Gallery from '../../components/listing/Gallery';
 import AmenityList from '../../components/listing/AmenityList';
+import AvailabilityCalendar from '../../components/listing/AvailabilityCalendar';
 import BookingWidget from '../../components/listing/BookingWidget';
 import { HeartIcon, StarIcon } from '../../components/common/icons';
 import { getListingById } from '../../data/mockListings';
@@ -98,6 +99,8 @@ export default function ListingDetail() {
             </section>
 
             <AmenityList amenities={listing.amenities} />
+
+            <AvailabilityCalendar bookedRanges={listing.bookedRanges} />
           </div>
 
           <div>
