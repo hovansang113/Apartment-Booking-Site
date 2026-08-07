@@ -1,6 +1,6 @@
 # Database — Booking Platform
 
-MySQL, quản lý qua Prisma (`backend/prisma/schema.prisma`). Toàn bộ 8 bảng bên dưới đã được migrate thật (`npx prisma migrate dev`) vào database `booking_platform`.
+MySQL, quản lý qua Prisma (`backend/prisma/schema.prisma`). Toàn bộ 9 bảng bên dưới đã được migrate thật (`npx prisma migrate dev`) vào database `booking_platform`.
 
 ## Enum dùng chung
 
@@ -13,6 +13,7 @@ MySQL, quản lý qua Prisma (`backend/prisma/schema.prisma`). Toàn bộ 8 bả
 | `CalendarDayStatus` | `blocked`, `booked` | `listing_calendar.status` — 1 ngày trên lịch đang bị chặn thủ công hay đã có booking |
 | `CalendarDaySource` | `manual`, `ical_sync`, `booking` | `listing_calendar.source` — ngày đó bị chiếm do host tự block, đồng bộ iCal ngoài, hay do có booking |
 | `PaymentStatus` | `simulated_success` | `payments.status` — chỉ có 1 giá trị vì thanh toán là giả lập (REQ_10), không tích hợp cổng thanh toán thật |
+| `Amenity` | `wifi`, `kitchen`, `washer`, `air_conditioning`, `free_parking`, `pool`, `tv`, `workspace` | `listing_amenities.amenity` — danh sách tiện nghi cố định cho trang chi tiết listing (REQ_06), không phải text tự do |
 
 ---
 
@@ -47,11 +48,12 @@ MySQL, quản lý qua Prisma (`backend/prisma/schema.prisma`). Toàn bộ 8 bả
 | `title`, `description`, `category`, `address` | | |
 | `latitude`, `longitude` | decimal | toạ độ để hiển thị bản đồ |
 | `default_price` | decimal(12,2) | giá mặc định/đêm, có thể bị override theo ngày (xem `listing_price_overrides`) |
+| `guest_capacity`, `bedrooms`, `beds`, `bathrooms` | int, bắt buộc | hiển thị "X khách · Y phòng ngủ..." trên trang chi tiết (REQ_06) |
 | `status` | enum, default `pending` | admin duyệt (`approved`) hoặc đình chỉ (`suspended`) |
 | `suspend_reason` | nullable text | lý do admin đình chỉ tin, hiển thị cho host |
 | `created_at` / `updated_at` | | |
 
-**Quan hệ:** 1 listing có nhiều `listing_images`, nhiều `listing_price_overrides`, nhiều `listing_calendar` (ngày bị chặn/đã đặt), nhiều `listing_calendar_sync` (nguồn đồng bộ iCal), nhiều `bookings`.
+**Quan hệ:** 1 listing có nhiều `listing_images`, nhiều `listing_amenities`, nhiều `listing_price_overrides`, nhiều `listing_calendar` (ngày bị chặn/đã đặt), nhiều `listing_calendar_sync` (nguồn đồng bộ iCal), nhiều `bookings`.
 
 **Index:** `host_id`, `status` — phục vụ query "tin của tôi" và "tin đang chờ duyệt".
 
@@ -69,7 +71,19 @@ MySQL, quản lý qua Prisma (`backend/prisma/schema.prisma`). Toàn bộ 8 bả
 
 ---
 
-## 4. `listing_price_overrides`
+## 4. `listing_amenities`
+
+**Làm gì:** tiện nghi của listing (wifi, bếp, hồ bơi...) — bảng nối nhiều-nhiều kiểu đơn giản (mỗi dòng = 1 listing có 1 tiện nghi), không phải text tự do để tránh host gõ mỗi người 1 kiểu.
+
+| Cột | Ý nghĩa |
+|---|---|
+| `listing_id` + `amenity` | unique — 1 listing không lặp lại cùng 1 tiện nghi |
+
+**Cách update:** khi host sửa danh sách tiện nghi, service xoá hết dòng cũ (`deleteMany`) rồi tạo lại theo danh sách mới — không có cách "diff" từng cái.
+
+---
+
+## 5. `listing_price_overrides`
 
 **Làm gì:** override giá theo ngày cụ thể (vd cuối tuần, lễ Tết đắt hơn `default_price`).
 
@@ -82,7 +96,7 @@ MySQL, quản lý qua Prisma (`backend/prisma/schema.prisma`). Toàn bộ 8 bả
 
 ---
 
-## 5. `bookings`
+## 6. `bookings`
 
 **Làm gì:** yêu cầu đặt phòng (REQ_07). **Mặc định `status = approved` ngay khi tạo** — khách không cần chờ host duyệt, chỉ cần lịch còn trống.
 
@@ -105,7 +119,7 @@ MySQL, quản lý qua Prisma (`backend/prisma/schema.prisma`). Toàn bộ 8 bả
 
 ---
 
-## 6. `listing_calendar`
+## 7. `listing_calendar`
 
 **Làm gì:** nguồn sự thật duy nhất cho "ngày nào của listing này còn trống hay không" — mỗi dòng là 1 (`listing_id`, `date`) unique.
 
@@ -120,7 +134,7 @@ MySQL, quản lý qua Prisma (`backend/prisma/schema.prisma`). Toàn bộ 8 bả
 
 ---
 
-## 7. `listing_calendar_sync`
+## 8. `listing_calendar_sync`
 
 **Làm gì:** cấu hình đồng bộ lịch 2 chiều với nguồn ngoài (Airbnb/Booking.com...) qua iCal URL.
 
@@ -131,7 +145,7 @@ MySQL, quản lý qua Prisma (`backend/prisma/schema.prisma`). Toàn bộ 8 bả
 
 ---
 
-## 8. `payments`
+## 9. `payments`
 
 **Làm gì:** ghi nhận thanh toán cho 1 booking. Vì đồ án không tích hợp cổng thanh toán thật, mọi thanh toán tạo ra đều `status: simulated_success` (REQ_10 — giả lập thanh toán thành công ngay).
 

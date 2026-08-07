@@ -3,7 +3,20 @@ const { created, ok } = require('../utils/response.util');
 
 // REQ_02 - host creates a listing
 async function create(req, res) {
-  const { title, description, category, address, latitude, longitude, defaultPrice } = req.body;
+  const {
+    title,
+    description,
+    category,
+    address,
+    latitude,
+    longitude,
+    defaultPrice,
+    guestCapacity,
+    bedrooms,
+    beds,
+    bathrooms,
+    amenities,
+  } = req.body;
   const listing = await listingService.createListing({
     hostId: req.user.id,
     title,
@@ -13,6 +26,11 @@ async function create(req, res) {
     latitude,
     longitude,
     defaultPrice,
+    guestCapacity,
+    bedrooms,
+    beds,
+    bathrooms,
+    amenities,
     files: req.files,
   });
   return created(res, listing, 'Listing created successfully, pending admin approval');
@@ -20,7 +38,20 @@ async function create(req, res) {
 
 // REQ_02 - host updates its own listing
 async function update(req, res) {
-  const { title, description, category, address, latitude, longitude, defaultPrice } = req.body;
+  const {
+    title,
+    description,
+    category,
+    address,
+    latitude,
+    longitude,
+    defaultPrice,
+    guestCapacity,
+    bedrooms,
+    beds,
+    bathrooms,
+    amenities,
+  } = req.body;
   const listing = await listingService.updateListing({
     listingId: req.params.id,
     hostId: req.user.id,
@@ -31,6 +62,11 @@ async function update(req, res) {
     latitude,
     longitude,
     defaultPrice,
+    guestCapacity,
+    bedrooms,
+    beds,
+    bathrooms,
+    amenities,
   });
   return ok(res, listing, 'Listing updated successfully');
 }

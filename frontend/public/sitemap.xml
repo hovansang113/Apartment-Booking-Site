@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  TODO: file nay dang tinh (chi co trang chu). Khi REQ_06 (trang chi tiet listing)
+  xong, chuyen sang generate dong luc build (fetch danh sach listing da approved
+  tu API roi sinh 1 <url> cho moi /listings/:id) thay vi sua tay.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://example.com/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

@@ -1,11 +1,27 @@
 const prisma = require('../config/prisma');
+const cloudinary = require('../config/cloudinary');
 const AppError = require('../utils/appError');
 
-function toImageData(files) {
-  return files.map((file, index) => ({
-    imageUrl: file.path,
-    sortOrder: index,
-  }));
+function uploadImageToCloudinary(file) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'booking-platform/listings' },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      },
+    );
+    stream.end(file.buffer);
+  });
+}
+
+async function uploadImages(files) {
+  const urls = await Promise.all(files.map(uploadImageToCloudinary));
+  return urls.map((imageUrl, index) => ({ imageUrl, sortOrder: index }));
+}
+
+function toAmenityData(amenities) {
+  return amenities.map((amenity) => ({ amenity }));
 }
 
 async function assertOwnedByHost(listingId, hostId) {
@@ -20,7 +36,24 @@ async function assertOwnedByHost(listingId, hostId) {
 }
 
 // REQ_02: host creates a listing
-async function createListing({ hostId, title, description, category, address, latitude, longitude, defaultPrice, files }) {
+async function createListing({
+  hostId,
+  title,
+  description,
+  category,
+  address,
+  latitude,
+  longitude,
+  defaultPrice,
+  guestCapacity,
+  bedrooms,
+  beds,
+  bathrooms,
+  amenities,
+  files,
+}) {
+  const imageData = await uploadImages(files);
+
   return prisma.listing.create({
     data: {
       hostId,
@@ -31,20 +64,28 @@ async function createListing({ hostId, title, description, category, address, la
       latitude,
       longitude,
       defaultPrice,
-      images: { create: toImageData(files) },
+      guestCapacity,
+      bedrooms,
+      beds,
+      bathrooms,
+      images: { create: imageData },
+      amenities: amenities ? { create: toAmenityData(amenities) } : undefined,
     },
-    include: { images: true },
+    include: { images: true, amenities: true },
   });
 }
 
 // REQ_02: host updates its own listing
-async function updateListing({ listingId, hostId, ...fields }) {
+async function updateListing({ listingId, hostId, amenities, ...fields }) {
   await assertOwnedByHost(listingId, hostId);
 
   return prisma.listing.update({
     where: { id: listingId },
-    data: fields,
-    include: { images: true },
+    data: {
+      ...fields,
+      ...(amenities ? { amenities: { deleteMany: {}, create: toAmenityData(amenities) } } : {}),
+    },
+    include: { images: true, amenities: true },
   });
 }
 

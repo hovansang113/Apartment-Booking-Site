@@ -1,7 +1,7 @@
 # Booking Platform — Setup
 
-Đây là bộ khung (scaffold) đã setup sẵn cấu trúc thư mục + config + thư viện cho backend và frontend.
-**Chưa có logic nghiệp vụ** — các file controller/service chỉ có comment TODO đánh dấu REQ tương ứng, để team tự code dần theo từng sprint.
+Bộ khung (scaffold) đã setup sẵn cấu trúc thư mục + config + thư viện cho backend và frontend.
+Một số REQ đã có logic thật (auth, guest quick login, host listing CRUD + upload ảnh; frontend đã có trang chủ + trang chi tiết listing bằng mock data) — các REQ còn lại vẫn chỉ có comment TODO đánh dấu, xem tiến độ chi tiết trong [`TODO.md`](TODO.md).
 
 ## Cấu trúc
 

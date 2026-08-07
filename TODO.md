@@ -25,13 +25,13 @@ Cập nhật lần cuối: 2026-08-06. Tick `[x]` khi xong, đừng xoá dòng �
 - [x] **REQ_14** — Guest quick login (đặt phòng không cần đăng ký trước)
   → cùng file với REQ_01, hàm `guestLogin`
 - [x] **REQ_02** — Host tạo / sửa / xoá listing, upload ảnh qua Cloudinary
-  → `services/listing.service.js`, `controllers/listing.controller.js`, `routes/listing.routes.js`, `validators/listing.validator.js`. Đã test 401/403/422/404/409 + chặn xoá listing đã có booking. Upload ảnh thật cần `CLOUDINARY_*` thật trong `.env` (còn placeholder)
+  → `services/listing.service.js`, `controllers/listing.controller.js`, `routes/listing.routes.js`, `validators/listing.validator.js`. Đã test 401/403/422/404/409 + chặn xoá listing đã có booking. Upload chỉ thật sự gọi Cloudinary **sau khi** validate xong (multer dùng memory storage, không dùng CloudinaryStorage trực tiếp — tránh tốn 1 lần gọi Cloudinary cho request sai). Listing giờ có thêm `guestCapacity/bedrooms/beds/bathrooms` (bắt buộc) + `amenities` (enum cố định, bảng `listing_amenities`). Upload ảnh thật cần `CLOUDINARY_*` thật trong `.env` (còn placeholder)
 - [ ] **REQ_03** — Admin duyệt / đình chỉ listing (`pending` → `approved`/`suspended`)
   → stub: `controllers/admin.controller.js`, `routes/admin.routes.js`
 - [ ] **REQ_04** — Admin quản lý user (khoá / mở khoá tài khoản)
   → stub: `controllers/admin.controller.js`, `routes/admin.routes.js`
-- [ ] **REQ_05 / REQ_06** — Xem danh sách listing + chi tiết listing kèm lịch
-  → stub: `routes/listing.routes.js`, `routes/calendar.routes.js`
+- [ ] **REQ_05 / REQ_06** — Xem danh sách listing + chi tiết listing kèm lịch (backend)
+  → stub: `routes/listing.routes.js`, `routes/calendar.routes.js`. **FE đã build UI trước** (trang chủ + trang detail) bằng mock data — xem mục Frontend bên dưới. Khi làm backend, nhớ nối `frontend/src/data/mockListings.js` → gọi `listingService` thật, và bỏ mock file đi
 - [ ] **REQ_07** — Khách gửi yêu cầu đặt phòng (tạo `booking`, auto-approved nếu lịch trống)
   → stub: `services/booking.service.js`, `controllers/booking.controller.js`, `routes/booking.routes.js`
 - [ ] **REQ_09** — Chống trùng lịch: check `listing_calendar` trong `prisma.$transaction` ngay lúc tạo booking (đi kèm REQ_07, không phải route riêng)
@@ -46,4 +46,8 @@ Cập nhật lần cuối: 2026-08-06. Tick `[x]` khi xong, đừng xoá dòng �
 
 ## Frontend
 
-- [ ] Chưa bắt đầu — toàn bộ `components/`, `pages/` còn rỗng (chỉ có `.gitkeep`), `AuthContext.jsx`/`ProtectedRoute.jsx`/`services/*.js` vẫn là stub, chưa nối với API backend đã code ở trên
+- [x] **Trang chủ guest** (`pages/user/Home.jsx`) — layout kiểu Airbnb (search pill trong header, tab category theo đúng `ListingCategory`, lưới listing card), màu thương hiệu riêng (teal, không phải màu Airbnb). Dùng `data/mockListings.js` (mock), chưa nối API thật
+- [x] **Trang chi tiết listing** (`pages/user/ListingDetail.jsx`, route `/listings/:id`) — gallery ảnh, thông tin host + sức chứa, mô tả, tiện nghi, booking widget sticky (chọn ngày/khách, tính giá tạm). **Không có phần đánh giá/reviews** — không có REQ, không có bảng DB, cố tình không làm giả. Nút "Đặt phòng" chỉ hiện toast tạm vì REQ_07 (API tạo booking) chưa có
+- [x] SEO cho SPA (Vite, không SSR) — `react-helmet-async` set title/meta/OG/canonical/JSON-LD riêng từng trang, `index.html` có meta mặc định tốt (cho bot không chạy JS), `public/robots.txt` + `public/sitemap.xml` (sitemap đang tĩnh, cần sinh động khi có API listing thật)
+- [ ] `AuthContext.jsx`, `ProtectedRoute.jsx`, `services/api.js`, `services/authService.js`, `services/listingService.js`, `services/bookingService.js` — vẫn là stub, chưa nối với API backend đã code
+- [ ] Domain thật — `SITE_URL` trong `Seo.jsx` và `index.html`/`robots.txt`/`sitemap.xml` đang để `https://example.com`, cần đổi khi có domain deploy thật
