@@ -10,19 +10,27 @@ const currencyFormatter = new Intl.NumberFormat('vi-VN', {
 
 export default function ListingCard({ listing }) {
   const [saved, setSaved] = useState(false);
+  const image = listing.images?.[0]?.imageUrl ?? listing.image;
+  const price = listing.defaultPrice ?? listing.pricePerNight;
 
   return (
     <article className="group">
       <Link to={`/listings/${listing.id}`} className="block">
         <div className="relative aspect-square overflow-hidden rounded-xl bg-neutral-100">
-          <img
-            src={listing.image}
-            alt={`${listing.title} tại ${listing.address}`}
-            loading="lazy"
-            width={800}
-            height={800}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
+          {image ? (
+            <img
+              src={image}
+              alt={`${listing.title} tại ${listing.address}`}
+              loading="lazy"
+              width={800}
+              height={800}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="h-full w-full bg-neutral-200 flex items-center justify-center text-neutral-400 text-sm">
+              Không có ảnh
+            </div>
+          )}
           <button
             type="button"
             onClick={(e) => {
@@ -39,14 +47,16 @@ export default function ListingCard({ listing }) {
 
         <div className="mt-2 flex items-start justify-between gap-2">
           <h3 className="truncate text-sm font-medium text-neutral-900">{listing.address}</h3>
-          <span className="flex shrink-0 items-center gap-1 text-sm text-neutral-900">
-            <StarIcon className="h-3.5 w-3.5" />
-            {listing.rating.toFixed(2)}
-          </span>
+          {listing.rating != null && (
+            <span className="flex shrink-0 items-center gap-1 text-sm text-neutral-900">
+              <StarIcon className="h-3.5 w-3.5" />
+              {listing.rating.toFixed(2)}
+            </span>
+          )}
         </div>
         <p className="truncate text-sm text-neutral-500">{listing.title}</p>
         <p className="mt-1 text-sm text-neutral-900">
-          <span className="font-semibold">{currencyFormatter.format(listing.pricePerNight)}</span>{' '}
+          <span className="font-semibold">{currencyFormatter.format(price)}</span>{' '}
           / đêm
         </p>
       </Link>

@@ -52,7 +52,11 @@ async function createListing({
   amenities,
   files,
 }) {
+  console.log('=== createListing ===');
+  console.log('files:', files?.length, 'amenities:', amenities, 'category:', category);
+  console.log('CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
   const imageData = await uploadImages(files);
+  console.log('imageData:', imageData);
 
   return prisma.listing.create({
     data: {
@@ -101,4 +105,47 @@ async function deleteListing({ listingId, hostId }) {
   await prisma.listing.delete({ where: { id: listingId } });
 }
 
-module.exports = { createListing, updateListing, deleteListing };
+// REQ_05: public listing search - chỉ approved
+async function getPublicListings({ category, page = 1, limit = 20 } = {}) {
+  const where = { status: 'approved', ...(category ? { category } : {}) };
+  const skip = (Number(page) - 1) * Number(limit);
+  const [listings, total] = await Promise.all([
+    prisma.listing.findMany({
+      where,
+      include: { images: { orderBy: { sortOrder: 'asc' }, take: 1 } },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: Number(limit),
+    }),
+    prisma.listing.count({ where }),
+  ]);
+  return { listings, total };
+}
+
+// REQ_02: host gets its own listings
+async function getHostListings(hostId) {
+  return prisma.listing.findMany({
+    where: { hostId },
+    include: {
+      images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+      amenities: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+}
+
+// REQ_02: get single listing (public)
+async function getListing(listingId) {
+  const listing = await prisma.listing.findUnique({
+    where: { id: listingId },
+    include: {
+      images: { orderBy: { sortOrder: 'asc' } },
+      amenities: true,
+      host: { select: { id: true, fullName: true } },
+    },
+  });
+  if (!listing) throw new AppError(404, 'Listing not found');
+  return listing;
+}
+
+module.exports = { createListing, updateListing, deleteListing, getPublicListings, getHostListings, getListing };

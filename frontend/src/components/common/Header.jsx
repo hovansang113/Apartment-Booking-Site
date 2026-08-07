@@ -1,8 +1,29 @@
-import { Link } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import SearchBar from './SearchBar';
 import { GlobeIcon, MenuIcon, UserCircleIcon } from './icons';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Header() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  function handleLogout() {
+    logout();
+    setOpen(false);
+    navigate('/');
+  }
+
   return (
     <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
@@ -30,13 +51,55 @@ export default function Header() {
           >
             <GlobeIcon className="h-5 w-5" />
           </button>
-          <Link
-            to="/auth/login"
-            className="flex items-center gap-3 rounded-full border border-neutral-300 py-2 pl-3 pr-2 hover:shadow-md transition-shadow"
-          >
-            <MenuIcon className="h-4 w-4 text-neutral-700" />
-            <UserCircleIcon className="h-7 w-7 text-neutral-500" />
-          </Link>
+
+          {/* User menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              className="flex items-center gap-3 rounded-full border border-neutral-300 py-2 pl-3 pr-2 hover:shadow-md transition-shadow"
+            >
+              <MenuIcon className="h-4 w-4 text-neutral-700" />
+              <UserCircleIcon className="h-7 w-7 text-neutral-500" />
+            </button>
+
+            {open && (
+              <div className="absolute right-0 mt-2 w-52 rounded-xl border border-neutral-200 bg-white shadow-lg py-1 text-sm">
+                {user ? (
+                  <>
+                    <div className="px-4 py-2 font-semibold text-neutral-800 border-b border-neutral-100">
+                      {user.fullName}
+                    </div>
+                    {user.role === 'admin' && (
+                      <Link to="/admin" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
+                        Quản trị
+                      </Link>
+                    )}
+                    {user.role === 'host' && (
+                      <Link to="/host/listings" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
+                        Quản lý phòng
+                      </Link>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 hover:bg-neutral-50 text-neutral-700"
+                    >
+                      Đăng xuất
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/auth/login" onClick={() => setOpen(false)} className="block px-4 py-2 font-semibold hover:bg-neutral-50 text-neutral-800">
+                      Đăng nhập
+                    </Link>
+                    <Link to="/auth/register" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
+                      Đăng ký
+                    </Link>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </nav>
       </div>
 

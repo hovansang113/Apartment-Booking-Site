@@ -7,8 +7,9 @@ const { upload } = require('../middlewares/upload.middleware');
 const { createListingRules, updateListingRules } = require('../validators/listing.validator');
 const { validate } = require('../validators/validate.util');
 
-// router.get('/', ...);            // REQ_05/06
-// router.get('/:id', ...);         // REQ_06
+router.get('/', listingController.getPublicListings); // REQ_05 - public, chỉ approved
+router.get('/mine', authenticate, authorize(UserRole.host), listingController.getHostListings); // REQ_02
+router.get('/:id', listingController.getOne); // REQ_06 - public
 
 router.post(
   '/',

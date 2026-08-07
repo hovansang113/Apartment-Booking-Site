@@ -1,5 +1,7 @@
 const { body } = require('express-validator');
-const { ListingCategory, Amenity } = require('@prisma/client');
+const { ListingCategory } = require('@prisma/client');
+
+const VALID_AMENITIES = ['wifi', 'kitchen', 'washer', 'air_conditioning', 'free_parking', 'pool', 'tv', 'workspace'];
 
 const TITLE_MAX = 191; // matches VARCHAR(191) column
 const ADDRESS_MAX = 191; // matches VARCHAR(191) column
@@ -69,7 +71,7 @@ const amenitiesRule = body('amenities')
   .optional({ checkFalsy: true })
   .customSanitizer(parseAmenities)
   .custom((value) => {
-    if (!Array.isArray(value) || !value.every((a) => Object.values(Amenity).includes(a))) {
+    if (!Array.isArray(value) || !value.every((a) => VALID_AMENITIES.includes(a))) {
       throw new Error('Amenities must be an array of valid amenity values');
     }
     return true;

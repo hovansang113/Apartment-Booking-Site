@@ -3,7 +3,7 @@ const { UserRole } = require('@prisma/client');
 
 const EMAIL_MAX = 191; // matches VARCHAR(191) column
 const NAME_MAX = 191; // matches VARCHAR(191) column
-const PASSWORD_MIN = 8;
+const PASSWORD_MIN = 6;
 const PASSWORD_MAX = 72; // bcrypt silently ignores bytes beyond 72
 
 const emailRule = body('email')
@@ -18,9 +18,7 @@ const emailRule = body('email')
 
 const newPasswordRule = body('password')
   .isLength({ min: PASSWORD_MIN, max: PASSWORD_MAX })
-  .withMessage(`Password must be between ${PASSWORD_MIN} and ${PASSWORD_MAX} characters`)
-  .matches(/^(?=.*[A-Za-z])(?=.*\d).+$/)
-  .withMessage('Password must contain at least one letter and one number');
+  .withMessage(`Password must be between ${PASSWORD_MIN} and ${PASSWORD_MAX} characters`);
 
 const fullNameRule = body('fullName')
   .trim()

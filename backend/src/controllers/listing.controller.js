@@ -77,4 +77,23 @@ async function remove(req, res) {
   return ok(res, null, 'Listing deleted successfully');
 }
 
-module.exports = { create, update, remove };
+// REQ_05 - public listing list
+async function getPublicListings(req, res) {
+  const { category, page, limit } = req.query;
+  const result = await listingService.getPublicListings({ category, page, limit });
+  return ok(res, result);
+}
+
+// REQ_06 - public single listing
+async function getOne(req, res) {
+  const listing = await listingService.getListing(req.params.id);
+  return ok(res, listing);
+}
+
+// REQ_02 - host gets its own listings
+async function getHostListings(req, res) {
+  const listings = await listingService.getHostListings(req.user.id);
+  return ok(res, listings);
+}
+
+module.exports = { create, update, remove, getPublicListings, getOne, getHostListings };
