@@ -8,7 +8,9 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import HostListingsPage from './pages/host/HostListingsPage';
 import HostListingFormPage from './pages/host/HostListingFormPage';
+import HostListingWizard from './pages/host/HostListingWizard';
 import HostBookingsPage from './pages/host/HostBookingsPage';
+import BecomeHostPage from './pages/host/BecomeHostPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 import AdminListingsPage from './pages/admin/AdminListingsPage';
 import MyBookingsPage from './pages/user/MyBookingsPage';
@@ -57,9 +59,10 @@ export default function App() {
             <MainLayout><HostBookingsPage /></MainLayout>
           </ProtectedRoute>
         } />
+        {/* Wizard tạo phòng — không có Header/Footer, giống luồng "Trở thành host" của Airbnb */}
         <Route path="/host/listings/new" element={
           <ProtectedRoute roles={['host']}>
-            <MainLayout><HostListingFormPage /></MainLayout>
+            <HostListingWizard />
           </ProtectedRoute>
         } />
         <Route path="/host/listings/:id/edit" element={
@@ -73,6 +76,7 @@ export default function App() {
           <MainLayout>
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/host" element={<BecomeHostPage />} />
               <Route path="/listings/:id" element={<ListingDetail />} />
             </Routes>
           </MainLayout>
