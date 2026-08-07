@@ -1,8 +1,14 @@
 const router = require('express').Router();
+const { UserRole } = require('@prisma/client');
+const adminController = require('../controllers/admin.controller');
+const { authenticate } = require('../middlewares/auth.middleware');
+const { authorize } = require('../middlewares/role.middleware');
+const { updateListingStatusRules, getListingsQueryRules } = require('../validators/admin.validator');
+const { validate } = require('../validators/validate.util');
 
-// router.get('/listings/pending', ...);  // REQ_03
-// router.patch('/listings/:id/status', ...); // REQ_03
-// router.get('/users', ...);             // REQ_04
-// router.patch('/users/:id/status', ...);// REQ_04
+router.use(authenticate, authorize(UserRole.admin));
+
+router.get('/listings', getListingsQueryRules, validate, adminController.getListings); // REQ_03
+router.patch('/listings/:id/status', updateListingStatusRules, validate, adminController.updateListingStatus); // REQ_03
 
 module.exports = router;
