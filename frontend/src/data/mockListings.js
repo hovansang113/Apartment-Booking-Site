@@ -162,7 +162,11 @@ export const mockListings = [
 ];
 
 export function getListingById(id) {
-  const listing = mockListings.find((l) => l.id === id);
+  if (!id) return null;
+  const cleanId = String(id).trim();
+  const listing = mockListings.find(
+    (l) => l.id === cleanId || l.id === `mock-${cleanId}` || l.id.replace('mock-', '') === cleanId,
+  );
   if (!listing) return null;
   return { ...listing, images: gallery(listing.image) };
 }

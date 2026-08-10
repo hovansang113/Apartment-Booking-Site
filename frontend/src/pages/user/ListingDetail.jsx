@@ -1,14 +1,30 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Seo from '../../components/common/Seo';
 import Gallery from '../../components/listing/Gallery';
 import AmenityList from '../../components/listing/AmenityList';
+import AvailabilityCalendar from '../../components/listing/AvailabilityCalendar';
 import BookingWidget from '../../components/listing/BookingWidget';
 import { HeartIcon, StarIcon } from '../../components/common/icons';
 import { getListingById } from '../../data/mockListings';
 
 export default function ListingDetail() {
   const { id } = useParams();
+  const [checkIn, setCheckIn] = useState('');
+  const [checkOut, setCheckOut] = useState('');
   const listing = getListingById(id);
+
+  function handleSelectDate(dateStr) {
+    if (!checkIn || (checkIn && checkOut)) {
+      setCheckIn(dateStr);
+      setCheckOut('');
+    } else if (dateStr <= checkIn) {
+      setCheckIn(dateStr);
+      setCheckOut('');
+    } else {
+      setCheckOut(dateStr);
+    }
+  }
 
   if (!listing) {
     return (
@@ -98,11 +114,24 @@ export default function ListingDetail() {
             </section>
 
             <AmenityList amenities={listing.amenities} />
+
+            <AvailabilityCalendar
+              bookedRanges={listing.bookedRanges}
+              checkIn={checkIn}
+              checkOut={checkOut}
+              onSelectDate={handleSelectDate}
+            />
           </div>
 
           <div>
             <div className="sticky top-24">
-              <BookingWidget listing={listing} />
+              <BookingWidget
+                listing={listing}
+                checkIn={checkIn}
+                checkOut={checkOut}
+                onChangeCheckIn={setCheckIn}
+                onChangeCheckOut={setCheckOut}
+              />
             </div>
           </div>
         </div>
