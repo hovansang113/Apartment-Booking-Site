@@ -1,6 +1,6 @@
 # TODO — Booking Platform
 
-Cập nhật lần cuối: 2026-08-06. Tick `[x]` khi xong, đừng xoá dòng đã làm — để lịch sử.
+Cập nhật lần cuối: 2026-08-10. Tick `[x]` khi xong, đừng xoá dòng đã làm — để lịch sử.
 
 ## Hạ tầng / setup
 
@@ -41,8 +41,9 @@ Cập nhật lần cuối: 2026-08-06. Tick `[x]` khi xong, đừng xoá dòng �
   → stub: `routes/booking.routes.js` (route `reject`)
 - [ ] **REQ_11** — Guest tự huỷ booking của mình
   → stub: `routes/booking.routes.js` (route `cancel`)
-- [ ] **REQ_12** — Host tự block lịch thủ công (không qua booking)
-  → stub: `routes/calendar.routes.js`
+- [x] **REQ_12** — Host tự block lịch thủ công + xem lịch tháng + **đồng bộ 2 chiều iCal** (Airbnb/VRBO, mở rộng ngoài REQ gốc theo yêu cầu Jason)
+  → `services/calendar.service.js`, `controllers/calendar.controller.js`, `routes/calendar.routes.js`, `validators/calendar.validator.js`. Dùng `node-ical` để parse `.ics`. Đã test end-to-end (API script + Playwright qua UI thật) bằng file `.ics` thật của Airbnb: `GET /:listingId` (lịch tháng), `POST /:listingId/block`, `POST /:listingId/unblock`, `PUT /:listingId/price`, `GET/POST /:listingId/sync`, `POST /:listingId/sync/:syncId/refresh`, `DELETE /:listingId/sync/:syncId`. **Lưu ý xử lý ngày**: `node-ical` trả `Date` cho field `VALUE=DATE` theo giờ local (không phải UTC) — server chạy `Asia/Ho_Chi_Minh`, nếu convert bằng `toISOString()` sẽ bị lệch lùi 1 ngày; phải đọc lại bằng getter local (`getFullYear/getMonth/getDate`), xem comment trong `calendar.service.js`. **Xung đột nguồn**: 1 ngày chỉ 1 dòng `listing_calendar` (`unique(listingId,date)`) — sync bỏ qua ngày nào đã có block tay/booking thật, ưu tiên dữ liệu tại chỗ. Thêm 2 field vào schema (`ListingCalendarSync.label`, `ListingCalendar.calendarSyncId`) + migration `add_calendar_sync_label_and_link`. Thêm route phụ trợ `GET /api/listings/mine` (host xem bài đăng của mình, cần để chọn listing thật cho trang lịch — trước đó chưa có route GET nào cho listings)
+  → **Không có tên khách khi sync từ Airbnb thật** (chỉ có `SUMMARY: Reserved` + link đặt phòng + 4 số điện thoại cuối, không có tên) — ngày sync hiển thị nhãn chung "Đã đặt qua {label}" thay vì tên khách, phân biệt màu (indigo) với booking thật (teal/brand, cần REQ_07 mới có dữ liệu thật)
 
 ## Frontend
 
@@ -53,7 +54,11 @@ Cập nhật lần cuối: 2026-08-06. Tick `[x]` khi xong, đừng xoá dòng �
 - [x] **Trang quản lý Hôm nay của Host** (`pages/host/HostTodayPage.jsx`, route `/host/today` hoặc `/host`) — Giao diện chính chủ nhà khớp theo mẫu (Header dạng tab `Hôm nay`/`Lịch`/`Bài đăng` — loại bỏ mục `Tin nhắn`, thẻ thông báo Thuế, bộ chọn tab `Hôm nay`/`Sắp tới`, hình minh hoạ cuốn sổ + Trạng thái chưa có lượt đặt + nút hành động `Hoàn tất bài đăng của bạn`).
 - [x] **Trang Tạo bài đăng mới (Wizard 6 bước chuẩn Airbnb)** (`pages/host/CreateListingPage.jsx`, route `/host/listings/new`) — Khớp theo ảnh mẫu `create.png` (Top header tối giản với nút "Bạn có thắc mắc?", "Lưu và thoát", Bước 1 chọn loại chỗ ở & số lượng phòng/giường/khách, Bước 2 nhập địa chỉ, Bước 3 chọn tiện nghi chính & nổi bật khớp giao diện `create.png`, Bước 4 upload ảnh, Bước 5 nhập tiêu đề/mô tả, Bước 6 giá phòng & tóm tắt; Thanh progress bar chân trang cố định với nút "Quay lại" / "Tiếp theo").
 - [x] **Trang Quản lý Bài đăng & Modal tạo mới có Nhân hóa** (`pages/host/HostListingsPage.jsx`, route `/host/listings`) — Khớp theo ảnh `postPage.png` & `Screenshot 2026-08-10 145303.png` (Chuyển chế độ xem Lưới/Danh sách, nút Dấu cộng `+` bật Modal chào mừng nhân hóa `"Chào mừng [Tên] quay trở lại 👋"`, nút "Hoàn thiện bài đăng dở dang", nút "Tạo bài đăng mới" & "Tạo từ bài đăng hiện có" với hiệu ứng viền mượt mà).
-- [ ] `AuthContext.jsx`, `ProtectedRoute.jsx`, `services/api.js`, `services/authService.js`, `services/listingService.js`, `services/bookingService.js` — vẫn là stub, chưa nối với API backend đã code
+- [x] **Trang Lịch cho thuê của Host** (`pages/host/HostCalendarPage.jsx`, route `/host/calendar`) — Theo yêu cầu của Jason: chọn bài đăng (danh sách thật từ `GET /listings/mine`), lưới lịch tháng hiển thị khách đã đặt / đồng bộ ngoài / giá theo ngày (ưu tiên override), click 1 ngày để mở modal toggle Còn trống/Đã chặn + sửa giá riêng ngày đó. **Đã nối API thật** (`services/calendarService.js`, react-query) — không còn mock. Phần "Kết nối lịch ngoài" hoạt động thật: dán link `.ics`, làm mới, ngắt kết nối
+
+- [x] **Fix bug**: `RegisterPage.jsx` ("Đăng ký tài khoản Chủ nhà") không gửi `role: 'host'` lên backend → tài khoản luôn bị tạo với role mặc định `user`, phát hiện lúc test REQ_12 qua UI thật (route `/listings/mine` yêu cầu role host nên lộ ra ngay). Đã thêm `role: 'host'` vào payload gọi `registerApi`
+
+- [ ] `AuthContext.jsx`, `ProtectedRoute.jsx`, `services/api.js`, `services/listingService.js`, `services/bookingService.js` — phần lớn vẫn là stub/mock (`AuthContext` mặc định giả lập host đã đăng nhập khi chưa có token thật), `authService.js` đã dùng thật (login/register/guestLogin), `calendarService.js` đã dùng thật (REQ_12)
 
 - [ ] Domain thật — `SITE_URL` trong `Seo.jsx` và `index.html`/`robots.txt`/`sitemap.xml` đang để `https://example.com`, cần đổi khi có domain deploy thật
 

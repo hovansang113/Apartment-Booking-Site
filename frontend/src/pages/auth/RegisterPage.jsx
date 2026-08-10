@@ -56,6 +56,7 @@ export default function RegisterPage() {
         email: email.trim(),
         phone: phone.trim() || undefined,
         password,
+        role: 'host',
       });
 
       login(res.user, res.token);

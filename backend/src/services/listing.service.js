@@ -35,6 +35,17 @@ async function assertOwnedByHost(listingId, hostId) {
   return listing;
 }
 
+// REQ_02 (prereq cho REQ_12): host xem danh sach bai dang cua chinh minh -
+// bao gom moi status (pending/approved/suspended), khac voi REQ_05 (danh sach
+// cong khai chi hien approved).
+async function getMyListings(hostId) {
+  return prisma.listing.findMany({
+    where: { hostId },
+    include: { images: true },
+    orderBy: { createdAt: 'desc' },
+  });
+}
+
 // REQ_02: host creates a listing
 async function createListing({
   hostId,
@@ -101,4 +112,4 @@ async function deleteListing({ listingId, hostId }) {
   await prisma.listing.delete({ where: { id: listingId } });
 }
 
-module.exports = { createListing, updateListing, deleteListing };
+module.exports = { getMyListings, createListing, updateListing, deleteListing };

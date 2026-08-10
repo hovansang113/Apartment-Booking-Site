@@ -10,6 +10,8 @@ const { validate } = require('../validators/validate.util');
 // router.get('/', ...);            // REQ_05/06
 // router.get('/:id', ...);         // REQ_06
 
+router.get('/mine', authenticate, authorize(UserRole.host), listingController.mine); // prereq REQ_12
+
 router.post(
   '/',
   authenticate,

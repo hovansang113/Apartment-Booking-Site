@@ -1,6 +1,12 @@
 const listingService = require('../services/listing.service');
 const { created, ok } = require('../utils/response.util');
 
+// Prereq cho REQ_12 (host calendar) - host xem danh sach bai dang cua minh
+async function mine(req, res) {
+  const listings = await listingService.getMyListings(req.user.id);
+  return ok(res, listings);
+}
+
 // REQ_02 - host creates a listing
 async function create(req, res) {
   const {
@@ -77,4 +83,4 @@ async function remove(req, res) {
   return ok(res, null, 'Listing deleted successfully');
 }
 
-module.exports = { create, update, remove };
+module.exports = { mine, create, update, remove };
