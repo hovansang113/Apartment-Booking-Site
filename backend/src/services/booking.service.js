@@ -1,10 +1,38 @@
+const crypto = require('crypto');
 const prisma = require('../config/prisma');
 const AppError = require('../utils/appError');
+const { createNotification } = require('./notification.service');
 
-// Tính số đêm giữa 2 ngày
 function calcNights(checkIn, checkOut) {
   const ms = new Date(checkOut) - new Date(checkIn);
   return Math.round(ms / (1000 * 60 * 60 * 24));
+}
+
+// Tính tổng giá có tính price override từng ngày
+async function calcTotalPrice(listingId, defaultPrice, checkIn, checkOut) {
+  const start = new Date(checkIn);
+  const end = new Date(checkOut);
+
+  // Lấy tất cả override trong khoảng [checkIn, checkOut)
+  const overrides = await prisma.listingPriceOverride.findMany({
+    where: {
+      listingId,
+      date: { gte: start, lt: end },
+    },
+  });
+
+  const overrideMap = new Map(
+    overrides.map((o) => [o.date.toISOString().slice(0, 10), Number(o.price)])
+  );
+
+  let total = 0;
+  const current = new Date(start);
+  while (current < end) {
+    const key = current.toISOString().slice(0, 10);
+    total += overrideMap.has(key) ? overrideMap.get(key) : Number(defaultPrice);
+    current.setDate(current.getDate() + 1);
+  }
+  return total;
 }
 
 // REQ_07: tạo booking, kiểm tra conflict ngày trong transaction
@@ -13,63 +41,80 @@ async function createBooking({ guestId, listingId, checkIn, checkOut, contactNam
   if (!listing) throw new AppError(404, 'Listing not found');
   if (listing.status !== 'approved') throw new AppError(400, 'Listing is not available for booking');
 
+  // Bug #5: host/admin không được self-book
+  if (listing.hostId === guestId) throw new AppError(400, 'Host cannot book their own listing');
+
   const nights = calcNights(checkIn, checkOut);
   if (nights < 1) throw new AppError(400, 'Check-out must be after check-in');
 
-  const totalPrice = Number(listing.defaultPrice) * nights;
+  // Bug #4: tính giá theo override từng ngày
+  const totalPrice = await calcTotalPrice(listingId, listing.defaultPrice, checkIn, checkOut);
 
-  // REQ_09: kiểm tra conflict trong transaction
-  return prisma.$transaction(async (tx) => {
-    const conflict = await tx.listingCalendar.findFirst({
-      where: {
-        listingId,
-        date: { gte: new Date(checkIn), lt: new Date(checkOut) },
-        status: 'booked',
-      },
-    });
-    if (conflict) throw new AppError(409, 'Listing is not available for the selected dates');
+  // Bug #1: dùng Serializable để tránh race condition double-booking
+  const booking = await prisma.$transaction(
+    async (tx) => {
+      const conflict = await tx.listingCalendar.findFirst({
+        where: {
+          listingId,
+          date: { gte: new Date(checkIn), lt: new Date(checkOut) },
+          // Bug #2: kiểm tra cả blocked lẫn booked
+          status: { in: ['booked', 'blocked'] },
+        },
+      });
+      if (conflict) throw new AppError(409, 'Listing is not available for the selected dates');
 
-    const booking = await tx.booking.create({
-      data: {
-        listingId,
-        guestId,
-        checkIn: new Date(checkIn),
-        checkOut: new Date(checkOut),
-        totalPrice,
-        contactName,
-        contactEmail,
-        contactPhone,
-        status: 'approved',
-        approvedAt: new Date(),
-      },
-    });
+      const booking = await tx.booking.create({
+        data: {
+          listingId,
+          guestId,
+          checkIn: new Date(checkIn),
+          checkOut: new Date(checkOut),
+          totalPrice,
+          contactName,
+          contactEmail,
+          contactPhone,
+          status: 'approved',
+          approvedAt: new Date(),
+        },
+      });
 
-    // Đánh dấu calendar
-    const dates = [];
-    const current = new Date(checkIn);
-    const end = new Date(checkOut);
-    while (current < end) {
-      dates.push(new Date(current));
-      current.setDate(current.getDate() + 1);
-    }
+      const dates = [];
+      const current = new Date(checkIn);
+      const end = new Date(checkOut);
+      while (current < end) {
+        dates.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+      }
 
-    await tx.listingCalendar.createMany({
-      data: dates.map((date) => ({
-        id: require('crypto').randomUUID(),
-        listingId,
-        date,
-        status: 'booked',
-        source: 'booking',
-        bookingId: booking.id,
-      })),
-      skipDuplicates: true,
-    });
+      // Bug #2: không dùng skipDuplicates — nếu có conflict thật thì phải throw
+      await tx.listingCalendar.createMany({
+        data: dates.map((date) => ({
+          id: crypto.randomUUID(), // Bug #6: require crypto một lần ở đầu file
+          listingId,
+          date,
+          status: 'booked',
+          source: 'booking',
+          bookingId: booking.id,
+        })),
+      });
 
-    return booking;
-  });
+      return booking;
+    },
+    { isolationLevel: 'Serializable' }
+  );
+
+  // Gửi notification cho host sau khi transaction thành công
+  // Chạy ngoài transaction để lỗi notification không rollback booking
+  await createNotification({
+    userId: listing.hostId,
+    title: 'New booking received',
+    body: `${contactName} booked "${listing.title}" from ${checkIn} to ${checkOut}. Total: ${totalPrice.toLocaleString()} VND.`,
+  }).catch(() => {}); // notification thất bại không ảnh hưởng booking
+
+  return booking;
 }
 
-// REQ_07: guest/user xem booking của mình
+// REQ_07: guest xem booking của mình
 async function getMyBookings(guestId) {
   return prisma.booking.findMany({
     where: { guestId },
@@ -87,7 +132,11 @@ async function cancelBooking({ bookingId, guestId }) {
   const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
   if (!booking) throw new AppError(404, 'Booking not found');
   if (booking.guestId !== guestId) throw new AppError(403, 'Not your booking');
-  if (booking.status === 'canceled') throw new AppError(400, 'Booking already canceled');
+
+  // Bug #3: chỉ cho hủy khi đang ở trạng thái có thể hủy
+  if (!['approved', 'pending'].includes(booking.status)) {
+    throw new AppError(400, 'Booking cannot be canceled in its current status');
+  }
 
   return prisma.$transaction(async (tx) => {
     await tx.listingCalendar.deleteMany({ where: { bookingId } });
@@ -130,4 +179,49 @@ async function getListingBookings(listingId, hostId) {
   });
 }
 
-module.exports = { createBooking, getMyBookings, cancelBooking, rejectBooking, getListingBookings };
+// Revenue & stats dashboard cho host
+async function getHostStats(hostId) {
+  const listings = await prisma.listing.findMany({
+    where: { hostId },
+    select: { id: true },
+  });
+  const listingIds = listings.map((l) => l.id);
+
+  if (listingIds.length === 0) {
+    return { totalRevenue: 0, totalBookings: 0, byStatus: {}, monthlyRevenue: [] };
+  }
+
+  const [allBookings, revenueResult] = await Promise.all([
+    prisma.booking.groupBy({
+      by: ['status'],
+      where: { listingId: { in: listingIds } },
+      _count: { id: true },
+    }),
+    prisma.booking.findMany({
+      where: { listingId: { in: listingIds }, status: 'approved' },
+      select: { totalPrice: true, createdAt: true },
+    }),
+  ]);
+
+  const byStatus = Object.fromEntries(
+    allBookings.map((g) => [g.status, g._count.id])
+  );
+
+  const totalRevenue = revenueResult.reduce((sum, b) => sum + Number(b.totalPrice), 0);
+  const totalBookings = allBookings.reduce((sum, g) => sum + g._count.id, 0);
+
+  // Gom doanh thu theo tháng (12 tháng gần nhất)
+  const monthlyMap = new Map();
+  revenueResult.forEach(({ totalPrice, createdAt }) => {
+    const key = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}`;
+    monthlyMap.set(key, (monthlyMap.get(key) || 0) + Number(totalPrice));
+  });
+  const monthlyRevenue = Array.from(monthlyMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-12)
+    .map(([month, revenue]) => ({ month, revenue }));
+
+  return { totalRevenue, totalBookings, byStatus, monthlyRevenue };
+}
+
+module.exports = { createBooking, getMyBookings, cancelBooking, rejectBooking, getListingBookings, getHostStats };

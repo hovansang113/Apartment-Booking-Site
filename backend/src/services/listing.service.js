@@ -52,11 +52,7 @@ async function createListing({
   amenities,
   files,
 }) {
-  console.log('=== createListing ===');
-  console.log('files:', files?.length, 'amenities:', amenities, 'category:', category);
-  console.log('CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
   const imageData = await uploadImages(files);
-  console.log('imageData:', imageData);
 
   return prisma.listing.create({
     data: {
@@ -79,17 +75,40 @@ async function createListing({
   });
 }
 
-// REQ_02: host updates its own listing
-async function updateListing({ listingId, hostId, amenities, ...fields }) {
+// REQ_02: host updates its own listing (kèm upload ảnh mới + xóa ảnh cũ)
+async function updateListing({ listingId, hostId, amenities, deleteImageIds, files, ...fields }) {
   await assertOwnedByHost(listingId, hostId);
+
+  // Upload ảnh mới nếu có
+  const newImageData = files && files.length > 0 ? await uploadImages(files) : [];
+
+  // Lấy sortOrder hiện tại cao nhất để append ảnh mới đúng thứ tự
+  if (newImageData.length > 0) {
+    const lastImage = await prisma.listingImage.findFirst({
+      where: { listingId },
+      orderBy: { sortOrder: 'desc' },
+    });
+    const baseOrder = lastImage ? lastImage.sortOrder + 1 : 0;
+    newImageData.forEach((img, i) => { img.sortOrder = baseOrder + i; });
+  }
 
   return prisma.listing.update({
     where: { id: listingId },
     data: {
       ...fields,
+      status: 'pending',
+      suspendReason: null,
       ...(amenities ? { amenities: { deleteMany: {}, create: toAmenityData(amenities) } } : {}),
+      images: {
+        ...(deleteImageIds && deleteImageIds.length > 0
+          ? { deleteMany: { id: { in: deleteImageIds } } }
+          : {}),
+        ...(newImageData.length > 0
+          ? { create: newImageData.map(({ imageUrl, sortOrder }) => ({ imageUrl, sortOrder })) }
+          : {}),
+      },
     },
-    include: { images: true, amenities: true },
+    include: { images: { orderBy: { sortOrder: 'asc' } }, amenities: true },
   });
 }
 
@@ -97,9 +116,12 @@ async function updateListing({ listingId, hostId, amenities, ...fields }) {
 async function deleteListing({ listingId, hostId }) {
   await assertOwnedByHost(listingId, hostId);
 
-  const bookingCount = await prisma.booking.count({ where: { listingId } });
-  if (bookingCount > 0) {
-    throw new AppError(409, 'Cannot delete a listing that already has bookings');
+  // Bug #3: chỉ block xóa nếu có active booking
+  const activeBookingCount = await prisma.booking.count({
+    where: { listingId, status: { in: ['approved', 'pending'] } },
+  });
+  if (activeBookingCount > 0) {
+    throw new AppError(409, 'Cannot delete a listing that has active bookings');
   }
 
   await prisma.listing.delete({ where: { id: listingId } });
@@ -145,6 +167,8 @@ async function getListing(listingId) {
     },
   });
   if (!listing) throw new AppError(404, 'Listing not found');
+  // Bug #1: không trả về listing chưa approved hoặc đã suspended cho public
+  if (listing.status !== 'approved') throw new AppError(404, 'Listing not found');
   return listing;
 }
 

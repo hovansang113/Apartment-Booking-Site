@@ -39,34 +39,18 @@ async function create(req, res) {
 // REQ_02 - host updates its own listing
 async function update(req, res) {
   const {
-    title,
-    description,
-    category,
-    address,
-    latitude,
-    longitude,
-    defaultPrice,
-    guestCapacity,
-    bedrooms,
-    beds,
-    bathrooms,
-    amenities,
+    title, description, category, address, latitude, longitude,
+    defaultPrice, guestCapacity, bedrooms, beds, bathrooms,
+    amenities, deleteImageIds,
   } = req.body;
   const listing = await listingService.updateListing({
     listingId: req.params.id,
     hostId: req.user.id,
-    title,
-    description,
-    category,
-    address,
-    latitude,
-    longitude,
-    defaultPrice,
-    guestCapacity,
-    bedrooms,
-    beds,
-    bathrooms,
+    title, description, category, address, latitude, longitude,
+    defaultPrice, guestCapacity, bedrooms, beds, bathrooms,
     amenities,
+    deleteImageIds: deleteImageIds ? (Array.isArray(deleteImageIds) ? deleteImageIds : [deleteImageIds]) : [],
+    files: req.files || [],
   });
   return ok(res, listing, 'Listing updated successfully');
 }

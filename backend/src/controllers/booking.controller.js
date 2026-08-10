@@ -1,6 +1,11 @@
 const bookingService = require('../services/booking.service');
 const { ok, created } = require('../utils/response.util');
 
+async function getHostStats(req, res) {
+  const stats = await bookingService.getHostStats(req.user.id);
+  return ok(res, stats);
+}
+
 async function create(req, res) {
   const { listingId, checkIn, checkOut, contactName, contactEmail, contactPhone } = req.body;
   const booking = await bookingService.createBooking({
@@ -31,4 +36,4 @@ async function getListingBookings(req, res) {
   return ok(res, bookings);
 }
 
-module.exports = { create, getMine, cancel, reject, getListingBookings };
+module.exports = { create, getMine, cancel, reject, getListingBookings, getHostStats };

@@ -9,5 +9,6 @@ router.get('/mine', authenticate, bookingController.getMine); // REQ_07/11
 router.patch('/:id/cancel', authenticate, bookingController.cancel); // REQ_11
 router.patch('/:id/reject', authenticate, authorize(UserRole.host), bookingController.reject); // REQ_08
 router.get('/listing/:listingId', authenticate, authorize(UserRole.host), bookingController.getListingBookings); // REQ_08
+router.get('/host/stats', authenticate, authorize(UserRole.host), bookingController.getHostStats);
 
 module.exports = router;

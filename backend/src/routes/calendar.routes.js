@@ -1,25 +1,14 @@
 const router = require('express').Router();
-const prisma = require('../config/prisma');
-const { ok } = require('../utils/response.util');
+const { UserRole } = require('@prisma/client');
+const calendarController = require('../controllers/calendar.controller');
+const { authenticate } = require('../middlewares/auth.middleware');
+const { authorize } = require('../middlewares/role.middleware');
 
-// REQ_06: lấy ngày đã booked của listing (public)
-router.get('/:listingId', async (req, res) => {
-  const { listingId } = req.params;
-  const { year, month } = req.query;
+// Public: guest xem ngày bận của listing
+router.get('/:listingId', calendarController.getCalendar);
 
-  const where = { listingId, status: 'booked' };
-  if (year && month) {
-    const start = new Date(Number(year), Number(month) - 1, 1);
-    const end = new Date(Number(year), Number(month), 1);
-    where.date = { gte: start, lt: end };
-  }
-
-  const days = await prisma.listingCalendar.findMany({
-    where,
-    select: { date: true, status: true },
-  });
-
-  return ok(res, days);
-});
+// Host: block/unblock ngày
+router.post('/:listingId/block', authenticate, authorize(UserRole.host), calendarController.blockDates);
+router.delete('/:listingId/block', authenticate, authorize(UserRole.host), calendarController.unblockDates);
 
 module.exports = router;

@@ -29,6 +29,11 @@ async function updateListingStatus({ listingId, status, suspendReason }) {
   const listing = await prisma.listing.findUnique({ where: { id: listingId } });
   if (!listing) throw new AppError(404, 'Listing not found');
 
+  // Bug #6: validate status transition hợp lệ
+  if (listing.status === status) {
+    throw new AppError(400, `Listing is already ${status}`);
+  }
+
   if (status === ListingStatus.suspended && !suspendReason) {
     throw new AppError(400, 'suspendReason is required when suspending a listing');
   }

@@ -25,6 +25,7 @@ router.put(
   '/:id',
   authenticate,
   authorize(UserRole.host),
+  upload.array('images', 10),
   updateListingRules,
   validate,
   listingController.update,

@@ -68,10 +68,8 @@ async function guestLogin({ email, fullName, phone }) {
     if (user.status === UserStatus.locked) {
       throw new AppError(403, 'This account has been locked');
     }
-    user = await prisma.user.update({
-      where: { id: user.id },
-      data: { fullName, phone },
-    });
+    // Bug #4: không overwrite thông tin guest — chỉ issue token, tránh account hijack
+    // Ai biết email guest cũng có thể gọi endpoint này và đổi tên/SĐT
   } else {
     const randomPassword = crypto.randomBytes(16).toString('hex');
     const passwordHash = await bcrypt.hash(randomPassword, SALT_ROUNDS);

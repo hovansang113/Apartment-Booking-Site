@@ -13,6 +13,8 @@ const bookingRoutes = require('./routes/booking.routes');
 const calendarRoutes = require('./routes/calendar.routes');
 const adminRoutes = require('./routes/admin.routes');
 const paymentRoutes = require('./routes/payment.routes');
+const pricingRoutes = require('./routes/pricing.routes');
+const notificationRoutes = require('./routes/notification.routes');
 
 const app = express();
 
@@ -29,6 +31,8 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/pricing', pricingRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
