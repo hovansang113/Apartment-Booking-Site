@@ -222,7 +222,7 @@ export default function HostCalendarPage() {
       </Helmet>
 
       <main className="min-h-[85vh] bg-white px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-7xl">
           <div className="border-b border-neutral-200 pb-6 mb-6">
             <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">Lịch cho thuê</h1>
             <p className="mt-1 text-sm text-neutral-500">
