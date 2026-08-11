@@ -5,6 +5,11 @@ export async function getPublicListings({ category, page } = {}) {
   return data.data;
 }
 
+export async function getListingById(id) {
+  const { data } = await api.get(`/listings/${id}`);
+  return data.data;
+}
+
 export async function getHostListings() {
   const { data } = await api.get('/listings/mine');
   return data.data;
