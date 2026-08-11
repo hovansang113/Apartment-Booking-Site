@@ -33,4 +33,10 @@ async function updateUserStatus(req, res) {
   return ok(res, user, `User ${status} successfully`);
 }
 
-module.exports = { getListings, updateListingStatus, getUsers, updateUserStatus };
+// GET /api/admin/stats
+async function getStats(req, res) {
+  const stats = await adminService.getStats();
+  return ok(res, stats);
+}
+
+module.exports = { getListings, updateListingStatus, getUsers, updateUserStatus, getStats };

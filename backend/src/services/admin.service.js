@@ -104,4 +104,118 @@ async function updateUserStatus({ userId, status }) {
   });
 }
 
-module.exports = { getListings, updateListingStatus, getUsers, updateUserStatus };
+// REQ stats: tổng quan cho admin dashboard
+async function getStats() {
+  const now = new Date();
+  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  const [
+    totalUsers,
+    totalHosts,
+    totalListings,
+    pendingListings,
+    approvedListings,
+    suspendedListings,
+    totalBookings,
+    canceledBookings,
+    revenueAll,
+    revenueThisMonth,
+    revenueLastMonth,
+    recentBookings,
+    pendingListingItems,
+  ] = await Promise.all([
+    prisma.user.count({ where: { isGuest: false, role: { not: 'admin' } } }),
+    prisma.user.count({ where: { role: 'host' } }),
+    prisma.listing.count(),
+    prisma.listing.count({ where: { status: 'pending' } }),
+    prisma.listing.count({ where: { status: 'approved' } }),
+    prisma.listing.count({ where: { status: 'suspended' } }),
+    prisma.booking.count({ where: { status: 'approved' } }),
+    prisma.booking.count({ where: { status: 'canceled' } }),
+    prisma.booking.aggregate({
+      where: { status: 'approved' },
+      _sum: { totalPrice: true },
+    }),
+    prisma.booking.aggregate({
+      where: { status: 'approved', createdAt: { gte: startOfThisMonth } },
+      _sum: { totalPrice: true },
+    }),
+    prisma.booking.aggregate({
+      where: {
+        status: 'approved',
+        createdAt: { gte: startOfLastMonth, lt: startOfThisMonth },
+      },
+      _sum: { totalPrice: true },
+    }),
+    prisma.booking.findMany({
+      where: { status: 'approved' },
+      orderBy: { createdAt: 'desc' },
+      take: 8,
+      include: {
+        listing: { select: { title: true } },
+        guest: { select: { fullName: true, email: true } },
+      },
+    }),
+    prisma.listing.findMany({
+      where: { status: 'pending' },
+      orderBy: { createdAt: 'asc' },
+      take: 5,
+      include: {
+        images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+        host: { select: { fullName: true, email: true } },
+      },
+    }),
+  ]);
+
+  const thisMonthRevenue = Number(revenueThisMonth._sum.totalPrice ?? 0);
+  const lastMonthRevenue = Number(revenueLastMonth._sum.totalPrice ?? 0);
+  const revenueGrowth = lastMonthRevenue === 0
+    ? null
+    : Math.round(((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100);
+
+  return {
+    users: {
+      total: totalUsers,
+      hosts: totalHosts,
+      guests: totalUsers - totalHosts,
+    },
+    listings: {
+      total: totalListings,
+      pending: pendingListings,
+      approved: approvedListings,
+      suspended: suspendedListings,
+    },
+    bookings: {
+      total: totalBookings,
+      canceled: canceledBookings,
+    },
+    revenue: {
+      total: Number(revenueAll._sum.totalPrice ?? 0),
+      thisMonth: thisMonthRevenue,
+      lastMonth: lastMonthRevenue,
+      growthPercent: revenueGrowth,
+    },
+    recentBookings: recentBookings.map((b) => ({
+      id: b.id,
+      guestName: b.contactName,
+      guestEmail: b.contactEmail,
+      listingTitle: b.listing.title,
+      checkIn: b.checkIn,
+      checkOut: b.checkOut,
+      totalPrice: Number(b.totalPrice),
+      createdAt: b.createdAt,
+    })),
+    pendingListings: pendingListingItems.map((l) => ({
+      id: l.id,
+      title: l.title,
+      address: l.address,
+      image: l.images[0]?.imageUrl ?? null,
+      hostName: l.host.fullName,
+      hostEmail: l.host.email,
+      createdAt: l.createdAt,
+    })),
+  };
+}
+
+module.exports = { getListings, updateListingStatus, getUsers, updateUserStatus, getStats };

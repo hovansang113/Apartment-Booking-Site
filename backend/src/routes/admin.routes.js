@@ -13,6 +13,8 @@ const { validate } = require('../validators/validate.util');
 
 router.use(authenticate, authorize(UserRole.admin));
 
+router.get('/stats', adminController.getStats);
+
 router.get('/listings', getListingsQueryRules, validate, adminController.getListings); // REQ_03
 router.patch('/listings/:id/status', updateListingStatusRules, validate, adminController.updateListingStatus); // REQ_03
 
