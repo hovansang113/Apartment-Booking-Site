@@ -61,9 +61,8 @@ export default function BookingWidget({ listing, checkIn, checkOut, onChangeChec
       });
       return data.data;
     },
-    onSuccess: () => {
-      toast.success('Đặt phòng thành công!');
-      navigate('/bookings');
+    onSuccess: (booking) => {
+      navigate(`/bookings/${booking.id}/payment`);
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Đặt phòng thất bại'),
   });

@@ -9,3 +9,18 @@ export async function updateListingStatus(id, status, suspendReason) {
   const { data } = await api.patch(`/admin/listings/${id}/status`, { status, suspendReason });
   return data.data;
 }
+
+export async function getAdminUsers(params = {}) {
+  const { data } = await api.get('/admin/users', { params });
+  return data.data;
+}
+
+export async function updateUserStatus(id, status) {
+  const { data } = await api.patch(`/admin/users/${id}/status`, { status });
+  return data.data;
+}
+
+export async function getAdminStats() {
+  const { data } = await api.get('/admin/stats');
+  return data.data;
+}

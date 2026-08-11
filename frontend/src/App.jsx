@@ -10,8 +10,13 @@ import HostListingsPage from './pages/host/HostListingsPage';
 import HostListingFormPage from './pages/host/HostListingFormPage';
 import HostBookingsPage from './pages/host/HostBookingsPage';
 import ProtectedRoute from './routes/ProtectedRoute';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminStatsPage from './pages/admin/AdminStatsPage';
 import AdminListingsPage from './pages/admin/AdminListingsPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
 import MyBookingsPage from './pages/user/MyBookingsPage';
+import PaymentPage from './pages/user/PaymentPage';
+import HostCalendarPage from './pages/host/HostCalendarPage';
 
 function MainLayout({ children }) {
   return (
@@ -38,11 +43,26 @@ export default function App() {
             <MainLayout><MyBookingsPage /></MainLayout>
           </ProtectedRoute>
         } />
+        <Route path="/bookings/:bookingId/payment" element={
+          <ProtectedRoute>
+            <MainLayout><PaymentPage /></MainLayout>
+          </ProtectedRoute>
+        } />
 
         {/* Admin */}
         <Route path="/admin" element={
           <ProtectedRoute roles={['admin']}>
-            <MainLayout><AdminListingsPage /></MainLayout>
+            <MainLayout><AdminLayout><AdminStatsPage /></AdminLayout></MainLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/listings" element={
+          <ProtectedRoute roles={['admin']}>
+            <MainLayout><AdminLayout><AdminListingsPage /></AdminLayout></MainLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/users" element={
+          <ProtectedRoute roles={['admin']}>
+            <MainLayout><AdminLayout><AdminUsersPage /></AdminLayout></MainLayout>
           </ProtectedRoute>
         } />
 
@@ -55,6 +75,11 @@ export default function App() {
         <Route path="/host/bookings" element={
           <ProtectedRoute roles={['host']}>
             <MainLayout><HostBookingsPage /></MainLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/host/calendar" element={
+          <ProtectedRoute roles={['host']}>
+            <MainLayout><HostCalendarPage /></MainLayout>
           </ProtectedRoute>
         } />
         <Route path="/host/listings/new" element={
