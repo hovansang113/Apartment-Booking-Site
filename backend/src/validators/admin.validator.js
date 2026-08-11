@@ -1,5 +1,5 @@
 const { body, query } = require('express-validator');
-const { ListingStatus } = require('@prisma/client');
+const { ListingStatus, UserStatus, UserRole } = require('@prisma/client');
 
 const updateListingStatusRules = [
   body('status')
@@ -18,4 +18,26 @@ const getListingsQueryRules = [
     .withMessage(`status must be one of: ${Object.values(ListingStatus).join(', ')}`),
 ];
 
-module.exports = { updateListingStatusRules, getListingsQueryRules };
+const updateUserStatusRules = [
+  body('status')
+    .isIn(Object.values(UserStatus))
+    .withMessage(`status must be one of: ${Object.values(UserStatus).join(', ')}`),
+];
+
+const getUsersQueryRules = [
+  query('role')
+    .optional()
+    .isIn([UserRole.host, UserRole.user])
+    .withMessage('role must be host or user'),
+  query('status')
+    .optional()
+    .isIn(Object.values(UserStatus))
+    .withMessage(`status must be one of: ${Object.values(UserStatus).join(', ')}`),
+];
+
+module.exports = {
+  updateListingStatusRules,
+  getListingsQueryRules,
+  updateUserStatusRules,
+  getUsersQueryRules,
+};

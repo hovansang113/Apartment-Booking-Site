@@ -19,4 +19,18 @@ async function updateListingStatus(req, res) {
   return ok(res, listing, `Listing ${status} successfully`);
 }
 
-module.exports = { getListings, updateListingStatus };
+// REQ_04: GET /api/admin/users
+async function getUsers(req, res) {
+  const { role, status, page, limit } = req.query;
+  const result = await adminService.getUsers({ role, status, page, limit });
+  return ok(res, result);
+}
+
+// REQ_04: PATCH /api/admin/users/:id/status
+async function updateUserStatus(req, res) {
+  const { status } = req.body;
+  const user = await adminService.updateUserStatus({ userId: req.params.id, status });
+  return ok(res, user, `User ${status} successfully`);
+}
+
+module.exports = { getListings, updateListingStatus, getUsers, updateUserStatus };

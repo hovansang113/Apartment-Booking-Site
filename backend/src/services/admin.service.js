@@ -51,4 +51,57 @@ async function updateListingStatus({ listingId, status, suspendReason }) {
   });
 }
 
-module.exports = { getListings, updateListingStatus };
+// REQ_04: lấy danh sách user (không bao gồm admin, không bao gồm guest)
+async function getUsers({ role, status, page = 1, limit = 20 }) {
+  const where = {
+    role: { not: 'admin' },
+    isGuest: false,
+    ...(role ? { role } : {}),
+    ...(status ? { status } : {}),
+  };
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phone: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        _count: { select: { listings: true, bookings: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: Number(limit),
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  return { users, total, page: Number(page), limit: Number(limit) };
+}
+
+// REQ_04: khoá hoặc mở khoá tài khoản user
+async function updateUserStatus({ userId, status }) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError(404, 'User not found');
+  if (user.role === 'admin') throw new AppError(403, 'Cannot change admin status');
+  if (user.status === status) throw new AppError(400, `User is already ${status}`);
+
+  return prisma.user.update({
+    where: { id: userId },
+    data: { status },
+    select: {
+      id: true,
+      email: true,
+      fullName: true,
+      role: true,
+      status: true,
+    },
+  });
+}
+
+module.exports = { getListings, updateListingStatus, getUsers, updateUserStatus };
