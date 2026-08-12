@@ -1,29 +1,40 @@
 import { NavLink } from 'react-router-dom';
 
 const TABS = [
-  { to: '/admin', label: 'Tổng quan', end: true },
-  { to: '/admin/listings', label: 'Listing' },
-  { to: '/admin/users', label: 'Người dùng' },
+  { to: '/admin',          label: 'Overview',  end: true },
+  { to: '/admin/listings', label: 'Listings'             },
+  { to: '/admin/users',    label: 'Users'                },
 ];
 
 export default function AdminLayout({ children }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="border-b border-gray-200 bg-white">
-        <div className="mx-auto max-w-5xl px-4">
-          <div className="flex items-center gap-6 py-4">
-            <h1 className="text-lg font-bold text-gray-900">Admin</h1>
-            <nav className="flex gap-1">
+    <div className="min-h-screen" style={{ backgroundColor: '#FAF6EF' }}>
+      <div style={{ backgroundColor: '#0d9488' }}>
+        <div className="mx-auto max-w-5xl px-8">
+          <div className="flex items-center gap-8 h-14">
+            {/* Wordmark — duy nhất 1 lần */}
+            <span
+              className="shrink-0 text-[15px] font-bold tracking-tight text-white"
+              style={{ letterSpacing: '-0.01em' }}
+            >
+              stayhub
+            </span>
+
+            {/* Divider */}
+            <div style={{ width: 1, height: 16, backgroundColor: 'rgba(255,255,255,0.25)' }} />
+
+            {/* Tabs */}
+            <nav className="flex h-full">
               {TABS.map((t) => (
                 <NavLink
                   key={t.to}
                   to={t.to}
                   end={t.end}
                   className={({ isActive }) =>
-                    `px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    `flex items-center h-full px-1 mr-6 text-[13px] font-medium border-b-2 transition-colors duration-150 ${
                       isActive
-                        ? 'bg-teal-50 text-teal-700'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                        ? 'border-white text-white'
+                        : 'border-transparent text-white/60 hover:text-white'
                     }`
                   }
                 >
@@ -34,7 +45,7 @@ export default function AdminLayout({ children }) {
           </div>
         </div>
       </div>
-      <div className="mx-auto max-w-5xl px-4 py-8">{children}</div>
+      <div className="mx-auto max-w-5xl px-8 py-10">{children}</div>
     </div>
   );
 }

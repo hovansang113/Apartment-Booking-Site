@@ -59,10 +59,10 @@ function BookingList({ listingId }) {
             <div key={booking.id} className="bg-gray-50 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-gray-900">{booking.guest?.fullName}</span>
+                  <span className="font-medium text-gray-900">{booking.contactName || booking.guest?.fullName}</span>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.text}</span>
                 </div>
-                <p className="text-sm text-gray-500 mt-0.5">{booking.guest?.email} · {booking.guest?.phone || 'Chưa có SĐT'}</p>
+                <p className="text-sm text-gray-500 mt-0.5">{booking.contactEmail || booking.guest?.email} · {booking.contactPhone || booking.guest?.phone || 'Chưa có SĐT'}</p>
                 <p className="text-sm text-gray-700 mt-1">
                   {new Date(booking.checkIn).toLocaleDateString('vi-VN')} →{' '}
                   {new Date(booking.checkOut).toLocaleDateString('vi-VN')}

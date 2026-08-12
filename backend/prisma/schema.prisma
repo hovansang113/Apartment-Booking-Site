@@ -165,6 +165,7 @@ model Booking {
   contactEmail    String        @map("contact_email")
   contactPhone    String?       @map("contact_phone")
   rejectedReason  String?       @map("rejected_reason") @db.Text
+  guestToken      String?       @unique @map("guest_token")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
   approvedAt      DateTime?     @map("approved_at")

@@ -15,12 +15,11 @@ async function confirmPayment(req, res) {
   if (booking.guestId !== req.user.id) throw new AppError(403, 'Not your booking');
   if (booking.status !== 'approved') throw new AppError(400, 'Booking is not in approved status');
 
-  // Idempotent — nếu đã có payment rồi thì trả về luôn
-  const existing = await prisma.payment.findUnique({ where: { bookingId } });
-  if (existing) return ok(res, { payment: existing, booking }, 'Payment already confirmed');
-
-  const payment = await prisma.payment.create({
-    data: { bookingId, amount: booking.totalPrice, status: 'simulated_success' },
+  // Idempotent + atomic — dùng upsert để tránh race condition double-create
+  const payment = await prisma.payment.upsert({
+    where: { bookingId },
+    update: {},
+    create: { bookingId, amount: booking.totalPrice, status: 'simulated_success' },
   });
 
   return ok(res, { payment, booking }, 'Payment confirmed');

@@ -4,7 +4,12 @@ const bookingController = require('../controllers/booking.controller');
 const { authenticate } = require('../middlewares/auth.middleware');
 const { authorize } = require('../middlewares/role.middleware');
 
-router.post('/', authenticate, bookingController.create); // REQ_07 - mọi user đã đăng nhập
+// Guest booking (no auth) — REQ_14
+router.post('/guest', bookingController.createGuest);
+router.get('/guest/:token', bookingController.getByGuestToken);
+router.delete('/guest/:token', bookingController.cancelByGuestToken);
+
+router.post('/', authenticate, bookingController.create); // REQ_07
 router.get('/mine', authenticate, bookingController.getMine); // REQ_07/11
 router.patch('/:id/cancel', authenticate, bookingController.cancel); // REQ_11
 router.patch('/:id/reject', authenticate, authorize(UserRole.host), bookingController.reject); // REQ_08

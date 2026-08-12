@@ -1,6 +1,22 @@
 const bookingService = require('../services/booking.service');
 const { ok, created } = require('../utils/response.util');
 
+async function createGuest(req, res) {
+  const { listingId, checkIn, checkOut, contactName, contactEmail, contactPhone } = req.body;
+  const result = await bookingService.createGuestBooking({ listingId, checkIn, checkOut, contactName, contactEmail, contactPhone });
+  return created(res, result, result.message);
+}
+
+async function getByGuestToken(req, res) {
+  const booking = await bookingService.getBookingByGuestToken(req.params.token);
+  return ok(res, booking);
+}
+
+async function cancelByGuestToken(req, res) {
+  const booking = await bookingService.cancelBookingByGuestToken(req.params.token);
+  return ok(res, booking, 'Đã huỷ đặt phòng');
+}
+
 async function getHostStats(req, res) {
   const stats = await bookingService.getHostStats(req.user.id);
   return ok(res, stats);
@@ -36,4 +52,4 @@ async function getListingBookings(req, res) {
   return ok(res, bookings);
 }
 
-module.exports = { create, getMine, cancel, reject, getListingBookings, getHostStats };
+module.exports = { create, createGuest, getMine, cancel, reject, getListingBookings, getHostStats, getByGuestToken, cancelByGuestToken };

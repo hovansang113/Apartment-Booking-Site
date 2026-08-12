@@ -17,16 +17,6 @@ async function blockDates({ listingId, hostId, startDate, endDate, note }) {
   const end = new Date(endDate);
   if (end <= start) throw new AppError(400, 'End date must be after start date');
 
-  // Kiểm tra có ngày nào đã booked trong khoảng không
-  const bookedConflict = await prisma.listingCalendar.findFirst({
-    where: {
-      listingId,
-      date: { gte: start, lt: end },
-      status: 'booked',
-    },
-  });
-  if (bookedConflict) throw new AppError(409, 'Some dates in this range are already booked');
-
   const dates = [];
   const current = new Date(start);
   while (current < end) {
@@ -34,19 +24,28 @@ async function blockDates({ listingId, hostId, startDate, endDate, note }) {
     current.setDate(current.getDate() + 1);
   }
 
-  await prisma.listingCalendar.createMany({
-    data: dates.map((date) => ({
-      id: crypto.randomUUID(),
-      listingId,
-      date,
-      status: 'blocked',
-      source: 'manual',
-      note: note || null,
-    })),
-    skipDuplicates: true,
+  // Atomic: kiểm tra conflict và insert trong cùng 1 transaction
+  const result = await prisma.$transaction(async (tx) => {
+    const bookedConflict = await tx.listingCalendar.findFirst({
+      where: { listingId, date: { gte: start, lt: end }, status: 'booked' },
+    });
+    if (bookedConflict) throw new AppError(409, 'Some dates in this range are already booked');
+
+    const { count } = await tx.listingCalendar.createMany({
+      data: dates.map((date) => ({
+        id: crypto.randomUUID(),
+        listingId,
+        date,
+        status: 'blocked',
+        source: 'manual',
+        note: note || null,
+      })),
+      skipDuplicates: true,
+    });
+    return count;
   });
 
-  return { blocked: dates.length };
+  return { blocked: result };
 }
 
 // REQ_12: host unblock một khoảng ngày

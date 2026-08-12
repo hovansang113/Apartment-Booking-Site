@@ -33,9 +33,10 @@ async function updateUserStatus(req, res) {
   return ok(res, user, `User ${status} successfully`);
 }
 
-// GET /api/admin/stats
+// GET /api/admin/stats?period=week|month|quarter|year
 async function getStats(req, res) {
-  const stats = await adminService.getStats();
+  const { period = 'month' } = req.query;
+  const stats = await adminService.getStats({ period });
   return ok(res, stats);
 }
 

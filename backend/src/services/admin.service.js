@@ -61,7 +61,7 @@ async function getUsers({ role, status, page = 1, limit = 20 }) {
   };
   const skip = (Number(page) - 1) * Number(limit);
 
-  const [users, total] = await Promise.all([
+  const [rawUsers, total] = await Promise.all([
     prisma.user.findMany({
       where,
       select: {
@@ -73,6 +73,7 @@ async function getUsers({ role, status, page = 1, limit = 20 }) {
         status: true,
         createdAt: true,
         _count: { select: { listings: true, bookings: true } },
+        listings: { select: { _count: { select: { bookings: true } } } },
       },
       orderBy: { createdAt: 'desc' },
       skip,
@@ -80,6 +81,14 @@ async function getUsers({ role, status, page = 1, limit = 20 }) {
     }),
     prisma.user.count({ where }),
   ]);
+
+  const users = rawUsers.map(({ listings, _count, ...u }) => ({
+    ...u,
+    _count: {
+      listings: _count.listings,
+      bookings: listings.reduce((sum, l) => sum + l._count.bookings, 0),
+    },
+  }));
 
   return { users, total, page: Number(page), limit: Number(limit) };
 }
@@ -104,11 +113,48 @@ async function updateUserStatus({ userId, status }) {
   });
 }
 
+// Tính khoảng thời gian theo period
+function getPeriodRange(period) {
+  const now = new Date();
+  let start, prevStart, prevEnd;
+
+  switch (period) {
+    case 'week': {
+      const day = now.getDay() === 0 ? 6 : now.getDay() - 1; // Mon=0
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
+      prevStart = new Date(start); prevStart.setDate(prevStart.getDate() - 7);
+      prevEnd = start;
+      break;
+    }
+    case 'quarter': {
+      const q = Math.floor(now.getMonth() / 3);
+      start = new Date(now.getFullYear(), q * 3, 1);
+      prevStart = new Date(now.getFullYear(), q * 3 - 3, 1);
+      prevEnd = start;
+      break;
+    }
+    case 'year': {
+      start = new Date(now.getFullYear(), 0, 1);
+      prevStart = new Date(now.getFullYear() - 1, 0, 1);
+      prevEnd = start;
+      break;
+    }
+    case 'month':
+    default: {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      prevEnd = start;
+    }
+  }
+  return { start, prevStart, prevEnd };
+}
+
 // REQ stats: tổng quan cho admin dashboard
-async function getStats() {
+async function getStats({ period = 'month' } = {}) {
   const now = new Date();
   const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const { start: periodStart, prevStart, prevEnd } = getPeriodRange(period);
 
   const [
     totalUsers,
@@ -119,9 +165,9 @@ async function getStats() {
     suspendedListings,
     totalBookings,
     canceledBookings,
-    revenueAll,
-    revenueThisMonth,
-    revenueLastMonth,
+    rejectedBookings,
+    revenuePeriod,
+    revenuePrevPeriod,
     recentBookings,
     pendingListingItems,
   ] = await Promise.all([
@@ -131,30 +177,25 @@ async function getStats() {
     prisma.listing.count({ where: { status: 'pending' } }),
     prisma.listing.count({ where: { status: 'approved' } }),
     prisma.listing.count({ where: { status: 'suspended' } }),
-    prisma.booking.count({ where: { status: 'approved' } }),
-    prisma.booking.count({ where: { status: 'canceled' } }),
+    prisma.booking.count({ where: { createdAt: { gte: periodStart } } }),
+    prisma.booking.count({ where: { status: 'canceled', createdAt: { gte: periodStart } } }),
+    prisma.booking.count({ where: { status: 'rejected', createdAt: { gte: periodStart } } }),
     prisma.booking.aggregate({
-      where: { status: 'approved' },
-      _sum: { totalPrice: true },
-    }),
-    prisma.booking.aggregate({
-      where: { status: 'approved', createdAt: { gte: startOfThisMonth } },
+      where: { status: 'approved', createdAt: { gte: periodStart } },
       _sum: { totalPrice: true },
     }),
     prisma.booking.aggregate({
       where: {
         status: 'approved',
-        createdAt: { gte: startOfLastMonth, lt: startOfThisMonth },
+        createdAt: { gte: prevStart, lt: prevEnd },
       },
       _sum: { totalPrice: true },
     }),
     prisma.booking.findMany({
-      where: { status: 'approved' },
       orderBy: { createdAt: 'desc' },
       take: 8,
       include: {
         listing: { select: { title: true } },
-        guest: { select: { fullName: true, email: true } },
       },
     }),
     prisma.listing.findMany({
@@ -168,13 +209,14 @@ async function getStats() {
     }),
   ]);
 
-  const thisMonthRevenue = Number(revenueThisMonth._sum.totalPrice ?? 0);
-  const lastMonthRevenue = Number(revenueLastMonth._sum.totalPrice ?? 0);
-  const revenueGrowth = lastMonthRevenue === 0
+  const thisPeriodRevenue = Number(revenuePeriod._sum.totalPrice ?? 0);
+  const prevPeriodRevenue = Number(revenuePrevPeriod._sum.totalPrice ?? 0);
+  const revenueGrowth = prevPeriodRevenue === 0
     ? null
-    : Math.round(((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100);
+    : Math.round(((thisPeriodRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 100);
 
   return {
+    period,
     users: {
       total: totalUsers,
       hosts: totalHosts,
@@ -189,21 +231,23 @@ async function getStats() {
     bookings: {
       total: totalBookings,
       canceled: canceledBookings,
+      rejected: rejectedBookings,
     },
     revenue: {
-      total: Number(revenueAll._sum.totalPrice ?? 0),
-      thisMonth: thisMonthRevenue,
-      lastMonth: lastMonthRevenue,
+      total: thisPeriodRevenue,
+      thisPeriod: thisPeriodRevenue,
+      prevPeriod: prevPeriodRevenue,
       growthPercent: revenueGrowth,
     },
     recentBookings: recentBookings.map((b) => ({
       id: b.id,
       guestName: b.contactName,
       guestEmail: b.contactEmail,
-      listingTitle: b.listing.title,
+      listingTitle: b.listing?.title ?? '—',
       checkIn: b.checkIn,
       checkOut: b.checkOut,
       totalPrice: Number(b.totalPrice),
+      status: b.status,
       createdAt: b.createdAt,
     })),
     pendingListings: pendingListingItems.map((l) => ({

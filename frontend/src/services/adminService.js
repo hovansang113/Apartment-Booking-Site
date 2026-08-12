@@ -20,7 +20,7 @@ export async function updateUserStatus(id, status) {
   return data.data;
 }
 
-export async function getAdminStats() {
-  const { data } = await api.get('/admin/stats');
+export async function getAdminStats(period = 'month') {
+  const { data } = await api.get('/admin/stats', { params: { period } });
   return data.data;
 }

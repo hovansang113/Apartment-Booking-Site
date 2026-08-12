@@ -4,9 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
-import { createBooking } from '../../services/bookingService';
-import { guestLogin } from '../../services/authService';
-import api from '../../services/api';
+import { createBooking, createGuestBooking } from '../../services/bookingService';
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency', currency: 'VND', maximumFractionDigits: 0,
@@ -35,34 +33,28 @@ export default function BookingWidget({ listing, checkIn, checkOut, onChangeChec
 
   const mutation = useMutation({
     mutationFn: async (values) => {
-      let token = user ? localStorage.getItem('token') : null;
-
-      // Chưa đăng nhập → tạo tài khoản guest rồi lấy token
-      if (!user) {
-        const { user: guestUser, token: guestToken } = await guestLogin({
-          email: values.contactEmail,
-          fullName: values.contactName,
-          phone: values.contactPhone,
-        });
-        authLogin(guestUser, guestToken);
-        token = guestToken;
-      }
-
-      // Gọi API đặt phòng với token (set thẳng vào header nếu cần)
-      const { data } = await api.post('/bookings', {
+      const payload = {
         listingId: listing.id,
-        checkIn: values.checkIn,
-        checkOut: values.checkOut,
+        checkIn,
+        checkOut,
         contactName: values.contactName,
         contactEmail: values.contactEmail,
         contactPhone: values.contactPhone,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      return data.data;
+      };
+
+      if (user) {
+        return createBooking(payload);
+      } else {
+        return createGuestBooking(payload);
+      }
     },
-    onSuccess: (booking) => {
-      navigate(`/bookings/${booking.id}/payment`);
+    onSuccess: (result, values) => {
+      if (user) {
+        navigate(`/bookings/${result.id}/payment`);
+      } else {
+        toast.success('Đặt phòng thành công! Email xác nhận đã được gửi.');
+        setShowForm(false);
+      }
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Đặt phòng thất bại'),
   });

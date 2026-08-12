@@ -14,11 +14,4 @@ async function login(req, res) {
   return ok(res, result, 'Logged in successfully');
 }
 
-// REQ_14 - guest quick login
-async function guestLogin(req, res) {
-  const { email, fullName, phone } = req.body;
-  const result = await authService.guestLogin({ email, fullName, phone });
-  return ok(res, result, 'Guest authenticated successfully');
-}
-
-module.exports = { register, login, guestLogin };
+module.exports = { register, login };

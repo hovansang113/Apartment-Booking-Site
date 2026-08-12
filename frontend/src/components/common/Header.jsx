@@ -37,16 +37,16 @@ export default function Header() {
           </div>
         </div>
 
-        <nav aria-label="Tài khoản" className="ml-auto flex shrink-0 items-center gap-2">
+        <nav aria-label="Account" className="ml-auto flex shrink-0 items-center gap-2">
           <Link
             to="/host"
             className="hidden rounded-full px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 lg:inline-block"
           >
-            Cho thuê chỗ ở của bạn
+            Become a host
           </Link>
           <button
             type="button"
-            aria-label="Ngôn ngữ"
+            aria-label="Language"
             className="hidden h-10 w-10 items-center justify-center rounded-full text-neutral-700 hover:bg-neutral-100 sm:flex"
           >
             <GlobeIcon className="h-5 w-5" />
@@ -72,41 +72,41 @@ export default function Header() {
                     </div>
                     {user.role === 'admin' && (
                       <Link to="/admin" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
-                        Quản trị
+                        Admin panel
                       </Link>
                     )}
                     {user.role === 'host' && (
                       <>
                         <Link to="/host/listings" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
-                          Quản lý phòng
+                          My listings
                         </Link>
                         <Link to="/host/bookings" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
-                          Quản lý booking
+                          Manage bookings
                         </Link>
                         <Link to="/host/calendar" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
-                          Lịch cho thuê
+                          Calendar
                         </Link>
                       </>
                     )}
                     {user.role === 'user' && (
                       <Link to="/bookings" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
-                        Đặt phòng của tôi
+                        My bookings
                       </Link>
                     )}
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2 hover:bg-neutral-50 text-neutral-700"
                     >
-                      Đăng xuất
+                      Log out
                     </button>
                   </>
                 ) : (
                   <>
                     <Link to="/auth/login" onClick={() => setOpen(false)} className="block px-4 py-2 font-semibold hover:bg-neutral-50 text-neutral-800">
-                      Đăng nhập
+                      Log in
                     </Link>
                     <Link to="/auth/register" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
-                      Đăng ký làm chủ nhà
+                      Sign up as host
                     </Link>
                   </>
                 )}

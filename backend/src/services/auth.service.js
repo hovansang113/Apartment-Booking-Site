@@ -57,35 +57,4 @@ async function login({ email, password }) {
   return issueSession(user);
 }
 
-// REQ_14: guest quick login - book without registering first
-async function guestLogin({ email, fullName, phone }) {
-  let user = await prisma.user.findUnique({ where: { email } });
-  if (user && !user.isGuest) {
-    throw new AppError(409, 'This email already has an account, please log in instead');
-  }
-
-  if (user) {
-    if (user.status === UserStatus.locked) {
-      throw new AppError(403, 'This account has been locked');
-    }
-    // Bug #4: không overwrite thông tin guest — chỉ issue token, tránh account hijack
-    // Ai biết email guest cũng có thể gọi endpoint này và đổi tên/SĐT
-  } else {
-    const randomPassword = crypto.randomBytes(16).toString('hex');
-    const passwordHash = await bcrypt.hash(randomPassword, SALT_ROUNDS);
-    user = await prisma.user.create({
-      data: {
-        email,
-        passwordHash,
-        fullName,
-        phone,
-        role: UserRole.user,
-        isGuest: true,
-      },
-    });
-  }
-
-  return issueSession(user);
-}
-
-module.exports = { register, login, guestLogin, sanitizeUser };
+module.exports = { register, login, sanitizeUser };

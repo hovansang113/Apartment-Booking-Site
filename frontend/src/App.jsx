@@ -16,6 +16,7 @@ import AdminListingsPage from './pages/admin/AdminListingsPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import MyBookingsPage from './pages/user/MyBookingsPage';
 import PaymentPage from './pages/user/PaymentPage';
+import GuestBookingPage from './pages/user/GuestBookingPage';
 import HostCalendarPage from './pages/host/HostCalendarPage';
 
 function MainLayout({ children }) {
@@ -37,6 +38,9 @@ export default function App() {
         <Route path="/auth/login" element={<LoginPage />} />
         <Route path="/auth/register" element={<RegisterPage />} />
 
+        {/* Guest booking (no auth) */}
+        <Route path="/bookings/guest/:token" element={<GuestBookingPage />} />
+
         {/* Bookings */}
         <Route path="/bookings" element={
           <ProtectedRoute>
@@ -49,20 +53,20 @@ export default function App() {
           </ProtectedRoute>
         } />
 
-        {/* Admin */}
+        {/* Admin — standalone layout, không dùng MainLayout */}
         <Route path="/admin" element={
           <ProtectedRoute roles={['admin']}>
-            <MainLayout><AdminLayout><AdminStatsPage /></AdminLayout></MainLayout>
+            <AdminLayout><AdminStatsPage /></AdminLayout>
           </ProtectedRoute>
         } />
         <Route path="/admin/listings" element={
           <ProtectedRoute roles={['admin']}>
-            <MainLayout><AdminLayout><AdminListingsPage /></AdminLayout></MainLayout>
+            <AdminLayout><AdminListingsPage /></AdminLayout>
           </ProtectedRoute>
         } />
         <Route path="/admin/users" element={
           <ProtectedRoute roles={['admin']}>
-            <MainLayout><AdminLayout><AdminUsersPage /></AdminLayout></MainLayout>
+            <AdminLayout><AdminUsersPage /></AdminLayout>
           </ProtectedRoute>
         } />
 

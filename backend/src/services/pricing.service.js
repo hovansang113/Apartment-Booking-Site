@@ -17,12 +17,15 @@ async function setPriceOverrides({ listingId, hostId, overrides }) {
     throw new AppError(400, 'overrides must be a non-empty array');
   }
 
-  // Upsert từng ngày — nếu đã có thì update giá, chưa có thì tạo mới
+  // Validate trước, upsert sau — tránh partial write khi có entry lỗi
+  for (const { date, price } of overrides) {
+    if (!date || price == null || Number(price) <= 0) {
+      throw new AppError(400, 'Invalid entry: date and positive price are required');
+    }
+  }
+
   const results = await Promise.all(
     overrides.map(({ date, price }) => {
-      if (!date || price == null || Number(price) <= 0) {
-        throw new AppError(400, `Invalid entry: date and positive price are required`);
-      }
       const d = new Date(date);
       return prisma.listingPriceOverride.upsert({
         where: { listingId_date: { listingId, date: d } },

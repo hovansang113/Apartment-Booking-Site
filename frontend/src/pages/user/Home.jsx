@@ -7,20 +7,25 @@ import { getPublicListings } from '../../services/listingService';
 
 function Hero() {
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-400 py-16 text-white">
-      {/* Decorative blobs */}
+    <div className="relative overflow-hidden bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-400 py-20 text-white">
       <div className="pointer-events-none absolute -top-20 -right-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-        <p className="text-sm font-medium uppercase tracking-widest text-teal-100 mb-3">
-          Chào mừng đến với Stayhub
-        </p>
-        <h1 className="text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
-          Tìm chỗ ở hoàn hảo<br className="hidden sm:block" /> cho chuyến đi của bạn
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 10, color: '#8aad9d', letterSpacing: '0.16em' }}>01</span>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ color: '#8aad9d' }}>
+            Welcome to Stayhub
+          </p>
+        </div>
+        <h1
+          className="leading-tight text-3xl sm:text-4xl lg:text-5xl"
+          style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 600, color: '#FAF6EF' }}
+        >
+          Find your perfect stay<br className="hidden sm:block" /> for every journey
         </h1>
-        <p className="mt-4 text-base text-teal-50 max-w-xl mx-auto">
-          Căn hộ, villa, homestay và hơn thế nữa — đặt phòng dễ dàng, giá tốt nhất.
+        <p className="mt-5 text-[15px] max-w-xl mx-auto leading-relaxed text-white">
+          Apartments, villas, homestays and more — book easily at the best price.
         </p>
       </div>
     </div>
@@ -53,8 +58,8 @@ export default function Home() {
   return (
     <>
       <Seo
-        title="Trang chủ"
-        description="Tìm và đặt căn hộ, nhà nguyên căn, villa, homestay khắp Việt Nam."
+        title="Home"
+        description="Find and book apartments, houses, villas, homestays across Vietnam."
         path="/"
       />
 
@@ -71,13 +76,13 @@ export default function Home() {
         ) : listings.length === 0 ? (
           <div className="py-24 text-center">
             <p className="text-4xl mb-3">🏠</p>
-            <p className="text-neutral-600 font-medium">Không có chỗ ở nào trong danh mục này</p>
-            <p className="text-sm text-neutral-400 mt-1">Thử chọn danh mục khác nhé</p>
+            <p className="text-neutral-600 font-medium">No listings found in this category</p>
+            <p className="text-sm text-neutral-400 mt-1">Try selecting a different category</p>
           </div>
         ) : (
-          <section aria-label="Kết quả tìm kiếm chỗ ở">
+          <section aria-label="Search results">
             <p className="text-sm text-neutral-500 mb-6">
-              {listings.length} chỗ ở được tìm thấy
+              {listings.length} place{listings.length !== 1 ? 's' : ''} found
             </p>
             <ul className="grid list-none grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {listings.map((listing) => (

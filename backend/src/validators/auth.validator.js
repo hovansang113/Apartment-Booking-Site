@@ -46,6 +46,4 @@ const loginRules = [
   body('password').notEmpty().withMessage('Password is required'),
 ];
 
-const guestLoginRules = [emailRule, fullNameRule, phoneRule];
-
-module.exports = { registerRules, loginRules, guestLoginRules };
+module.exports = { registerRules, loginRules };

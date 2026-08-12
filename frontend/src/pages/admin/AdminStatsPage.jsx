@@ -1,129 +1,264 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAdminStats } from '../../services/adminService';
 import { Link } from 'react-router-dom';
 
-const vnd = (n) => Number(n).toLocaleString('vi-VN') + 'đ';
-const fmt = (d) => new Date(d).toLocaleDateString('vi-VN');
+const PERIODS = [
+  { value: 'week',    label: 'Week'    },
+  { value: 'month',   label: 'Month'   },
+  { value: 'quarter', label: 'Quarter' },
+  { value: 'year',    label: 'Year'    },
+];
 
-function StatCard({ label, value, sub, color = 'teal' }) {
-  const colors = {
-    teal: 'bg-teal-50 text-teal-700',
-    yellow: 'bg-yellow-50 text-yellow-700',
-    blue: 'bg-blue-50 text-blue-700',
-    red: 'bg-red-50 text-red-700',
-  };
+const PERIOD_LABELS = {
+  week: 'this week vs last week',
+  month: 'this month vs last month',
+  quarter: 'this quarter vs last quarter',
+  year: 'this year vs last year',
+};
+
+const vnd = (n) => Number(n).toLocaleString('vi-VN') + '₫';
+const fmt = (d) => new Date(d).toLocaleDateString('en-GB');
+
+const STATUS = {
+  approved: { dot: '#2F4A3E', label: 'Confirmed',  text: '#2F4A3E' },
+  pending:  { dot: '#A89E97', label: 'Pending',     text: '#A89E97' },
+  canceled: { dot: '#B85C38', label: 'Cancelled',   text: '#B85C38' },
+  rejected: { dot: '#B85C38', label: 'Rejected',    text: '#B85C38' },
+};
+
+function SectionNum({ n, label }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className={`mt-1 text-2xl font-bold ${colors[color].split(' ')[1]}`}>{value}</p>
-      {sub && <p className="mt-1 text-xs text-gray-400">{sub}</p>}
+    <div className="flex items-baseline gap-2 mb-5">
+      <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 10, color: '#DDD4C4' }}>{n}</span>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#A89E97]">{label}</span>
+    </div>
+  );
+}
+
+function Avatar({ name = '' }) {
+  const parts = name.trim().split(' ');
+  const init = parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+  return (
+    <div
+      className="w-8 h-8 shrink-0 flex items-center justify-center text-white text-[11px] font-bold"
+      style={{ backgroundColor: '#2F4A3E', borderRadius: 3, fontFamily: 'Fraunces, Georgia, serif' }}
+    >
+      {init}
+    </div>
+  );
+}
+
+function StatusBadge({ status }) {
+  const s = STATUS[status] ?? { dot: '#aaa', label: status, text: '#aaa' };
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[12px]" style={{ color: s.text }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: s.dot, display: 'inline-block', flexShrink: 0 }} />
+      {s.label}
+    </span>
+  );
+}
+
+function Icon({ path, size = 18, opacity = 0.45 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="#2F4A3E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      style={{ opacity }}>
+      <path d={path} />
+    </svg>
+  );
+}
+
+const ICONS = {
+  revenue: 'M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 4v2m0 8v2M9.5 10A2.5 2.5 0 0 1 12 8a2.5 2.5 0 0 1 0 5 2.5 2.5 0 0 0 0 5 2.5 2.5 0 0 0 2.5-1.5',
+  booking: 'M3 4h18v18H3V4zm5-2v4m8-4v4M3 10h18M10 16l2 2 4-4',
+  listing: 'M3 21V10l9-7 9 7v11M9 21v-6h6v6',
+  users:   'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 8 0 4 4 0 0 0-8 0m8 14v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+};
+
+function RuledLine({ dashed = false }) {
+  return <div style={{ height: 1, borderTop: dashed ? '1px dashed #DDD4C4' : '1px solid #EDE8E1', margin: '8px 0' }} />;
+}
+
+function SmallCard({ label, value, iconPath, sub }) {
+  return (
+    <div className="flex flex-col justify-between p-4" style={{ border: '1px solid #DDD4C4', borderRadius: 6, backgroundColor: '#FAF6EF', minHeight: 0 }}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#A89E97] leading-tight">{label}</span>
+        <Icon path={iconPath} size={14} opacity={0.35} />
+      </div>
+      <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 700, fontSize: 36, color: '#2F4A3E', lineHeight: 1, margin: '6px 0' }}>
+        {value}
+      </p>
+      {sub && (
+        <p className="text-[10px] text-[#A89E97] leading-snug mt-2 pt-2" style={{ borderTop: '1px dashed #DDD4C4' }}>
+          {sub}
+        </p>
+      )}
     </div>
   );
 }
 
 export default function AdminStatsPage() {
+  const [period, setPeriod] = useState('month');
+
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-stats'],
-    queryFn: getAdminStats,
+    queryKey: ['admin-stats', period],
+    queryFn: () => getAdminStats(period),
     refetchInterval: 60000,
   });
 
-  if (isLoading) return <p className="text-center text-gray-400 py-16">Đang tải...</p>;
+  if (isLoading) return <p className="py-20 text-center text-sm text-[#A89E97]">Loading...</p>;
   if (!data) return null;
 
   const { users, listings, bookings, revenue, recentBookings, pendingListings } = data;
 
-  const growthLabel =
-    revenue.growthPercent === null
-      ? 'Chưa có dữ liệu tháng trước'
-      : revenue.growthPercent >= 0
-      ? `↑ ${revenue.growthPercent}% so tháng trước`
-      : `↓ ${Math.abs(revenue.growthPercent)}% so tháng trước`;
+  const growthPos = revenue.growthPercent !== null && revenue.growthPercent >= 0;
+  const growthLabel = revenue.growthPercent === null ? null
+    : growthPos ? `▲ ${revenue.growthPercent}% ${PERIOD_LABELS[period]}`
+    : `▼ ${Math.abs(revenue.growthPercent)}% ${PERIOD_LABELS[period]}`;
 
   return (
-    <div className="space-y-8">
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Tổng doanh thu" value={vnd(revenue.total)} sub={`Tháng này: ${vnd(revenue.thisMonth)}`} color="teal" />
-        <StatCard label="Tháng này" value={vnd(revenue.thisMonth)} sub={growthLabel} color="blue" />
-        <StatCard label="Booking" value={bookings.total} sub={`Đã huỷ: ${bookings.canceled}`} color="yellow" />
-        <StatCard label="Người dùng" value={users.total} sub={`${users.hosts} host · ${users.guests} guest`} color="blue" />
-      </div>
+    <div className="space-y-10">
 
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard label="Listing đã duyệt" value={listings.approved} color="teal" />
-        <StatCard label="Chờ duyệt" value={listings.pending} color="yellow" />
-        <StatCard label="Đình chỉ" value={listings.suspended} color="red" />
-      </div>
-
-      {/* Pending listings */}
-      {pendingListings.length > 0 && (
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900">Listing chờ duyệt</h2>
-            <Link to="/admin/listings" className="text-sm text-teal-600 hover:underline">Xem tất cả</Link>
+      {/* 01 Overview */}
+      <section>
+        <div className="flex items-center justify-between mb-5">
+          <SectionNum n="01" label="Overview" />
+          {/* Period selector */}
+          <div className="flex gap-1">
+            {PERIODS.map((p) => (
+              <button key={p.value} onClick={() => setPeriod(p.value)}
+                className="text-[11px] font-semibold uppercase tracking-[0.09em] px-3 py-1.5 transition-colors"
+                style={{
+                  borderRadius: 4,
+                  border: `1px solid ${period === p.value ? '#2F4A3E' : '#DDD4C4'}`,
+                  backgroundColor: period === p.value ? '#2F4A3E' : 'transparent',
+                  color: period === p.value ? '#FAF6EF' : '#A89E97',
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
-          <div className="space-y-3">
-            {pendingListings.map((l) => (
-              <div key={l.id} className="flex items-center gap-3 rounded-xl border border-yellow-200 bg-yellow-50 p-3">
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr', gap: 10, alignItems: 'stretch' }}>
+
+          {/* Revenue card — compact, no dead space */}
+          <div className="flex flex-col p-5" style={{ border: '1.5px solid #A8B5A0', borderRadius: 6, backgroundColor: '#FAF6EF', gap: 10 }}>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#A89E97]">Total revenue</span>
+              <Icon path={ICONS.revenue} size={14} opacity={0.35} />
+            </div>
+
+            <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 700, fontSize: 32, color: '#C17A54', lineHeight: 1 }}>
+              {vnd(revenue.total)}
+            </p>
+
+            {/* Sparkline compact */}
+            <svg width="100%" height="28" viewBox="0 0 120 28" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="spk-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#C17A54" stopOpacity="0.15" />
+                  <stop offset="100%" stopColor="#C17A54" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path d="M0 22 C15 17, 25 23, 40 15 C55 7, 65 18, 80 11 C95 4, 108 13, 120 7 L120 28 L0 28 Z" fill="url(#spk-fill)" />
+              <path d="M0 22 C15 17, 25 23, 40 15 C55 7, 65 18, 80 11 C95 4, 108 13, 120 7" fill="none" stroke="#C17A54" strokeWidth="1.5" strokeLinecap="round" />
+              <circle cx="120" cy="7" r="2.5" fill="#C17A54" />
+            </svg>
+
+            <div className="pt-2 space-y-0.5" style={{ borderTop: '1px dashed #DDD4C4' }}>
+              <p className="text-[11px] text-[#6B5F58]">
+                Revenue:{' '}
+                <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 600, color: '#C17A54' }}>
+                  {vnd(revenue.total)}
+                </span>
+              </p>
+              {growthLabel && (
+                <p className="text-[10px]" style={{ color: growthPos ? '#2F4A3E' : '#B85C38' }}>{growthLabel}</p>
+              )}
+            </div>
+          </div>
+
+          <SmallCard label="Bookings"      value={bookings.total}    iconPath={ICONS.booking}
+            sub={`Cancelled: ${bookings.canceled} · Rejected: ${bookings.rejected ?? 0}`} />
+          <SmallCard label="Listings"      value={listings.approved} iconPath={ICONS.listing}
+            sub={listings.pending > 0 ? `${listings.pending} pending` : 'None pending'} />
+          <SmallCard label="Users"         value={users.total}       iconPath={ICONS.users}
+            sub={`${users.hosts} hosts · ${users.total - users.hosts} guests`} />
+        </div>
+      </section>
+
+      {/* 02 Pending listings */}
+      {pendingListings.length > 0 && (
+        <section>
+          <div className="flex items-baseline justify-between mb-5">
+            <SectionNum n="02" label="Pending listings" />
+            <Link to="/admin/listings" className="text-[11px] font-medium text-[#2F4A3E] hover:underline mb-5">View all →</Link>
+          </div>
+          <div style={{ border: '1px solid #DDD4C4', borderRadius: 6, backgroundColor: '#FAF6EF', overflow: 'hidden' }}>
+            {pendingListings.map((l, i) => (
+              <div key={l.id} className="flex items-center gap-4 px-5 py-4"
+                style={{ borderTop: i > 0 ? '1px dashed #DDD4C4' : 'none' }}>
                 {l.image
-                  ? <img src={l.image} alt={l.title} className="h-14 w-20 rounded-lg object-cover shrink-0" />
-                  : <div className="h-14 w-20 rounded-lg bg-gray-200 shrink-0" />
+                  ? <img src={l.image} alt={l.title} className="w-16 h-11 object-cover shrink-0" style={{ borderRadius: 4 }} />
+                  : <div className="w-16 h-11 shrink-0" style={{ backgroundColor: '#F0EAE0', borderRadius: 4 }} />
                 }
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate">{l.title}</p>
-                  <p className="text-sm text-gray-500">{l.hostName} · {l.hostEmail}</p>
-                  <p className="text-xs text-gray-400">Gửi lúc {fmt(l.createdAt)}</p>
+                  <p className="text-[13px] font-medium text-[#2A2420] truncate">{l.title}</p>
+                  <p className="text-[11px] text-[#A89E97] mt-0.5">{l.hostName} · {fmt(l.createdAt)}</p>
                 </div>
-                <Link
-                  to="/admin/listings"
-                  className="shrink-0 rounded-lg bg-teal-600 px-3 py-1.5 text-sm text-white hover:bg-teal-700"
+                <Link to="/admin/listings"
+                  className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.08em] px-3 py-1.5 transition-colors"
+                  style={{ border: '1px solid #2F4A3E', color: '#2F4A3E', borderRadius: 4 }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2F4A3E'; e.currentTarget.style.color = '#FAF6EF'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#2F4A3E'; }}
                 >
-                  Xét duyệt
+                  Review
                 </Link>
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Recent bookings */}
-      <div>
-        <h2 className="mb-3 font-semibold text-gray-900">Booking gần đây</h2>
+      {/* 02/03 Recent bookings */}
+      <section>
+        <SectionNum n={pendingListings.length > 0 ? '03' : '02'} label="Recent bookings" />
         {recentBookings.length === 0 ? (
-          <p className="text-sm text-gray-400">Chưa có booking nào</p>
+          <p className="py-12 text-center text-sm text-[#A89E97]">No bookings yet</p>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-xs font-medium uppercase text-gray-500">
-                <tr>
-                  <th className="px-4 py-3">Khách</th>
-                  <th className="px-4 py-3">Listing</th>
-                  <th className="px-4 py-3">Ngày ở</th>
-                  <th className="px-4 py-3 text-right">Tổng tiền</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {recentBookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900">{b.guestName}</p>
-                      <p className="text-gray-400">{b.guestEmail}</p>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700">{b.listingTitle}</td>
-                    <td className="px-4 py-3 text-gray-500">
-                      {fmt(b.checkIn)} → {fmt(b.checkOut)}
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold text-gray-900">
-                      {vnd(b.totalPrice)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div style={{ border: '1px solid #DDD4C4', borderRadius: 6, backgroundColor: '#FAF6EF', overflow: 'hidden' }}>
+            <div className="grid px-5 py-3" style={{ gridTemplateColumns: '2fr 2fr 1.5fr 1fr 1.2fr', borderBottom: '1px solid #DDD4C4' }}>
+              {['Guest', 'Property', 'Dates', 'Status', 'Total'].map((h) => (
+                <span key={h} className="text-[11px] italic text-[#A89E97]">{h}</span>
+              ))}
+            </div>
+            {recentBookings.map((b, i) => (
+              <div key={b.id} className="grid items-center px-5 py-3.5"
+                style={{ gridTemplateColumns: '2fr 2fr 1.5fr 1fr 1.2fr', borderTop: i > 0 ? '1px dashed #DDD4C4' : 'none' }}>
+                <div className="flex items-center gap-2.5">
+                  <Avatar name={b.guestName} />
+                  <div>
+                    <p className="text-[13px] font-medium text-[#2A2420]">{b.guestName}</p>
+                    <p className="text-[10px] text-[#A89E97] mt-0.5">{b.guestEmail}</p>
+                  </div>
+                </div>
+                <p className="text-[12px] text-[#6B5F58] pr-4 line-clamp-2">{b.listingTitle}</p>
+                <p className="text-[11px] text-[#A89E97]">{fmt(b.checkIn)}<br />{fmt(b.checkOut)}</p>
+                <StatusBadge status={b.status} />
+                <p className="text-[14px] font-semibold text-right text-[#2A2420]"
+                  style={{ fontFamily: 'Fraunces, Georgia, serif' }}>
+                  {vnd(b.totalPrice)}
+                </p>
+              </div>
+            ))}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

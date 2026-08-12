@@ -1,17 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply text-neutral-900 antialiased;
+    @apply antialiased;
+    font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+    letter-spacing: -0.01em;
+    color: #2A2420;
+    background-color: #FAF6EF;
   }
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+/* Ledger dashed row separators */
+.ledger-row + .ledger-row {
+  border-top: 1px dashed #DDD4C4;
 }
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
