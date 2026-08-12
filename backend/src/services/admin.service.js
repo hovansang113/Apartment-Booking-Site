@@ -113,6 +113,67 @@ async function updateUserStatus({ userId, status }) {
   });
 }
 
+// Build chart buckets: week→7 days, month→days, quarter→13 weeks, year→12 months
+async function buildChartData(period, periodStart, now) {
+  const bookings = await prisma.booking.findMany({
+    where: { status: 'approved', createdAt: { gte: periodStart, lte: now } },
+    select: { createdAt: true, totalPrice: true },
+  });
+
+  if (period === 'week') {
+    // 7 day buckets: Mon … today
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const buckets = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(periodStart); d.setDate(d.getDate() + i);
+      return { label: days[i], date: d.toDateString(), value: 0 };
+    });
+    for (const b of bookings) {
+      const ds = new Date(b.createdAt).toDateString();
+      const bucket = buckets.find((bk) => bk.date === ds);
+      if (bucket) bucket.value += Number(b.totalPrice);
+    }
+    return buckets.map(({ label, value }) => ({ label, value }));
+  }
+
+  if (period === 'month') {
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const buckets = Array.from({ length: daysInMonth }, (_, i) => ({
+      label: String(i + 1),
+      day: i + 1,
+      value: 0,
+    }));
+    for (const b of bookings) {
+      const d = new Date(b.createdAt).getDate();
+      buckets[d - 1].value += Number(b.totalPrice);
+    }
+    return buckets.map(({ label, value }) => ({ label, value }));
+  }
+
+  if (period === 'quarter') {
+    // 13 week buckets
+    const buckets = Array.from({ length: 13 }, (_, i) => {
+      const wStart = new Date(periodStart); wStart.setDate(wStart.getDate() + i * 7);
+      return { label: `W${i + 1}`, wStart: new Date(wStart), value: 0 };
+    });
+    for (const b of bookings) {
+      const t = new Date(b.createdAt).getTime();
+      for (let i = buckets.length - 1; i >= 0; i--) {
+        if (t >= buckets[i].wStart.getTime()) { buckets[i].value += Number(b.totalPrice); break; }
+      }
+    }
+    return buckets.map(({ label, value }) => ({ label, value }));
+  }
+
+  // year → 12 month buckets
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const buckets = Array.from({ length: 12 }, (_, i) => ({ label: MONTHS[i], month: i, value: 0 }));
+  for (const b of bookings) {
+    const m = new Date(b.createdAt).getMonth();
+    buckets[m].value += Number(b.totalPrice);
+  }
+  return buckets.map(({ label, value }) => ({ label, value }));
+}
+
 // Tính khoảng thời gian theo period
 function getPeriodRange(period) {
   const now = new Date();
@@ -215,6 +276,8 @@ async function getStats({ period = 'month' } = {}) {
     ? null
     : Math.round(((thisPeriodRevenue - prevPeriodRevenue) / prevPeriodRevenue) * 100);
 
+  const chartData = await buildChartData(period, periodStart, now);
+
   return {
     period,
     users: {
@@ -238,6 +301,7 @@ async function getStats({ period = 'month' } = {}) {
       thisPeriod: thisPeriodRevenue,
       prevPeriod: prevPeriodRevenue,
       growthPercent: revenueGrowth,
+      chartData,
     },
     recentBookings: recentBookings.map((b) => ({
       id: b.id,

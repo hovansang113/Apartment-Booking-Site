@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const TABS = [
   { to: '/admin',          label: 'Overview',  end: true },
@@ -7,6 +8,14 @@ const TABS = [
 ];
 
 export default function AdminLayout({ children }) {
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate('/auth/login');
+  }
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FAF6EF' }}>
       <div style={{ backgroundColor: '#0d9488' }}>
@@ -24,7 +33,7 @@ export default function AdminLayout({ children }) {
             <div style={{ width: 1, height: 16, backgroundColor: 'rgba(255,255,255,0.25)' }} />
 
             {/* Tabs */}
-            <nav className="flex h-full">
+            <nav className="flex h-full flex-1">
               {TABS.map((t) => (
                 <NavLink
                   key={t.to}
@@ -42,6 +51,25 @@ export default function AdminLayout({ children }) {
                 </NavLink>
               ))}
             </nav>
+
+            {/* Right side */}
+            <div className="flex items-center gap-4 shrink-0">
+              <a href="/" target="_blank" rel="noopener noreferrer"
+                className="text-[12px] text-white/50 hover:text-white transition-colors">
+                View site ↗
+              </a>
+              <div style={{ width: 1, height: 14, backgroundColor: 'rgba(255,255,255,0.2)' }} />
+              <div className="text-right">
+                <p className="text-[11px] font-semibold text-white leading-tight">{user?.fullName}</p>
+                <p className="text-[10px] text-white/50 capitalize leading-tight">{user?.role}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="text-[12px] font-medium text-white/50 hover:text-white transition-colors"
+              >
+                Log out
+              </button>
+            </div>
           </div>
         </div>
       </div>

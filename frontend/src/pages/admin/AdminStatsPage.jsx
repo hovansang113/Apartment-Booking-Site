@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAdminStats } from '../../services/adminService';
 import { Link } from 'react-router-dom';
+import { AreaChart, Area, Tooltip, ResponsiveContainer, XAxis } from 'recharts';
 
 const PERIODS = [
   { value: 'week',    label: 'Week'    },
@@ -78,22 +79,34 @@ const ICONS = {
   users:   'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 8 0 4 4 0 0 0-8 0m8 14v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
 };
 
+function ChartTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{ backgroundColor: '#2F4A3E', borderRadius: 4, padding: '4px 8px' }}>
+      <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontSize: 12, color: '#FAF6EF', margin: 0 }}>
+        {vnd(payload[0].value)}
+      </p>
+      <p style={{ fontSize: 10, color: 'rgba(250,246,239,0.6)', margin: 0 }}>{label}</p>
+    </div>
+  );
+}
+
 function RuledLine({ dashed = false }) {
   return <div style={{ height: 1, borderTop: dashed ? '1px dashed #DDD4C4' : '1px solid #EDE8E1', margin: '8px 0' }} />;
 }
 
-function SmallCard({ label, value, iconPath, sub }) {
+function SmallCard({ label, value, iconPath, sub, subColor, valueColor = '#2F4A3E' }) {
   return (
     <div className="flex flex-col justify-between p-4" style={{ border: '1px solid #DDD4C4', borderRadius: 6, backgroundColor: '#FAF6EF', minHeight: 0 }}>
       <div className="flex items-center justify-between mb-2">
         <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#A89E97] leading-tight">{label}</span>
         <Icon path={iconPath} size={14} opacity={0.35} />
       </div>
-      <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 700, fontSize: 36, color: '#2F4A3E', lineHeight: 1, margin: '6px 0' }}>
+      <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 700, fontSize: 28, color: valueColor, lineHeight: 1, margin: '6px 0' }}>
         {value}
       </p>
       {sub && (
-        <p className="text-[10px] text-[#A89E97] leading-snug mt-2 pt-2" style={{ borderTop: '1px dashed #DDD4C4' }}>
+        <p className="text-[10px] leading-snug mt-2 pt-2" style={{ borderTop: '1px dashed #DDD4C4', color: subColor ?? '#A89E97' }}>
           {sub}
         </p>
       )}
@@ -144,51 +157,61 @@ export default function AdminStatsPage() {
             ))}
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr', gap: 10, alignItems: 'stretch' }}>
-
-          {/* Revenue card — compact, no dead space */}
-          <div className="flex flex-col p-5" style={{ border: '1.5px solid #A8B5A0', borderRadius: 6, backgroundColor: '#FAF6EF', gap: 10 }}>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#A89E97]">Total revenue</span>
-              <Icon path={ICONS.revenue} size={14} opacity={0.35} />
-            </div>
-
-            <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 700, fontSize: 32, color: '#C17A54', lineHeight: 1 }}>
-              {vnd(revenue.total)}
-            </p>
-
-            {/* Sparkline compact */}
-            <svg width="100%" height="28" viewBox="0 0 120 28" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="spk-fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#C17A54" stopOpacity="0.15" />
-                  <stop offset="100%" stopColor="#C17A54" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path d="M0 22 C15 17, 25 23, 40 15 C55 7, 65 18, 80 11 C95 4, 108 13, 120 7 L120 28 L0 28 Z" fill="url(#spk-fill)" />
-              <path d="M0 22 C15 17, 25 23, 40 15 C55 7, 65 18, 80 11 C95 4, 108 13, 120 7" fill="none" stroke="#C17A54" strokeWidth="1.5" strokeLinecap="round" />
-              <circle cx="120" cy="7" r="2.5" fill="#C17A54" />
-            </svg>
-
-            <div className="pt-2 space-y-0.5" style={{ borderTop: '1px dashed #DDD4C4' }}>
-              <p className="text-[11px] text-[#6B5F58]">
-                Revenue:{' '}
-                <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 600, color: '#C17A54' }}>
-                  {vnd(revenue.total)}
-                </span>
-              </p>
-              {growthLabel && (
-                <p className="text-[10px]" style={{ color: growthPos ? '#2F4A3E' : '#B85C38' }}>{growthLabel}</p>
-              )}
-            </div>
-          </div>
-
-          <SmallCard label="Bookings"      value={bookings.total}    iconPath={ICONS.booking}
+        {/* 4 stat cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+          <SmallCard label="Revenue"  value={vnd(revenue.total)} iconPath={ICONS.revenue}
+            sub={growthLabel ?? undefined} subColor={growthPos ? '#2F4A3E' : '#B85C38'} valueColor="#C17A54" />
+          <SmallCard label="Bookings" value={bookings.total}     iconPath={ICONS.booking}
             sub={`Cancelled: ${bookings.canceled} · Rejected: ${bookings.rejected ?? 0}`} />
-          <SmallCard label="Listings"      value={listings.approved} iconPath={ICONS.listing}
+          <SmallCard label="Listings" value={listings.approved}  iconPath={ICONS.listing}
             sub={listings.pending > 0 ? `${listings.pending} pending` : 'None pending'} />
-          <SmallCard label="Users"         value={users.total}       iconPath={ICONS.users}
+          <SmallCard label="Users"    value={users.total}        iconPath={ICONS.users}
             sub={`${users.hosts} hosts · ${users.total - users.hosts} guests`} />
+        </div>
+
+        {/* Revenue chart — full width */}
+        <div className="mt-3 p-5" style={{ border: '1.5px solid #A8B5A0', borderRadius: 6, backgroundColor: '#FAF6EF' }}>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#A89E97]">Revenue over time</p>
+            {growthLabel && (
+              <span className="text-[11px] font-medium px-2.5 py-1" style={{
+                borderRadius: 4,
+                backgroundColor: growthPos ? 'rgba(47,74,62,0.08)' : 'rgba(184,92,56,0.08)',
+                color: growthPos ? '#2F4A3E' : '#B85C38',
+              }}>
+                {growthLabel}
+              </span>
+            )}
+          </div>
+          <div style={{ height: 140 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={revenue.chartData ?? []} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="rev-fill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#C17A54" stopOpacity="0.18" />
+                    <stop offset="100%" stopColor="#C17A54" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 9, fill: '#A89E97', fontFamily: 'Be Vietnam Pro, sans-serif' }}
+                  axisLine={false}
+                  tickLine={false}
+                  interval={period === 'month' ? 4 : 0}
+                />
+                <Tooltip content={<ChartTooltip />} cursor={{ stroke: '#C17A54', strokeWidth: 1, strokeDasharray: '3 3' }} />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#C17A54"
+                  strokeWidth={2}
+                  fill="url(#rev-fill)"
+                  dot={false}
+                  activeDot={{ r: 4, fill: '#C17A54', stroke: '#FAF6EF', strokeWidth: 2 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </section>
 
