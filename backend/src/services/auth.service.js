@@ -90,4 +90,15 @@ async function guestLogin({ email, fullName, phone }) {
   return issueSession(user);
 }
 
-module.exports = { register, login, guestLogin, sanitizeUser };
+// Dung cho GET /api/auth/me - lay lai thong tin user hien tai theo id trong
+// token, khong doc thang tu payload token vi role/status co the da doi (vd
+// admin vua khoa tai khoan) sau khi token duoc cap.
+async function getMe(userId) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new AppError(404, 'User not found');
+  }
+  return sanitizeUser(user);
+}
+
+module.exports = { register, login, guestLogin, getMe, sanitizeUser };

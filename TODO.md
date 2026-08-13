@@ -21,7 +21,8 @@ Cập nhật lần cuối: 2026-08-10. Tick `[x]` khi xong, đừng xoá dòng �
 ## REQ theo sprint
 
 - [x] **REQ_01** — Đăng ký / đăng nhập, cấp JWT (`user`/`host`/`admin`)
-  → `services/auth.service.js`, `controllers/auth.controller.js`, `routes/auth.routes.js`
+  → `services/auth.service.js`, `controllers/auth.controller.js`, `routes/auth.routes.js`. **Đổi sang cookie httpOnly** (10/8): JWT giờ set qua `res.cookie(...)` (`config/cookie.js`), không trả `token` trong response body nữa, không lưu `localStorage` phía FE nữa. `auth.middleware.js` đọc token từ cookie trước, vẫn fallback header `Authorization: Bearer` để tiện test curl/Postman. Thêm 2 route mới: `POST /auth/logout` (xoá cookie — bắt buộc gọi API vì JS không tự xoá được cookie httpOnly), `GET /auth/me` (FE hỏi server "đang đăng nhập ai" lúc load trang, thay cho đọc `localStorage`). FE: `api.js` bật `withCredentials: true`, `AuthContext.jsx` bỏ hẳn state `token`, gọi `getMe()` lúc mount thay vì đọc `localStorage`
+  → **Fix bug logout**: `AuthContext.logout()` trước đây set `user` về lại `MOCK_HOST_USER` (user giả) thay vì `null` — nên bấm "Đăng xuất" không có tác dụng gì thấy được, phát hiện lúc anh test thật. Giờ logout xong `user = null` đúng nghĩa
 - [x] **REQ_14** — Guest quick login (đặt phòng không cần đăng ký trước)
   → cùng file với REQ_01, hàm `guestLogin`
 - [x] **REQ_02** — Host tạo / sửa / xoá listing, upload ảnh qua Cloudinary

@@ -34,7 +34,7 @@ export default function LoginPage() {
       setLoading(true);
       const res = await loginApi(email.trim(), password);
 
-      login(res.user, res.token);
+      login(res.user);
       toast.success(`Chào mừng trở lại, ${res.user.fullName}!`);
 
       if (res.user.role === 'host') {

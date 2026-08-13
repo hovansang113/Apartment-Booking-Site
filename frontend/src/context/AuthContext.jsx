@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import * as authService from '../services/authService';
 
 const AuthContext = createContext(null);
 
@@ -10,48 +11,37 @@ const MOCK_HOST_USER = {
 };
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(MOCK_HOST_USER);
-  const [token, setToken] = useState('demo-jwt-token');
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // Cookie httpOnly khong doc duoc tu JS, nen phai hoi server "toi la ai" luc
+  // load trang thay vi doc localStorage nhu truoc.
   useEffect(() => {
-    try {
-      const savedToken = localStorage.getItem('token');
-      const savedUser = localStorage.getItem('user');
-      if (savedToken && savedUser) {
-        setToken(savedToken);
-        setUser(JSON.parse(savedUser));
-      } else {
-        // Default to mock host user for instant preview without login
+    authService
+      .getMe()
+      .then((data) => setUser(data.user))
+      .catch(() => {
+        // Chua dang nhap that - fallback ve user gia de xem truoc giao dien
+        // host ma khong can dang nhap (giu nguyen hanh vi cu).
         setUser(MOCK_HOST_USER);
-        setToken('demo-jwt-token');
-      }
-    } catch (e) {
-      console.error('Failed to parse saved user credentials', e);
-      setUser(MOCK_HOST_USER);
-    } finally {
-      setLoading(false);
-    }
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  function login(userData, jwt) {
+  function login(userData) {
     setUser(userData);
-    setToken(jwt);
-    localStorage.setItem('token', jwt);
-    localStorage.setItem('user', JSON.stringify(userData));
   }
 
-  function logout() {
-    setUser(MOCK_HOST_USER);
-    setToken('demo-jwt-token');
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  async function logout() {
+    try {
+      await authService.logout();
+    } finally {
+      setUser(null);
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>
   );
 }
 

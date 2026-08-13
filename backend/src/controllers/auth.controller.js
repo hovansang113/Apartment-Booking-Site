@@ -1,24 +1,43 @@
 const authService = require('../services/auth.service');
 const { created, ok } = require('../utils/response.util');
+const { COOKIE_NAME, cookieOptions } = require('../config/cookie');
 
-// REQ_01 - register, login, issue JWT
+function issueCookieResponse(res, { user, token }, message, isCreate) {
+  res.cookie(COOKIE_NAME, token, cookieOptions);
+  return isCreate ? created(res, { user }, message) : ok(res, { user }, message);
+}
+
+// REQ_01 - register, issue JWT via httpOnly cookie
 async function register(req, res) {
   const { email, password, fullName, phone, role } = req.body;
   const result = await authService.register({ email, password, fullName, phone, role });
-  return created(res, result, 'Registered successfully');
+  return issueCookieResponse(res, result, 'Registered successfully', true);
 }
 
 async function login(req, res) {
   const { email, password } = req.body;
   const result = await authService.login({ email, password });
-  return ok(res, result, 'Logged in successfully');
+  return issueCookieResponse(res, result, 'Logged in successfully', false);
 }
 
 // REQ_14 - guest quick login
 async function guestLogin(req, res) {
   const { email, fullName, phone } = req.body;
   const result = await authService.guestLogin({ email, fullName, phone });
-  return ok(res, result, 'Guest authenticated successfully');
+  return issueCookieResponse(res, result, 'Guest authenticated successfully', false);
 }
 
-module.exports = { register, login, guestLogin };
+// Xoa cookie httpOnly - JS phia frontend khong tu xoa duoc nen phai co route nay
+async function logout(req, res) {
+  res.clearCookie(COOKIE_NAME, cookieOptions);
+  return ok(res, null, 'Logged out successfully');
+}
+
+// Frontend goi luc load trang de biet dang dang nhap ai (khong doc duoc cookie
+// httpOnly truc tiep)
+async function me(req, res) {
+  const user = await authService.getMe(req.user.id);
+  return ok(res, { user });
+}
+
+module.exports = { register, login, guestLogin, logout, me };

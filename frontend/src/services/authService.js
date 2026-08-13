@@ -14,3 +14,14 @@ export async function guestLogin({ email, fullName, phone }) {
   const { data } = await api.post('/auth/guest-login', { email, fullName, phone });
   return data.data;
 }
+
+// Hoi server "toi la ai" luc load trang - cookie httpOnly khong doc duoc tu JS
+export async function getMe() {
+  const { data } = await api.get('/auth/me');
+  return data.data;
+}
+
+// Phai goi API de server tu xoa cookie httpOnly - JS khong tu xoa duoc
+export async function logout() {
+  await api.post('/auth/logout');
+}

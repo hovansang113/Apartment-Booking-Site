@@ -59,7 +59,7 @@ export default function RegisterPage() {
         role: 'host',
       });
 
-      login(res.user, res.token);
+      login(res.user);
       toast.success('Đăng ký tài khoản Chủ nhà thành công!');
       navigate(from, { replace: true });
     } catch (err) {
