@@ -238,7 +238,7 @@ function buildHostChartData(period, bookings) {
   if (period === 'quarter') {
     const buckets = Array.from({ length: 13 }, (_, i) => {
       const wStart = new Date(periodStart); wStart.setDate(wStart.getDate() + i * 7);
-      return { label: `T${i + 1}`, wStart: new Date(wStart), value: 0 };
+      return { label: `W${i + 1}`, wStart: new Date(wStart), value: 0 };
     });
     for (const b of filtered) {
       const t = new Date(b.createdAt).getTime();
