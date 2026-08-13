@@ -23,6 +23,7 @@ export default function BookingWidget({ listing, checkIn, checkOut, onChangeChec
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
+      guestCount: 1,
       contactName: user?.fullName ?? '',
       contactEmail: user?.email ?? '',
     },
@@ -37,6 +38,7 @@ export default function BookingWidget({ listing, checkIn, checkOut, onChangeChec
         listingId: listing.id,
         checkIn,
         checkOut,
+        guestCount: Number(values.guestCount),
         contactName: values.contactName,
         contactEmail: values.contactEmail,
         contactPhone: values.contactPhone,
@@ -129,6 +131,24 @@ export default function BookingWidget({ listing, checkIn, checkOut, onChangeChec
           <div className="bg-neutral-50 rounded-lg p-3 text-sm text-neutral-700 flex justify-between">
             <span>{checkIn} → {checkOut}</span>
             <span className="font-semibold">{nights} đêm · {currencyFormatter.format(total)}</span>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-1">
+              Số khách * <span className="text-neutral-400 font-normal">(tối đa {listing.guestCapacity})</span>
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={listing.guestCapacity}
+              {...register('guestCount', {
+                required: 'Bắt buộc',
+                min: { value: 1, message: 'Tối thiểu 1 khách' },
+                max: { value: listing.guestCapacity, message: `Tối đa ${listing.guestCapacity} khách` },
+              })}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+            {errors.guestCount && <p className="text-red-500 text-xs mt-1">{errors.guestCount.message}</p>}
           </div>
 
           <div>

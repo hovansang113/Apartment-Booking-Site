@@ -161,6 +161,7 @@ model Booking {
   checkOut        DateTime      @map("check_out") @db.Date
   totalPrice      Decimal       @map("total_price") @db.Decimal(12, 2)
   status          BookingStatus @default(approved)
+  guestCount      Int           @default(1) @map("guest_count")
   contactName     String        @map("contact_name")
   contactEmail    String        @map("contact_email")
   contactPhone    String?       @map("contact_phone")

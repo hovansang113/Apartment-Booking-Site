@@ -2,8 +2,8 @@ const bookingService = require('../services/booking.service');
 const { ok, created } = require('../utils/response.util');
 
 async function createGuest(req, res) {
-  const { listingId, checkIn, checkOut, contactName, contactEmail, contactPhone } = req.body;
-  const result = await bookingService.createGuestBooking({ listingId, checkIn, checkOut, contactName, contactEmail, contactPhone });
+  const { listingId, checkIn, checkOut, guestCount, contactName, contactEmail, contactPhone } = req.body;
+  const result = await bookingService.createGuestBooking({ listingId, checkIn, checkOut, guestCount, contactName, contactEmail, contactPhone });
   return created(res, result, result.message);
 }
 
@@ -23,10 +23,10 @@ async function getHostStats(req, res) {
 }
 
 async function create(req, res) {
-  const { listingId, checkIn, checkOut, contactName, contactEmail, contactPhone } = req.body;
+  const { listingId, checkIn, checkOut, guestCount, contactName, contactEmail, contactPhone } = req.body;
   const booking = await bookingService.createBooking({
     guestId: req.user.id,
-    listingId, checkIn, checkOut, contactName, contactEmail, contactPhone,
+    listingId, checkIn, checkOut, guestCount, contactName, contactEmail, contactPhone,
   });
   return created(res, booking, 'Đặt phòng thành công');
 }

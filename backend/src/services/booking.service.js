@@ -38,13 +38,16 @@ async function calcTotalPrice(listingId, defaultPrice, checkIn, checkOut) {
 }
 
 // REQ_07: tạo booking, kiểm tra conflict ngày trong transaction
-async function createBooking({ guestId, listingId, checkIn, checkOut, contactName, contactEmail, contactPhone }) {
+async function createBooking({ guestId, listingId, checkIn, checkOut, guestCount = 1, contactName, contactEmail, contactPhone }) {
   const listing = await prisma.listing.findUnique({ where: { id: listingId } });
   if (!listing) throw new AppError(404, 'Listing not found');
   if (listing.status !== 'approved') throw new AppError(400, 'Listing is not available for booking');
 
   // Bug #5: host/admin không được self-book
   if (listing.hostId === guestId) throw new AppError(400, 'Host cannot book their own listing');
+
+  if (guestCount < 1 || guestCount > listing.guestCapacity)
+    throw new AppError(400, `Số khách phải từ 1 đến ${listing.guestCapacity}`);
 
   if (isNaN(new Date(checkIn)) || isNaN(new Date(checkOut))) throw new AppError(400, 'Invalid date format');
   const nights = calcNights(checkIn, checkOut);
@@ -73,6 +76,7 @@ async function createBooking({ guestId, listingId, checkIn, checkOut, contactNam
           checkIn: new Date(checkIn),
           checkOut: new Date(checkOut),
           totalPrice,
+          guestCount: Number(guestCount),
           contactName,
           contactEmail,
           contactPhone,
@@ -227,7 +231,7 @@ async function getHostStats(hostId) {
 }
 
 // Guest booking (no auth) — tạo hoặc tìm guest user, sinh guestToken, gửi email
-async function createGuestBooking({ listingId, checkIn, checkOut, contactName, contactEmail, contactPhone }) {
+async function createGuestBooking({ listingId, checkIn, checkOut, guestCount = 1, contactName, contactEmail, contactPhone }) {
   // Nếu email đã có tài khoản thật → yêu cầu đăng nhập
   let guestUser = await prisma.user.findUnique({ where: { email: contactEmail } });
   if (guestUser && !guestUser.isGuest) {
@@ -245,6 +249,9 @@ async function createGuestBooking({ listingId, checkIn, checkOut, contactName, c
   const listing = await prisma.listing.findUnique({ where: { id: listingId } });
   if (!listing) throw new AppError(404, 'Listing not found');
   if (listing.status !== 'approved') throw new AppError(400, 'Listing is not available for booking');
+
+  if (guestCount < 1 || guestCount > listing.guestCapacity)
+    throw new AppError(400, `So khach phai tu 1 den ${listing.guestCapacity}`);
 
   const nights = calcNights(checkIn, checkOut);
   if (nights < 1) throw new AppError(400, 'Check-out must be after check-in');
@@ -265,6 +272,7 @@ async function createGuestBooking({ listingId, checkIn, checkOut, contactName, c
           checkIn: new Date(checkIn),
           checkOut: new Date(checkOut),
           totalPrice,
+          guestCount: Number(guestCount),
           contactName,
           contactEmail,
           contactPhone,
