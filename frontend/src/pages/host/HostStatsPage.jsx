@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { BarChart, Bar, Tooltip, ResponsiveContainer, XAxis, YAxis, Cell } from 'recharts';
@@ -5,8 +6,22 @@ import api from '../../services/api';
 
 const vnd = (n) => Number(n).toLocaleString('vi-VN') + '₫';
 
-async function fetchHostStats() {
-  const { data } = await api.get('/bookings/host/stats');
+const PERIODS = [
+  { value: 'week',    label: 'Tuần'  },
+  { value: 'month',   label: 'Tháng' },
+  { value: 'quarter', label: 'Quý'   },
+  { value: 'year',    label: 'Năm'   },
+];
+
+const PERIOD_LABELS = {
+  week:    'trong tuần này',
+  month:   'trong tháng này',
+  quarter: 'trong quý này',
+  year:    'trong năm này',
+};
+
+async function fetchHostStats(period) {
+  const { data } = await api.get('/bookings/host/stats', { params: { period } });
   return data.data;
 }
 
@@ -39,10 +54,10 @@ function SectionNum({ n, label }) {
 function SmallCard({ label, value, iconPath, sub, valueColor = '#2F4A3E' }) {
   return (
     <div className="flex flex-col justify-between p-4"
-      style={{ border: '1px solid #DDD4C4', borderRadius: 6, backgroundColor: '#FAF6EF', minHeight: 0 }}>
+      style={{ border: '1px solid #DDD4C4', borderRadius: 6, backgroundColor: '#FAF6EF' }}>
       <div className="flex items-center justify-between mb-2">
         <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#A89E97] leading-tight">{label}</span>
-        <Icon path={iconPath} size={14} opacity={0.35} />
+        <Icon path={iconPath} />
       </div>
       <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 700, fontSize: 28, color: valueColor, lineHeight: 1, margin: '6px 0' }}>
         {value}
@@ -69,37 +84,55 @@ function ChartTooltip({ active, payload, label }) {
 }
 
 export default function HostStatsPage() {
+  const [period, setPeriod] = useState('month');
+
   const { data, isLoading } = useQuery({
-    queryKey: ['host-stats'],
-    queryFn: fetchHostStats,
+    queryKey: ['host-stats', period],
+    queryFn: () => fetchHostStats(period),
     refetchInterval: 60000,
   });
 
   if (isLoading) return <p className="py-20 text-center text-sm text-[#A89E97]">Đang tải...</p>;
   if (!data) return null;
 
-  const { totalRevenue, totalBookings, byStatus, monthlyRevenue } = data;
+  const { totalRevenue, totalBookings, byStatus, chartData = [] } = data;
   const confirmed = byStatus?.approved ?? 0;
   const canceled  = byStatus?.canceled ?? 0;
 
-  const chartData = (monthlyRevenue ?? []).map(({ month, revenue }) => ({
-    label: month.slice(5) + '/' + month.slice(0, 4),
-    value: revenue,
-  }));
+  // Highlight cột cuối cùng có giá trị
+  const lastNonZero = chartData.reduceRight((found, _, i) => found === -1 && chartData[i].value > 0 ? i : found, -1);
 
   return (
     <div className="space-y-10">
 
       {/* 01 Tổng quan */}
       <section>
-        <SectionNum n="01" label="Tổng quan doanh thu" />
+        <div className="flex items-center justify-between mb-5">
+          <SectionNum n="01" label="Tổng quan doanh thu" />
+          <div className="flex gap-1">
+            {PERIODS.map((p) => (
+              <button key={p.value} onClick={() => setPeriod(p.value)}
+                className="text-[11px] font-semibold uppercase tracking-[0.09em] px-3 py-1.5 transition-colors"
+                style={{
+                  borderRadius: 4,
+                  border: `1px solid ${period === p.value ? '#2F4A3E' : '#DDD4C4'}`,
+                  backgroundColor: period === p.value ? '#2F4A3E' : 'transparent',
+                  color: period === p.value ? '#FAF6EF' : '#A89E97',
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
           <SmallCard
-            label="Tổng doanh thu"
+            label="Doanh thu"
             value={vnd(totalRevenue)}
             iconPath={ICONS.revenue}
             valueColor="#C17A54"
-            sub="Chỉ tính booking đã xác nhận"
+            sub={PERIOD_LABELS[period]}
           />
           <SmallCard
             label="Tổng booking"
@@ -121,33 +154,33 @@ export default function HostStatsPage() {
         </div>
       </section>
 
-      {/* 02 Biểu đồ doanh thu theo tháng */}
+      {/* 02 Biểu đồ */}
       <section>
-        <SectionNum n="02" label="Doanh thu theo tháng" />
-        {chartData.length === 0 ? (
-          <p className="py-12 text-center text-sm text-[#A89E97]">Chưa có doanh thu</p>
+        <SectionNum n="02" label={`Doanh thu theo ${PERIODS.find(p => p.value === period)?.label.toLowerCase()}`} />
+        {chartData.every((d) => d.value === 0) ? (
+          <p className="py-12 text-center text-sm text-[#A89E97]">Chưa có doanh thu trong khoảng này</p>
         ) : (
           <div className="p-5" style={{ border: '1.5px solid #A8B5A0', borderRadius: 6, backgroundColor: '#FAF6EF' }}>
             <div style={{ height: 200 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 8, right: 4, left: 4, bottom: 0 }} barSize={28}>
+                <BarChart data={chartData} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}
+                  barSize={period === 'month' ? 14 : period === 'quarter' ? 20 : 28}>
                   <XAxis
                     dataKey="label"
                     tick={{ fontSize: 10, fill: '#A89E97', fontFamily: 'Be Vietnam Pro, sans-serif' }}
-                    axisLine={false}
-                    tickLine={false}
+                    axisLine={false} tickLine={false}
+                    interval={period === 'month' ? 4 : 0}
                   />
                   <YAxis hide />
                   <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(47,74,62,0.05)' }} />
                   <Bar dataKey="value" radius={[3, 3, 0, 0]}>
                     {chartData.map((_, i) => (
-                      <Cell key={i} fill={i === chartData.length - 1 ? '#C17A54' : '#A8B5A0'} />
+                      <Cell key={i} fill={i === lastNonZero ? '#C17A54' : '#A8B5A0'} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <p className="text-[10px] text-[#A89E97] mt-3">Tháng hiện tại được tô đậm</p>
           </div>
         )}
       </section>
@@ -162,7 +195,7 @@ export default function HostStatsPage() {
             { to: '/host/pricing',  label: 'Quản lý giá →' },
           ].map(({ to, label }) => (
             <Link key={to} to={to}
-              className="block px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.08em] transition-colors text-center"
+              className="block px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-center transition-colors"
               style={{ border: '1px solid #2F4A3E', color: '#2F4A3E', borderRadius: 6, backgroundColor: '#FAF6EF' }}
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2F4A3E'; e.currentTarget.style.color = '#FAF6EF'; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FAF6EF'; e.currentTarget.style.color = '#2F4A3E'; }}

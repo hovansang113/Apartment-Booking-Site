@@ -206,8 +206,8 @@ export default function AdminStatsPage() {
                   stroke="#C17A54"
                   strokeWidth={2}
                   fill="url(#rev-fill)"
-                  dot={false}
-                  activeDot={{ r: 4, fill: '#C17A54', stroke: '#FAF6EF', strokeWidth: 2 }}
+                  dot={{ r: 3, fill: '#C17A54', stroke: '#FAF6EF', strokeWidth: 1.5 }}
+                  activeDot={{ r: 5, fill: '#C17A54', stroke: '#FAF6EF', strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>

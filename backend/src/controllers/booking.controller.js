@@ -18,7 +18,8 @@ async function cancelByGuestToken(req, res) {
 }
 
 async function getHostStats(req, res) {
-  const stats = await bookingService.getHostStats(req.user.id);
+  const { period = 'month' } = req.query;
+  const stats = await bookingService.getHostStats(req.user.id, period);
   return ok(res, stats);
 }
 

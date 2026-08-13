@@ -185,8 +185,82 @@ async function getListingBookings(listingId, hostId) {
   });
 }
 
+// --- Host stats helpers ---
+function getHostPeriodRange(period) {
+  const now = new Date();
+  switch (period) {
+    case 'week': {
+      const day = now.getDay() === 0 ? 6 : now.getDay() - 1;
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
+    }
+    case 'quarter': {
+      const q = Math.floor(now.getMonth() / 3);
+      return new Date(now.getFullYear(), q * 3, 1);
+    }
+    case 'year':
+      return new Date(now.getFullYear(), 0, 1);
+    case 'month':
+    default:
+      return new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+}
+
+function buildHostChartData(period, bookings) {
+  const now = new Date();
+  const periodStart = getHostPeriodRange(period);
+
+  const filtered = bookings.filter((b) => b.createdAt >= periodStart);
+
+  if (period === 'week') {
+    const days = ['T2','T3','T4','T5','T6','T7','CN'];
+    const buckets = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(periodStart); d.setDate(d.getDate() + i);
+      return { label: days[i], date: d.toDateString(), value: 0 };
+    });
+    for (const b of filtered) {
+      const ds = new Date(b.createdAt).toDateString();
+      const bk = buckets.find((x) => x.date === ds);
+      if (bk) bk.value += Number(b.totalPrice);
+    }
+    return buckets.map(({ label, value }) => ({ label, value }));
+  }
+
+  if (period === 'month') {
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const buckets = Array.from({ length: daysInMonth }, (_, i) => ({ label: String(i + 1), day: i + 1, value: 0 }));
+    for (const b of filtered) {
+      const d = new Date(b.createdAt).getDate();
+      buckets[d - 1].value += Number(b.totalPrice);
+    }
+    return buckets.map(({ label, value }) => ({ label, value }));
+  }
+
+  if (period === 'quarter') {
+    const buckets = Array.from({ length: 13 }, (_, i) => {
+      const wStart = new Date(periodStart); wStart.setDate(wStart.getDate() + i * 7);
+      return { label: `T${i + 1}`, wStart: new Date(wStart), value: 0 };
+    });
+    for (const b of filtered) {
+      const t = new Date(b.createdAt).getTime();
+      for (let i = buckets.length - 1; i >= 0; i--) {
+        if (t >= buckets[i].wStart.getTime()) { buckets[i].value += Number(b.totalPrice); break; }
+      }
+    }
+    return buckets.map(({ label, value }) => ({ label, value }));
+  }
+
+  // year → 12 tháng
+  const MONTHS = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
+  const buckets = Array.from({ length: 12 }, (_, i) => ({ label: MONTHS[i], month: i, value: 0 }));
+  for (const b of filtered) {
+    const m = new Date(b.createdAt).getMonth();
+    buckets[m].value += Number(b.totalPrice);
+  }
+  return buckets.map(({ label, value }) => ({ label, value }));
+}
+
 // Revenue & stats dashboard cho host
-async function getHostStats(hostId) {
+async function getHostStats(hostId, period = 'month') {
   const listings = await prisma.listing.findMany({
     where: { hostId },
     select: { id: true },
@@ -194,10 +268,12 @@ async function getHostStats(hostId) {
   const listingIds = listings.map((l) => l.id);
 
   if (listingIds.length === 0) {
-    return { totalRevenue: 0, totalBookings: 0, byStatus: {}, monthlyRevenue: [] };
+    return { totalRevenue: 0, totalBookings: 0, byStatus: {}, chartData: [] };
   }
 
-  const [allBookings, revenueResult] = await Promise.all([
+  const periodStart = getHostPeriodRange(period);
+
+  const [allBookings, revenueAllTime, revenuePeriod] = await Promise.all([
     prisma.booking.groupBy({
       by: ['status'],
       where: { listingId: { in: listingIds } },
@@ -207,27 +283,18 @@ async function getHostStats(hostId) {
       where: { listingId: { in: listingIds }, status: 'approved' },
       select: { totalPrice: true, createdAt: true },
     }),
+    prisma.booking.aggregate({
+      where: { listingId: { in: listingIds }, status: 'approved', createdAt: { gte: periodStart } },
+      _sum: { totalPrice: true },
+    }),
   ]);
 
-  const byStatus = Object.fromEntries(
-    allBookings.map((g) => [g.status, g._count.id])
-  );
-
-  const totalRevenue = revenueResult.reduce((sum, b) => sum + Number(b.totalPrice), 0);
+  const byStatus = Object.fromEntries(allBookings.map((g) => [g.status, g._count.id]));
+  const totalRevenue = Number(revenuePeriod._sum.totalPrice || 0);
   const totalBookings = allBookings.reduce((sum, g) => sum + g._count.id, 0);
+  const chartData = buildHostChartData(period, revenueAllTime);
 
-  // Gom doanh thu theo tháng (12 tháng gần nhất)
-  const monthlyMap = new Map();
-  revenueResult.forEach(({ totalPrice, createdAt }) => {
-    const key = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}`;
-    monthlyMap.set(key, (monthlyMap.get(key) || 0) + Number(totalPrice));
-  });
-  const monthlyRevenue = Array.from(monthlyMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-12)
-    .map(([month, revenue]) => ({ month, revenue }));
-
-  return { totalRevenue, totalBookings, byStatus, monthlyRevenue };
+  return { totalRevenue, totalBookings, byStatus, chartData, period };
 }
 
 // Guest booking (no auth) — tạo hoặc tìm guest user, sinh guestToken, gửi email
