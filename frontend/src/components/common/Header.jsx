@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import SearchBar from './SearchBar';
 import { GlobeIcon, MenuIcon, UserCircleIcon } from './icons';
 import { useAuth } from '../../context/AuthContext';
+import NotificationBell from './NotificationBell';
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -52,6 +53,8 @@ export default function Header() {
             <GlobeIcon className="h-5 w-5" />
           </button>
 
+          {user && <NotificationBell />}
+
           {/* User menu */}
           <div className="relative" ref={menuRef}>
             <button
@@ -85,6 +88,9 @@ export default function Header() {
                         </Link>
                         <Link to="/host/calendar" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
                           Calendar
+                        </Link>
+                        <Link to="/host/pricing" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
+                          Pricing
                         </Link>
                       </>
                     )}

@@ -18,6 +18,7 @@ import MyBookingsPage from './pages/user/MyBookingsPage';
 import PaymentPage from './pages/user/PaymentPage';
 import GuestBookingPage from './pages/user/GuestBookingPage';
 import HostCalendarPage from './pages/host/HostCalendarPage';
+import HostPricingPage from './pages/host/HostPricingPage';
 
 function MainLayout({ children }) {
   return (
@@ -84,6 +85,11 @@ export default function App() {
         <Route path="/host/calendar" element={
           <ProtectedRoute roles={['host']}>
             <MainLayout><HostCalendarPage /></MainLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/host/pricing" element={
+          <ProtectedRoute roles={['host']}>
+            <MainLayout><HostPricingPage /></MainLayout>
           </ProtectedRoute>
         } />
         <Route path="/host/listings/new" element={
