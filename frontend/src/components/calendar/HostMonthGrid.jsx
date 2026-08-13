@@ -1,4 +1,5 @@
-const WEEKDAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+import { useTranslation } from 'react-i18next';
+
 const COLS = 7;
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN', {
@@ -91,7 +92,7 @@ function barColorClasses(range) {
   return 'bg-neutral-500'; // blocked + manual
 }
 
-function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges }) {
+function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges, t }) {
   const segmentsWithRange = ranges
     .map((range) => ({ range, seg: segmentForWeek(range, week) }))
     .filter((r) => r.seg);
@@ -129,9 +130,9 @@ function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges }) {
                   </span>
                   {(info.minNights || info.maxNights) && (
                     <span className="text-[9px] text-neutral-400">
-                      {info.minNights ? `Tối thiểu ${info.minNights} đêm` : ''}
+                      {info.minNights ? t('hostCalendar.grid.minNights', { count: info.minNights }) : ''}
                       {info.minNights && info.maxNights ? ' · ' : ''}
-                      {info.maxNights ? `Tối đa ${info.maxNights} đêm` : ''}
+                      {info.maxNights ? t('hostCalendar.grid.maxNights', { count: info.maxNights }) : ''}
                     </span>
                   )}
                 </span>
@@ -147,7 +148,7 @@ function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges }) {
       <div className="pointer-events-none absolute inset-0 grid grid-cols-7 gap-1.5">
         {segmentsWithRange.map(({ range, seg }, i) => {
           const isPast = range.date < todayYMD;
-          const label = range.status === 'blocked' && range.source === 'manual' ? range.note || 'Đã chặn' : range.guestLabel;
+          const label = range.status === 'blocked' && range.source === 'manual' ? range.note || t('hostCalendar.grid.blockedDefault') : range.guestLabel;
           const isViewableBooking = range.status === 'booked' && range.booking;
 
           return (
@@ -185,13 +186,15 @@ function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges }) {
 // la 1 cap grid doc lap (o ngay + overlay thanh) de tranh loi can vi khi
 // tron item auto-place voi item dat vi tri tuyet doi trong CUNG 1 grid.
 export default function HostMonthGrid({ year, month, days, todayYMD, onDayClick, onBookingClick }) {
+  const { t } = useTranslation();
+  const weekdays = t('dateRangePicker.weekdays', { returnObjects: true });
   const weeks = buildWeeks(year, month);
   const ranges = groupOccupiedRanges(days);
 
   return (
     <div>
       <div className="grid grid-cols-7 border-b border-neutral-200 pb-2 text-center text-xs font-medium text-neutral-500">
-        {WEEKDAYS.map((w) => (
+        {weekdays.map((w) => (
           <span key={w}>{w}</span>
         ))}
       </div>
@@ -205,6 +208,7 @@ export default function HostMonthGrid({ year, month, days, todayYMD, onDayClick,
             onDayClick={onDayClick}
             onBookingClick={onBookingClick}
             ranges={ranges}
+            t={t}
           />
         ))}
       </div>

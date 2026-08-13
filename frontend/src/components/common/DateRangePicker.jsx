@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import {
-  addDays,
   addMonths,
   format,
   isBefore,
@@ -10,18 +9,12 @@ import {
   startOfDay,
   startOfMonth,
 } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { vi, enUS } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeftIcon, ChevronRightIcon } from './icons';
 
-const WEEKDAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-const FLEX_OPTIONS = [
-  { key: 'exact', label: 'Ngày chính xác' },
-  { key: 1, label: '± 1 ngày' },
-  { key: 2, label: '± 2 ngày' },
-  { key: 3, label: '± 3 ngày' },
-  { key: 7, label: '± 7 ngày' },
-  { key: 14, label: '± 14 ngày' },
-];
+const DATE_FNS_LOCALES = { vi, en: enUS };
+const FLEX_KEYS = [1, 2, 3, 7, 14];
 
 // Luoi thang, bat dau tu Thu Hai. Cell rong (null) cho cac o truoc ngay 1.
 function buildMonthGrid(monthStart) {
@@ -34,7 +27,7 @@ function buildMonthGrid(monthStart) {
   return cells;
 }
 
-function Month({ monthStart, range, hoverDay, onHover, onPick, minDate }) {
+function Month({ monthStart, range, hoverDay, onHover, onPick, minDate, weekdays, dateFnsLocale }) {
   const cells = useMemo(() => buildMonthGrid(monthStart), [monthStart]);
   const { checkIn, checkOut } = range;
   const previewEnd = checkOut || hoverDay;
@@ -42,10 +35,10 @@ function Month({ monthStart, range, hoverDay, onHover, onPick, minDate }) {
   return (
     <div className="w-full">
       <p className="mb-4 text-center text-sm font-semibold text-neutral-900">
-        {format(monthStart, 'LLLL yyyy', { locale: vi })}
+        {format(monthStart, 'LLLL yyyy', { locale: dateFnsLocale })}
       </p>
       <div className="grid grid-cols-7 gap-y-1 text-center text-xs font-medium text-neutral-500">
-        {WEEKDAYS.map((w) => (
+        {weekdays.map((w) => (
           <span key={w}>{w}</span>
         ))}
       </div>
@@ -95,6 +88,14 @@ function Month({ monthStart, range, hoverDay, onHover, onPick, minDate }) {
 }
 
 export default function DateRangePicker({ value, onChange, onClose }) {
+  const { t, i18n } = useTranslation();
+  const weekdays = t('dateRangePicker.weekdays', { returnObjects: true });
+  const dateFnsLocale = DATE_FNS_LOCALES[i18n.language] || vi;
+  const flexOptions = [
+    { key: 'exact', label: t('dateRangePicker.exactDay') },
+    ...FLEX_KEYS.map((n) => ({ key: n, label: t('dateRangePicker.flexDays', { count: n }) })),
+  ];
+
   const today = startOfDay(new Date());
   const [tab, setTab] = useState('exact-mode'); // 'exact-mode' | 'flexible-mode'
   const [flex, setFlex] = useState('exact');
@@ -128,7 +129,7 @@ export default function DateRangePicker({ value, onChange, onClose }) {
               tab === 'exact-mode' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500'
             }`}
           >
-            Ngày
+            {t('dateRangePicker.exact')}
           </button>
           <button
             type="button"
@@ -137,21 +138,19 @@ export default function DateRangePicker({ value, onChange, onClose }) {
               tab === 'flexible-mode' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500'
             }`}
           >
-            Linh hoạt
+            {t('dateRangePicker.flexible')}
           </button>
         </div>
       </div>
 
       {tab === 'flexible-mode' ? (
-        <p className="px-8 py-16 text-center text-sm text-neutral-500">
-          Tìm kiếm theo ngày linh hoạt sẽ sớm ra mắt — hiện dùng tab &quot;Ngày&quot; để chọn lịch chính xác.
-        </p>
+        <p className="px-8 py-16 text-center text-sm text-neutral-500">{t('dateRangePicker.flexibleComingSoon')}</p>
       ) : (
         <>
           <div className="flex items-center justify-between px-1">
             <button
               type="button"
-              aria-label="Tháng trước"
+              aria-label={t('dateRangePicker.prevMonth')}
               disabled={atEarliestMonth}
               onClick={() => setLeftMonth((m) => addMonths(m, -1))}
               className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-0"
@@ -160,7 +159,7 @@ export default function DateRangePicker({ value, onChange, onClose }) {
             </button>
             <button
               type="button"
-              aria-label="Tháng sau"
+              aria-label={t('dateRangePicker.nextMonth')}
               onClick={() => setLeftMonth((m) => addMonths(m, 1))}
               className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 text-neutral-700 hover:bg-neutral-100"
             >
@@ -176,6 +175,8 @@ export default function DateRangePicker({ value, onChange, onClose }) {
               onHover={setHoverDay}
               onPick={handlePick}
               minDate={today}
+              weekdays={weekdays}
+              dateFnsLocale={dateFnsLocale}
             />
             <Month
               monthStart={rightMonth}
@@ -184,11 +185,13 @@ export default function DateRangePicker({ value, onChange, onClose }) {
               onHover={setHoverDay}
               onPick={handlePick}
               minDate={today}
+              weekdays={weekdays}
+              dateFnsLocale={dateFnsLocale}
             />
           </div>
 
           <div className="mt-6 flex flex-wrap justify-center gap-2 border-t border-neutral-200 pt-5">
-            {FLEX_OPTIONS.map((opt) => (
+            {flexOptions.map((opt) => (
               <button
                 key={opt.key}
                 type="button"
@@ -212,14 +215,14 @@ export default function DateRangePicker({ value, onChange, onClose }) {
           onClick={() => onChange({ checkIn: null, checkOut: null })}
           className="text-sm font-semibold text-neutral-900 underline hover:text-brand-700"
         >
-          Xoá
+          {t('dateRangePicker.clear')}
         </button>
         <button
           type="button"
           onClick={onClose}
           className="rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700"
         >
-          Đóng
+          {t('dateRangePicker.close')}
         </button>
       </div>
     </div>

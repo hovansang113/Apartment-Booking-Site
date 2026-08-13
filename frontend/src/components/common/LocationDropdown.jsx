@@ -1,11 +1,14 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { mockListings } from '../../data/mockListings';
 import { LocationPinIcon } from './icons';
 
 // TEMP: goi y dia diem lay tu dia chi cac listing mau. Thay bang API goi y that khi REQ_05/06 xong.
+// Dia chi la du lieu (ten dia danh Viet Nam that), khong dich - chi dich chu UI xung quanh.
 const SUGGESTIONS = [...new Set(mockListings.map((l) => l.address))];
 
 export default function LocationDropdown({ query, onPick }) {
+  const { t } = useTranslation();
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return SUGGESTIONS;
@@ -15,10 +18,10 @@ export default function LocationDropdown({ query, onPick }) {
   return (
     <div className="rounded-3xl border border-neutral-200 bg-white p-3 shadow-xl">
       <p className="px-3 pb-2 pt-1 text-sm font-semibold text-neutral-900">
-        {query.trim() ? 'Kết quả gợi ý' : 'Điểm đến phổ biến'}
+        {query.trim() ? t('locationDropdown.suggestions') : t('locationDropdown.popular')}
       </p>
       {results.length === 0 ? (
-        <p className="px-3 py-6 text-center text-sm text-neutral-500">Không tìm thấy điểm đến phù hợp.</p>
+        <p className="px-3 py-6 text-center text-sm text-neutral-500">{t('locationDropdown.noResults')}</p>
       ) : (
         <ul className="list-none">
           {results.map((place) => (

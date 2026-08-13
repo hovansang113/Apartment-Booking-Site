@@ -46,6 +46,50 @@ async function getMyListings(hostId) {
   });
 }
 
+const PUBLIC_PAGE_SIZE = 20;
+
+// REQ_05: guest xem danh sach listing cong khai - chi hien status approved,
+// khong lo thong tin host ngoai ten hien thi. Loc theo category neu co, phan
+// trang bang page/pageSize co dinh.
+async function getPublicListings({ category, page }) {
+  const pageNum = Number(page) > 0 ? Number(page) : 1;
+  const where = { status: 'approved', ...(category ? { category } : {}) };
+
+  const [listings, total] = await Promise.all([
+    prisma.listing.findMany({
+      where,
+      include: {
+        images: { orderBy: { sortOrder: 'asc' } },
+        host: { select: { fullName: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: (pageNum - 1) * PUBLIC_PAGE_SIZE,
+      take: PUBLIC_PAGE_SIZE,
+    }),
+    prisma.listing.count({ where }),
+  ]);
+
+  return { listings, total };
+}
+
+// REQ_06: guest xem chi tiet 1 listing cong khai - chi hien status approved
+// (listing dang pending/suspended tra ve 404 nhu khong ton tai, khong lo
+// trang thai noi bo cho guest).
+async function getPublicListingById(listingId) {
+  const listing = await prisma.listing.findFirst({
+    where: { id: listingId, status: 'approved' },
+    include: {
+      images: { orderBy: { sortOrder: 'asc' } },
+      amenities: true,
+      host: { select: { fullName: true } },
+    },
+  });
+  if (!listing) {
+    throw new AppError(404, 'Listing not found');
+  }
+  return listing;
+}
+
 // REQ_02: host creates a listing
 async function createListing({
   hostId,
@@ -55,7 +99,8 @@ async function createListing({
   address,
   latitude,
   longitude,
-  defaultPrice,
+  weekdayPrice,
+  weekendPrice,
   guestCapacity,
   bedrooms,
   beds,
@@ -74,7 +119,8 @@ async function createListing({
       address,
       latitude,
       longitude,
-      defaultPrice,
+      weekdayPrice,
+      weekendPrice,
       guestCapacity,
       bedrooms,
       beds,
@@ -112,4 +158,11 @@ async function deleteListing({ listingId, hostId }) {
   await prisma.listing.delete({ where: { id: listingId } });
 }
 
-module.exports = { getMyListings, createListing, updateListing, deleteListing };
+module.exports = {
+  getMyListings,
+  getPublicListings,
+  getPublicListingById,
+  createListing,
+  updateListing,
+  deleteListing,
+};

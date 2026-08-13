@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
+import { format } from 'date-fns';
+import { vi, enUS } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 
-const WEEKDAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-const MONTHS_VI = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+const DATE_FNS_LOCALES = { vi, en: enUS };
 
 function toYMD(date) {
   return date.toISOString().slice(0, 10);
@@ -30,17 +32,17 @@ function getCalendarDays(year, month) {
   return days;
 }
 
-function MonthCalendar({ year, month, bookedSet, todayYMD, checkIn, checkOut, onSelectDate }) {
+function MonthCalendar({ year, month, bookedSet, todayYMD, checkIn, checkOut, onSelectDate, weekdays, dateFnsLocale, t }) {
   const days = useMemo(() => getCalendarDays(year, month), [year, month]);
 
   return (
     <div className="flex-1 min-w-0">
-      <p className="text-center font-semibold text-neutral-800 mb-3">
-        {MONTHS_VI[month]} {year}
+      <p className="text-center font-semibold text-neutral-800 mb-3 capitalize">
+        {format(new Date(year, month, 1), 'LLLL yyyy', { locale: dateFnsLocale })}
       </p>
       {/* Weekday headers */}
       <div className="grid grid-cols-7 mb-1">
-        {WEEKDAYS.map((d) => (
+        {weekdays.map((d) => (
           <div key={d} className="text-center text-[11px] font-medium text-neutral-400 py-1">
             {d}
           </div>
@@ -82,7 +84,7 @@ function MonthCalendar({ year, month, bookedSet, todayYMD, checkIn, checkOut, on
               <div
                 onClick={() => !isPast && !isBooked && onSelectDate && onSelectDate(ymd)}
                 className={className}
-                title={isBooked ? 'Đã có khách đặt' : isPast ? '' : 'Click để chọn'}
+                title={isBooked ? t('listing.calendar.bookedTitle') : isPast ? '' : t('listing.calendar.clickToSelect')}
               >
                 {isBooked && !isPast ? (
                   <span className="relative">
@@ -102,6 +104,10 @@ function MonthCalendar({ year, month, bookedSet, todayYMD, checkIn, checkOut, on
 }
 
 export default function AvailabilityCalendar({ bookedRanges = [], checkIn, checkOut, onSelectDate }) {
+  const { t, i18n } = useTranslation();
+  const weekdays = t('dateRangePicker.weekdays', { returnObjects: true });
+  const dateFnsLocale = DATE_FNS_LOCALES[i18n.language] || vi;
+
   const today = new Date();
   const todayYMD = toYMD(today);
 
@@ -115,29 +121,29 @@ export default function AvailabilityCalendar({ bookedRanges = [], checkIn, check
   const canGoPrev = offset > 0;
 
   return (
-    <section className="py-8 border-t border-neutral-200">
-      <h2 className="text-xl font-semibold text-neutral-900 mb-1">Lịch trống phòng</h2>
-      <p className="text-sm text-neutral-500 mb-5">Click vào ngày để chọn ngày nhận / trả phòng. Thời gian tối thiểu là 1 đêm.</p>
+    <section id="availability-calendar" className="py-8 border-t border-neutral-200 scroll-mt-24">
+      <h2 className="text-xl font-semibold text-neutral-900 mb-1">{t('listing.calendar.heading')}</h2>
+      <p className="text-sm text-neutral-500 mb-5">{t('listing.calendar.hint')}</p>
 
       {/* Legend */}
       <div className="flex gap-5 mb-6 text-xs text-neutral-600">
         <span className="flex items-center gap-1.5">
           <span className="w-4 h-4 rounded-full border border-neutral-200 bg-white inline-block" />
-          Còn trống
+          {t('listing.calendar.available')}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-4 h-4 rounded-full bg-teal-600 inline-block" />
-          Đã chọn
+          {t('listing.calendar.selected')}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-4 h-4 rounded-full bg-neutral-100 inline-block relative overflow-hidden">
             <span className="absolute inset-x-0 top-1/2 h-px bg-neutral-400 block" />
           </span>
-          Đã có khách
+          {t('listing.calendar.booked')}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-4 h-4 rounded-full ring-2 ring-teal-500 inline-block" />
-          Hôm nay
+          {t('listing.calendar.today')}
         </span>
       </div>
 
@@ -147,14 +153,14 @@ export default function AvailabilityCalendar({ bookedRanges = [], checkIn, check
           onClick={() => setOffset((o) => o - 1)}
           disabled={!canGoPrev}
           className="p-2 rounded-full hover:bg-neutral-100 disabled:opacity-30 disabled:cursor-default transition-colors"
-          aria-label="Tháng trước"
+          aria-label={t('listing.calendar.prevMonth')}
         >
           ‹
         </button>
         <button
           onClick={() => setOffset((o) => o + 1)}
           className="p-2 rounded-full hover:bg-neutral-100 transition-colors"
-          aria-label="Tháng sau"
+          aria-label={t('listing.calendar.nextMonth')}
         >
           ›
         </button>
@@ -170,6 +176,9 @@ export default function AvailabilityCalendar({ bookedRanges = [], checkIn, check
           checkIn={checkIn}
           checkOut={checkOut}
           onSelectDate={onSelectDate}
+          weekdays={weekdays}
+          dateFnsLocale={dateFnsLocale}
+          t={t}
         />
         <div className="w-px bg-neutral-200 shrink-0" />
         <MonthCalendar
@@ -180,6 +189,9 @@ export default function AvailabilityCalendar({ bookedRanges = [], checkIn, check
           checkIn={checkIn}
           checkOut={checkOut}
           onSelectDate={onSelectDate}
+          weekdays={weekdays}
+          dateFnsLocale={dateFnsLocale}
+          t={t}
         />
       </div>
     </section>

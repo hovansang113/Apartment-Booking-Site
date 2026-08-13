@@ -1,12 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-
-const TABS = [
-  { to: '/admin/listings', label: 'Duyệt tin đăng' },
-  { to: '/admin/users', label: 'Người dùng' },
-  { to: '/admin/tax-verifications', label: 'Hồ sơ thuế' },
-];
+import LanguageSwitcher from '../common/LanguageSwitcher';
 
 // Layout rieng cho khu vuc admin - KHONG dung chung Header/Footer cong khai
 // (khong search bar, khong "Chuyen sang che do du lich"...), giong dung
@@ -14,12 +10,19 @@ const TABS = [
 // vuc quan tri, khong phai trai nghiem khach/host nen tach layout rieng cho
 // dung chuan.
 export default function AdminLayout({ children }) {
+  const { t } = useTranslation();
   const location = useLocation();
   const { user, logout } = useAuth();
 
+  const TABS = [
+    { to: '/admin/listings', label: t('admin.layout.tabListings') },
+    { to: '/admin/users', label: t('admin.layout.tabUsers') },
+    { to: '/admin/tax-verifications', label: t('admin.layout.tabTax') },
+  ];
+
   async function handleLogout() {
     await logout();
-    toast.success('Đã đăng xuất tài khoản');
+    toast.success(t('admin.layout.logoutSuccess'));
     window.location.href = '/auth/login';
   }
 
@@ -50,13 +53,14 @@ export default function AdminLayout({ children }) {
           </div>
 
           <div className="flex items-center gap-4">
+            <LanguageSwitcher />
             <span className="hidden sm:inline text-xs text-neutral-500 truncate max-w-[160px]">{user?.email}</span>
             <button
               type="button"
               onClick={handleLogout}
               className="text-xs font-semibold text-red-600 hover:underline"
             >
-              Đăng xuất
+              {t('admin.layout.logout')}
             </button>
           </div>
         </div>

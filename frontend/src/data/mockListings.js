@@ -1,18 +1,6 @@
-// TEMP: du lieu mau de dung giao dien. Xoa file nay khi REQ_05/06
-// (GET /api/listings, GET /api/listings/:id) da xong va cac trang chuyen
-// sang goi listingService that.
-
-const GALLERY_POOL = [
-  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=60',
-  'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1200&q=60',
-  'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=60',
-  'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1200&q=60',
-  'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=1200&q=60',
-];
-
-function gallery(cover) {
-  return [cover.replace('w=800', 'w=1200'), ...GALLERY_POOL];
-}
+// REQ_05/06 da noi API that (xem listingService.js) - file nay gio chi con 2
+// vai tro: (1) fallback hien thi cho Home.jsx khi API loi that (khong phai
+// khi API tra ve rong), (2) du lieu ten dia diem mau cho LocationDropdown.js.
 
 export const mockListings = [
   {
@@ -160,13 +148,3 @@ export const mockListings = [
       'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=60',
   },
 ];
-
-export function getListingById(id) {
-  if (!id) return null;
-  const cleanId = String(id).trim();
-  const listing = mockListings.find(
-    (l) => l.id === cleanId || l.id === `mock-${cleanId}` || l.id.replace('mock-', '') === cleanId,
-  );
-  if (!listing) return null;
-  return { ...listing, images: gallery(listing.image) };
-}

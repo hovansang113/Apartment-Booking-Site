@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import {
   AmenityIcon,
   CategoryIcon,
@@ -11,29 +12,18 @@ import {
 } from '../../components/common/icons';
 import { createListing as createListingApi } from '../../services/listingService';
 
-const CATEGORY_OPTIONS = [
-  { id: 'apartment', label: 'Căn hộ', desc: 'Chỗ ở thuộc tòa nhà chung cư hoặc khu tập thể' },
-  { id: 'house', label: 'Nhà riêng', desc: 'Căn nhà nguyên căn độc lập dành riêng cho khách' },
-  { id: 'villa', label: 'Biệt thự / Villa', desc: 'Biệt thự sang trọng với khuôn viên rộng rãi' },
-  { id: 'homestay', label: 'Homestay', desc: 'Không gian ấm cúng, thân thiện mang bản sắc địa phương' },
-  { id: 'hotel_room', label: 'Phòng khách sạn', desc: 'Phòng trong khách sạn hoặc khu nghỉ dưỡng' },
-];
+const CATEGORY_IDS = ['apartment', 'house', 'villa', 'homestay', 'hotel_room'];
+const MAIN_AMENITY_IDS = ['wifi', 'tv', 'kitchen', 'washer', 'free_parking', 'air_conditioning', 'workspace'];
+const FEATURED_AMENITY_IDS = ['pool'];
 
-const MAIN_AMENITIES = [
-  { id: 'wifi', label: 'Wi-fi', name: 'wifi' },
-  { id: 'tv', label: 'TV', name: 'tv' },
-  { id: 'kitchen', label: 'Nhà bếp', name: 'kitchen' },
-  { id: 'washer', label: 'Máy giặt', name: 'washer' },
-  { id: 'free_parking', label: 'Chỗ đỗ xe miễn phí trong khuôn viên', name: 'free_parking' },
-  { id: 'air_conditioning', label: 'Điều hòa nhiệt độ', name: 'air_conditioning' },
-  { id: 'workspace', label: 'Không gian riêng để làm việc', name: 'workspace' },
-];
-
-const FEATURED_AMENITIES = [
-  { id: 'pool', label: 'Bể bơi', name: 'pool' },
-];
+const currencyFormatter = new Intl.NumberFormat('vi-VN', {
+  style: 'currency',
+  currency: 'VND',
+  maximumFractionDigits: 0,
+});
 
 export default function CreateListingPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const draftStepParam = parseInt(searchParams.get('step') || '1', 10);
@@ -53,14 +43,15 @@ export default function CreateListingPage() {
 
   useEffect(() => {
     if (searchParams.get('draftId')) {
-      toast('Đang tiếp tục chỉnh sửa bài đăng dở dang của bạn!', { icon: '📝' });
+      toast(t('createListing.draftToast'), { icon: '📝' });
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   const [photos, setPhotos] = useState([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [defaultPrice, setDefaultPrice] = useState(1200000);
+  const [weekdayPrice, setWeekdayPrice] = useState(1200000);
+  const [weekendPrice, setWeekendPrice] = useState(1200000);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function toggleAmenity(id) {
@@ -90,19 +81,19 @@ export default function CreateListingPage() {
 
   function handleNext() {
     if (step === 1 && !category) {
-      toast.error('Vui lòng chọn loại chỗ ở');
+      toast.error(t('createListing.errors.selectCategory'));
       return;
     }
     if (step === 2 && !address.trim()) {
-      toast.error('Vui lòng nhập địa chỉ cụ thể');
+      toast.error(t('createListing.errors.enterAddress'));
       return;
     }
     if (step === 4 && photos.length === 0) {
-      toast.error('Vui lòng tải lên ít nhất 1 ảnh');
+      toast.error(t('createListing.errors.uploadAtLeastOne'));
       return;
     }
     if (step === 5 && !title.trim()) {
-      toast.error('Vui lòng nhập tiêu đề cho bài đăng');
+      toast.error(t('createListing.errors.enterTitle'));
       return;
     }
 
@@ -129,7 +120,8 @@ export default function CreateListingPage() {
       formData.append('description', description.trim());
       formData.append('category', category);
       formData.append('address', address.trim());
-      formData.append('defaultPrice', defaultPrice);
+      formData.append('weekdayPrice', weekdayPrice);
+      formData.append('weekendPrice', weekendPrice);
       formData.append('guestCapacity', guestCapacity);
       formData.append('bedrooms', bedrooms);
       formData.append('beds', beds);
@@ -149,10 +141,10 @@ export default function CreateListingPage() {
         console.warn('API call skipped or backend offline during demo:', e);
       }
 
-      toast.success('Đã tạo thành công bài đăng mới! Bài đăng đang chờ quản trị viên phê duyệt.');
+      toast.success(t('createListing.submitSuccess'));
       navigate('/host/listings');
     } catch (err) {
-      toast.error('Có lỗi xảy ra khi tạo bài đăng. Vui lòng kiểm tra lại!');
+      toast.error(t('createListing.errors.submitError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -161,7 +153,7 @@ export default function CreateListingPage() {
   return (
     <>
       <Helmet>
-        <title>Tạo bài đăng mới — Stayhub Host</title>
+        <title>{t('createListing.pageTitle')}</title>
       </Helmet>
 
       <div className="flex min-h-screen flex-col bg-white text-neutral-900">
@@ -175,16 +167,16 @@ export default function CreateListingPage() {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => toast('Bộ phận hỗ trợ sẽ liên hệ với bạn trong giây lát!', { icon: '💬' })}
+                onClick={() => toast(t('createListing.supportToast'), { icon: '💬' })}
                 className="rounded-full border border-neutral-300 px-4 py-2 text-xs font-semibold text-neutral-700 hover:border-neutral-900 transition-colors"
               >
-                Bạn có thắc mắc?
+                {t('createListing.support')}
               </button>
               <Link
                 to="/host/listings"
                 className="rounded-full border border-neutral-300 px-4 py-2 text-xs font-semibold text-neutral-700 hover:border-neutral-900 transition-colors"
               >
-                Lưu và thoát
+                {t('createListing.saveExit')}
               </Link>
             </div>
           </div>
@@ -196,20 +188,20 @@ export default function CreateListingPage() {
           {step === 1 && (
             <div className="animate-fadeIn">
               <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">
-                Bắt đầu với loại chỗ ở của bạn
+                {t('createListing.step1.title')}
               </h1>
               <p className="mt-2 text-sm text-neutral-500 mb-8">
-                Khách hàng sẽ tìm thấy chỗ ở của bạn dựa trên loại hình này.
+                {t('createListing.step1.subtitle')}
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-                {CATEGORY_OPTIONS.map((cat) => {
-                  const isSelected = category === cat.id;
+                {CATEGORY_IDS.map((id) => {
+                  const isSelected = category === id;
                   return (
                     <button
-                      key={cat.id}
+                      key={id}
                       type="button"
-                      onClick={() => setCategory(cat.id)}
+                      onClick={() => setCategory(id)}
                       className={`flex items-start gap-4 p-5 rounded-2xl border text-left transition-all ${
                         isSelected
                           ? 'border-neutral-900 bg-neutral-50 ring-2 ring-neutral-900 shadow-sm'
@@ -217,23 +209,23 @@ export default function CreateListingPage() {
                       }`}
                     >
                       <div className="p-3 rounded-xl bg-neutral-100 text-neutral-800 shrink-0">
-                        <CategoryIcon name={cat.id} className="h-6 w-6" />
+                        <CategoryIcon name={id} className="h-6 w-6" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-neutral-900">{cat.label}</h3>
-                        <p className="text-xs text-neutral-500 mt-1">{cat.desc}</p>
+                        <h3 className="font-bold text-neutral-900">{t(`createListing.categoryLabel.${id}`)}</h3>
+                        <p className="text-xs text-neutral-500 mt-1">{t(`createListing.categoryDesc.${id}`)}</p>
                       </div>
                     </button>
                   );
                 })}
               </div>
 
-              <h2 className="text-lg font-bold text-neutral-900 mb-4">Sức chứa & Cấu trúc</h2>
+              <h2 className="text-lg font-bold text-neutral-900 mb-4">{t('createListing.step1.capacityHeading')}</h2>
               <div className="rounded-2xl border border-neutral-200 p-6 space-y-6 bg-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-neutral-900">Số lượng khách tối đa</p>
-                    <p className="text-xs text-neutral-500">Số khách có thể ở lại</p>
+                    <p className="font-semibold text-neutral-900">{t('createListing.step1.maxGuests')}</p>
+                    <p className="text-xs text-neutral-500">{t('createListing.step1.maxGuestsSub')}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <button
@@ -256,7 +248,7 @@ export default function CreateListingPage() {
                 </div>
 
                 <div className="border-t border-neutral-100 pt-6 flex items-center justify-between">
-                  <p className="font-semibold text-neutral-900">Phòng ngủ</p>
+                  <p className="font-semibold text-neutral-900">{t('createListing.step1.bedrooms')}</p>
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
@@ -278,7 +270,7 @@ export default function CreateListingPage() {
                 </div>
 
                 <div className="border-t border-neutral-100 pt-6 flex items-center justify-between">
-                  <p className="font-semibold text-neutral-900">Giường ngủ</p>
+                  <p className="font-semibold text-neutral-900">{t('createListing.step1.beds')}</p>
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
@@ -300,7 +292,7 @@ export default function CreateListingPage() {
                 </div>
 
                 <div className="border-t border-neutral-100 pt-6 flex items-center justify-between">
-                  <p className="font-semibold text-neutral-900">Phòng tắm</p>
+                  <p className="font-semibold text-neutral-900">{t('createListing.step1.bathrooms')}</p>
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
@@ -328,23 +320,23 @@ export default function CreateListingPage() {
           {step === 2 && (
             <div className="animate-fadeIn">
               <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">
-                Chỗ ở của bạn nằm ở đâu?
+                {t('createListing.step2.title')}
               </h1>
               <p className="mt-2 text-sm text-neutral-500 mb-8">
-                Địa chỉ cụ thể chỉ được chia sẻ với khách sau khi đơn đặt phòng của họ hoàn tất.
+                {t('createListing.step2.subtitle')}
               </p>
 
               <div className="space-y-4 rounded-2xl border border-neutral-200 p-6 bg-white shadow-sm">
                 <div>
                   <label className="block text-xs font-semibold uppercase text-neutral-700 mb-2">
-                    Địa chỉ chi tiết (Số nhà, Đường, Phường/Xã, Quận/Huyện, Thành phố) <span className="text-red-500">*</span>
+                    {t('createListing.step2.addressLabel')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Ví dụ: 123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, Hồ Chí Minh"
+                    placeholder={t('createListing.step2.addressPlaceholder')}
                     className="w-full rounded-xl border border-neutral-300 px-4 py-3.5 text-sm outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
                   />
                 </div>
@@ -356,33 +348,33 @@ export default function CreateListingPage() {
           {step === 3 && (
             <div className="animate-fadeIn">
               <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">
-                Cho khách biết chỗ ở của bạn có những gì
+                {t('createListing.step3.title')}
               </h1>
               <p className="mt-2 text-sm text-neutral-500 mb-8">
-                Bạn có thể bổ sung thêm tiện nghi sau khi đăng bài đăng.
+                {t('createListing.step3.subtitle')}
               </p>
 
               {/* Section 1 */}
               <h2 className="text-base font-semibold text-neutral-900 mb-4">
-                Còn những tiện nghi yêu thích của khách sau đây thì sao?
+                {t('createListing.step3.section1Heading')}
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-10">
-                {MAIN_AMENITIES.map((item) => {
-                  const isSelected = selectedAmenities.includes(item.id);
+                {MAIN_AMENITY_IDS.map((id) => {
+                  const isSelected = selectedAmenities.includes(id);
                   return (
                     <button
-                      key={item.id}
+                      key={id}
                       type="button"
-                      onClick={() => toggleAmenity(item.id)}
+                      onClick={() => toggleAmenity(id)}
                       className={`flex flex-col items-start justify-between p-5 h-32 rounded-2xl border text-left transition-all ${
                         isSelected
                           ? 'border-neutral-900 bg-neutral-50 ring-2 ring-neutral-900 shadow-sm'
                           : 'border-neutral-300 hover:border-neutral-500 bg-white'
                       }`}
                     >
-                      <AmenityIcon name={item.name} className="h-7 w-7 text-neutral-900" />
-                      <span className="font-medium text-neutral-900 text-sm">{item.label}</span>
+                      <AmenityIcon name={id} className="h-7 w-7 text-neutral-900" />
+                      <span className="font-medium text-neutral-900 text-sm">{t(`createListing.amenityLabel.${id}`)}</span>
                     </button>
                   );
                 })}
@@ -390,25 +382,25 @@ export default function CreateListingPage() {
 
               {/* Section 2 */}
               <h2 className="text-base font-semibold text-neutral-900 mb-4">
-                Bạn có tiện nghi nào nổi bật không?
+                {t('createListing.step3.section2Heading')}
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {FEATURED_AMENITIES.map((item) => {
-                  const isSelected = selectedAmenities.includes(item.id);
+                {FEATURED_AMENITY_IDS.map((id) => {
+                  const isSelected = selectedAmenities.includes(id);
                   return (
                     <button
-                      key={item.id}
+                      key={id}
                       type="button"
-                      onClick={() => toggleAmenity(item.id)}
+                      onClick={() => toggleAmenity(id)}
                       className={`flex flex-col items-start justify-between p-5 h-32 rounded-2xl border text-left transition-all ${
                         isSelected
                           ? 'border-neutral-900 bg-neutral-50 ring-2 ring-neutral-900 shadow-sm'
                           : 'border-neutral-200 hover:border-neutral-400 bg-white'
                       }`}
                     >
-                      <AmenityIcon name={item.name} className="h-7 w-7 text-neutral-900" />
-                      <span className="font-medium text-neutral-900 text-sm">{item.label}</span>
+                      <AmenityIcon name={id} className="h-7 w-7 text-neutral-900" />
+                      <span className="font-medium text-neutral-900 text-sm">{t(`createListing.amenityLabel.${id}`)}</span>
                     </button>
                   );
                 })}
@@ -420,10 +412,10 @@ export default function CreateListingPage() {
           {step === 4 && (
             <div className="animate-fadeIn">
               <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">
-                Thêm một số hình ảnh về chỗ ở của bạn
+                {t('createListing.step4.title')}
               </h1>
               <p className="mt-2 text-sm text-neutral-500 mb-8">
-                Bạn cần tải lên ít nhất 1 hình ảnh đẹp để bài đăng trông thật thu hút.
+                {t('createListing.step4.subtitle')}
               </p>
 
               <div className="mb-6 rounded-3xl border-2 border-dashed border-neutral-300 p-8 text-center bg-neutral-50 hover:bg-neutral-100 transition-colors">
@@ -437,8 +429,8 @@ export default function CreateListingPage() {
                 />
                 <label htmlFor="photo-upload-input" className="cursor-pointer">
                   <p className="text-4xl mb-2">📸</p>
-                  <p className="font-bold text-neutral-900">Kéo thả hoặc nhấp vào đây để chọn ảnh</p>
-                  <p className="text-xs text-neutral-500 mt-1">Hỗ trợ JPG, PNG, WEBP (tối đa 10MB/ảnh)</p>
+                  <p className="font-bold text-neutral-900">{t('createListing.step4.dropzoneTitle')}</p>
+                  <p className="text-xs text-neutral-500 mt-1">{t('createListing.step4.dropzoneSub')}</p>
                 </label>
               </div>
 
@@ -446,10 +438,10 @@ export default function CreateListingPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {photos.map((photo, index) => (
                     <div key={photo.id} className="relative aspect-4/3 rounded-2xl overflow-hidden group border border-neutral-200 shadow-sm">
-                      <img src={photo.url} alt={`Upload ${index}`} className="h-full w-full object-cover" />
+                      <img src={photo.url} alt={t('createListing.step4.uploadAlt', { index })} className="h-full w-full object-cover" />
                       {index === 0 && (
                         <span className="absolute top-2 left-2 rounded-full bg-neutral-900/80 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
-                          Ảnh bìa
+                          {t('createListing.step4.coverPhoto')}
                         </span>
                       )}
                       <button
@@ -470,16 +462,16 @@ export default function CreateListingPage() {
           {step === 5 && (
             <div className="animate-fadeIn">
               <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">
-                Bây giờ, hãy đặt tên và mô tả chỗ ở
+                {t('createListing.step5.title')}
               </h1>
               <p className="mt-2 text-sm text-neutral-500 mb-8">
-                Tiêu đề ngắn gọn mang nét đặc trưng nhất của chỗ ở sẽ thu hút khách đặt nhanh hơn.
+                {t('createListing.step5.subtitle')}
               </p>
 
               <div className="space-y-6">
                 <div className="rounded-2xl border border-neutral-200 p-6 bg-white">
                   <label className="block text-xs font-semibold uppercase text-neutral-700 mb-2">
-                    Tiêu đề bài đăng <span className="text-red-500">*</span>
+                    {t('createListing.step5.titleLabel')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -487,21 +479,21 @@ export default function CreateListingPage() {
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Ví dụ: Căn hộ Studio view biển ấm cúng trung tâm thành phố"
+                    placeholder={t('createListing.step5.titlePlaceholder')}
                     className="w-full rounded-xl border border-neutral-300 px-4 py-3.5 text-sm outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
                   />
-                  <p className="text-xs text-neutral-400 mt-2 text-right">{title.length}/100 ký tự</p>
+                  <p className="text-xs text-neutral-400 mt-2 text-right">{t('createListing.step5.titleCharCount', { count: title.length })}</p>
                 </div>
 
                 <div className="rounded-2xl border border-neutral-200 p-6 bg-white">
                   <label className="block text-xs font-semibold uppercase text-neutral-700 mb-2">
-                    Mô tả chỗ ở của bạn
+                    {t('createListing.step5.descLabel')}
                   </label>
                   <textarea
                     rows={5}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Giới thiệu điểm nổi bật, vị trí thuận tiện, không gian căn hộ..."
+                    placeholder={t('createListing.step5.descPlaceholder')}
                     className="w-full rounded-xl border border-neutral-300 p-4 text-sm outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900"
                   />
                 </div>
@@ -513,42 +505,66 @@ export default function CreateListingPage() {
           {step === 6 && (
             <div className="animate-fadeIn">
               <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">
-                Bây giờ, hãy đặt mức giá theo đêm
+                {t('createListing.step6.title')}
               </h1>
               <p className="mt-2 text-sm text-neutral-500 mb-8">
-                Bạn có thể thay đổi giá bất kỳ lúc nào sau khi hoàn tất bài đăng.
+                {t('createListing.step6.subtitle')}
               </p>
 
-              <div className="rounded-2xl border border-neutral-200 p-8 bg-white text-center max-w-md mx-auto mb-10 shadow-sm">
-                <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">
-                  Giá mỗi đêm (VND)
-                </p>
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-3xl font-bold text-neutral-900">₫</span>
-                  <input
-                    type="number"
-                    step={50000}
-                    min={100000}
-                    value={defaultPrice}
-                    onChange={(e) => setDefaultPrice(Number(e.target.value))}
-                    className="w-48 text-center text-4xl font-extrabold text-neutral-900 border-b-2 border-neutral-300 focus:border-neutral-900 outline-none pb-1"
-                  />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto mb-10">
+                <div className="rounded-2xl border border-neutral-200 p-6 bg-white text-center shadow-sm">
+                  <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+                    {t('createListing.step6.weekdayPriceLabel')}
+                  </p>
+                  <p className="text-xs text-neutral-400 mb-2">{t('createListing.step6.weekdayPriceHint')}</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-2xl font-bold text-neutral-900">₫</span>
+                    <input
+                      type="number"
+                      step={50000}
+                      min={100000}
+                      value={weekdayPrice}
+                      onChange={(e) => setWeekdayPrice(Number(e.target.value))}
+                      className="w-32 text-center text-3xl font-extrabold text-neutral-900 border-b-2 border-neutral-300 focus:border-neutral-900 outline-none pb-1"
+                    />
+                  </div>
                 </div>
-                <p className="text-xs text-neutral-400 mt-4">
-                  Ví dụ: 1.200.000 ₫ / đêm
+
+                <div className="rounded-2xl border border-neutral-200 p-6 bg-white text-center shadow-sm">
+                  <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+                    {t('createListing.step6.weekendPriceLabel')}
+                  </p>
+                  <p className="text-xs text-neutral-400 mb-2">{t('createListing.step6.weekendPriceHint')}</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-2xl font-bold text-neutral-900">₫</span>
+                    <input
+                      type="number"
+                      step={50000}
+                      min={100000}
+                      value={weekendPrice}
+                      onChange={(e) => setWeekendPrice(Number(e.target.value))}
+                      className="w-32 text-center text-3xl font-extrabold text-neutral-900 border-b-2 border-neutral-300 focus:border-neutral-900 outline-none pb-1"
+                    />
+                  </div>
+                </div>
+
+                <p className="col-span-full text-center text-xs text-neutral-400">
+                  {t('createListing.step6.priceExample')}
                 </p>
               </div>
 
               {/* Summary Card */}
               <div className="rounded-2xl border border-neutral-200 p-6 bg-neutral-50">
-                <h3 className="font-bold text-neutral-900 mb-4">Tóm tắt thông tin đăng bài</h3>
+                <h3 className="font-bold text-neutral-900 mb-4">{t('createListing.step6.summaryHeading')}</h3>
                 <div className="space-y-2 text-sm text-neutral-700">
-                  <p><span className="font-semibold text-neutral-900">Tiêu đề:</span> {title || 'Chưa đặt'}</p>
-                  <p><span className="font-semibold text-neutral-900">Loại chỗ ở:</span> {CATEGORY_OPTIONS.find((c) => c.id === category)?.label}</p>
-                  <p><span className="font-semibold text-neutral-900">Địa chỉ:</span> {address || 'Chưa nhập'}</p>
-                  <p><span className="font-semibold text-neutral-900">Sức chứa:</span> {guestCapacity} khách · {bedrooms} phòng ngủ · {beds} giường · {bathrooms} phòng tắm</p>
-                  <p><span className="font-semibold text-neutral-900">Tiện nghi chọn:</span> {selectedAmenities.length} tiện nghi</p>
-                  <p><span className="font-semibold text-neutral-900">Hình ảnh:</span> {photos.length} hình ảnh</p>
+                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryTitle')}</span> {title || t('createListing.step6.notSet')}</p>
+                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryCategory')}</span> {t(`createListing.categoryLabel.${category}`)}</p>
+                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryAddress')}</span> {address || t('createListing.step6.notEntered')}</p>
+                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryCapacity')}</span> {t('createListing.step6.summaryCapacityValue', { guests: guestCapacity, bedrooms, beds, bathrooms })}</p>
+                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryWeekdayPrice')}</span> {currencyFormatter.format(weekdayPrice)}</p>
+                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryWeekendPrice')}</span> {currencyFormatter.format(weekendPrice)}</p>
+                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryAmenities')}</span> {t('createListing.step6.summaryAmenitiesValue', { count: selectedAmenities.length })}</p>
+                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryPhotos')}</span> {t('createListing.step6.summaryPhotosValue', { count: photos.length })}</p>
                 </div>
               </div>
             </div>
@@ -564,7 +580,7 @@ export default function CreateListingPage() {
               onClick={handleBack}
               className="text-sm font-semibold text-neutral-900 underline disabled:opacity-30 disabled:no-underline"
             >
-              Quay lại
+              {t('createListing.back')}
             </button>
 
             {/* Segmented Progress Line */}
@@ -585,7 +601,7 @@ export default function CreateListingPage() {
               onClick={handleNext}
               className="rounded-xl bg-neutral-900 px-7 py-3 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors shadow-md disabled:opacity-50"
             >
-              {step === totalSteps ? (isSubmitting ? 'Đang xử lý...' : 'Hoàn tất đăng bài') : 'Tiếp theo'}
+              {step === totalSteps ? (isSubmitting ? t('createListing.processing') : t('createListing.finish')) : t('createListing.next')}
             </button>
           </div>
         </footer>

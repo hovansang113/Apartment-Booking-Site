@@ -7,6 +7,19 @@ async function mine(req, res) {
   return ok(res, listings);
 }
 
+// REQ_05 - guest xem danh sach listing cong khai (chi approved)
+async function list(req, res) {
+  const { category, page } = req.query;
+  const result = await listingService.getPublicListings({ category, page });
+  return ok(res, result);
+}
+
+// REQ_06 - guest xem chi tiet 1 listing cong khai (chi approved)
+async function getOne(req, res) {
+  const listing = await listingService.getPublicListingById(req.params.id);
+  return ok(res, listing);
+}
+
 // REQ_02 - host creates a listing
 async function create(req, res) {
   const {
@@ -16,7 +29,8 @@ async function create(req, res) {
     address,
     latitude,
     longitude,
-    defaultPrice,
+    weekdayPrice,
+    weekendPrice,
     guestCapacity,
     bedrooms,
     beds,
@@ -31,7 +45,8 @@ async function create(req, res) {
     address,
     latitude,
     longitude,
-    defaultPrice,
+    weekdayPrice,
+    weekendPrice,
     guestCapacity,
     bedrooms,
     beds,
@@ -51,7 +66,8 @@ async function update(req, res) {
     address,
     latitude,
     longitude,
-    defaultPrice,
+    weekdayPrice,
+    weekendPrice,
     guestCapacity,
     bedrooms,
     beds,
@@ -67,7 +83,8 @@ async function update(req, res) {
     address,
     latitude,
     longitude,
-    defaultPrice,
+    weekdayPrice,
+    weekendPrice,
     guestCapacity,
     bedrooms,
     beds,
@@ -83,4 +100,4 @@ async function remove(req, res) {
   return ok(res, null, 'Listing deleted successfully');
 }
 
-module.exports = { mine, create, update, remove };
+module.exports = { mine, list, getOne, create, update, remove };

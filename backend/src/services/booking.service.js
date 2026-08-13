@@ -1,6 +1,7 @@
 const { BookingStatus, CalendarDayStatus, CalendarDaySource } = require('@prisma/client');
 const prisma = require('../config/prisma');
 const AppError = require('../utils/appError');
+const pricingService = require('./pricing.service');
 
 function toYMD(date) {
   return date.toISOString().slice(0, 10);
@@ -23,8 +24,8 @@ function datesBetween(checkIn, checkOut) {
 // chi du de kiem chung yeu cau trong ticket cua Jason ve REQ_12 - "neu ngay bi
 // chan (block tay/booking/sync ngoai) thi khong cho dat". Con thieu so voi
 // REQ_07 day du: chua ho tro khach dat khong can tai khoan (REQ_14 tu tao
-// user), chua dung pricing.service.js de tinh gia theo tung dem (dang lay
-// dong default_price flat, chua nhin listing_price_overrides).
+// user). Gia tien da dung pricing.service.js (weekday/weekend + override
+// tung ngay, xem REQ_13).
 async function createBooking({ listingId, guestId, checkIn, checkOut }) {
   const dates = datesBetween(checkIn, checkOut);
   if (dates.length === 0) {
@@ -62,7 +63,7 @@ async function createBooking({ listingId, guestId, checkIn, checkOut }) {
       throw new AppError(404, 'Guest not found');
     }
 
-    const totalPrice = Number(listing.defaultPrice) * dates.length;
+    const totalPrice = await pricingService.calculateTotalPrice(tx, { listing, dates });
 
     const booking = await tx.booking.create({
       data: {

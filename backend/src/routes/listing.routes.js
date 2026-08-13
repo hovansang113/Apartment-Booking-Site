@@ -4,13 +4,18 @@ const listingController = require('../controllers/listing.controller');
 const { authenticate } = require('../middlewares/auth.middleware');
 const { authorize } = require('../middlewares/role.middleware');
 const { upload } = require('../middlewares/upload.middleware');
-const { createListingRules, updateListingRules } = require('../validators/listing.validator');
+const {
+  createListingRules,
+  updateListingRules,
+  publicListRules,
+} = require('../validators/listing.validator');
 const { validate } = require('../validators/validate.util');
 
-// router.get('/', ...);            // REQ_05/06
-// router.get('/:id', ...);         // REQ_06
+router.get('/', publicListRules, validate, listingController.list); // REQ_05 - public, no auth
 
 router.get('/mine', authenticate, authorize(UserRole.host), listingController.mine); // prereq REQ_12
+
+router.get('/:id', listingController.getOne); // REQ_06 - public, no auth
 
 router.post(
   '/',

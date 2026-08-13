@@ -1,6 +1,15 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { format, parseISO } from 'date-fns';
+import { vi, enUS } from 'date-fns/locale';
 import { StarIcon } from '../common/icons';
+
+const DATE_FNS_LOCALES = { vi, en: enUS };
+
+function scrollToCalendar() {
+  document.getElementById('availability-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -8,11 +17,31 @@ const currencyFormatter = new Intl.NumberFormat('vi-VN', {
   maximumFractionDigits: 0,
 });
 
-function nightsBetween(checkIn, checkOut) {
-  if (!checkIn || !checkOut) return 0;
-  const ms = new Date(checkOut) - new Date(checkIn);
-  const nights = Math.round(ms / (1000 * 60 * 60 * 24));
-  return nights > 0 ? nights : 0;
+// Cuoi tuan = dem Thu 6 + Thu 7 (khop dung logic backend, xem
+// backend/src/utils/pricing.util.js). checkIn/checkOut la chuoi 'YYYY-MM-DD'
+// nen new Date(ymd) da la UTC midnight theo spec ISO date-only - phai doc lai
+// bang getUTCDay()/setUTCDate() de khong bi lech ngay theo timezone trinh
+// duyet (cung class bug da gap voi node-ical o backend).
+function isWeekendDate(dateObj) {
+  const dow = dateObj.getUTCDay();
+  return dow === 5 || dow === 6;
+}
+
+// Tinh tong tien + so dem thuong/cuoi tuan cho khoang [checkIn, checkOut).
+function nightlyBreakdown(checkIn, checkOut, weekdayPrice, weekendPrice) {
+  if (!checkIn || !checkOut) return { weekdayNights: 0, weekendNights: 0, total: 0 };
+  let weekdayNights = 0;
+  let weekendNights = 0;
+  const cur = new Date(checkIn);
+  const end = new Date(checkOut);
+  while (cur < end) {
+    if (isWeekendDate(cur)) weekendNights += 1;
+    else weekdayNights += 1;
+    cur.setUTCDate(cur.getUTCDate() + 1);
+  }
+  const nights = weekdayNights + weekendNights;
+  const total = nights > 0 ? weekdayNights * weekdayPrice + weekendNights * weekendPrice : 0;
+  return { weekdayNights, weekendNights, nights, total };
 }
 
 function Counter({ label, sub, value, onInc, onDec, disableInc, disableDec }) {
@@ -46,36 +75,19 @@ function Counter({ label, sub, value, onInc, onDec, disableInc, disableDec }) {
 }
 
 // REQ_07 (tao booking) chua co API that — nut Dat phong chi hien thong bao tam.
-export default function BookingWidget({
-  listing,
-  checkIn: propCheckIn,
-  checkOut: propCheckOut,
-  onChangeCheckIn,
-  onChangeCheckOut,
-}) {
-  const [localCheckIn, setLocalCheckIn] = useState('');
-  const [localCheckOut, setLocalCheckOut] = useState('');
+export default function BookingWidget({ listing, checkIn, checkOut }) {
+  const { t, i18n } = useTranslation();
+  const dateFnsLocale = DATE_FNS_LOCALES[i18n.language] || vi;
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
   const [guestOpen, setGuestOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const checkIn = propCheckIn !== undefined ? propCheckIn : localCheckIn;
-  const checkOut = propCheckOut !== undefined ? propCheckOut : localCheckOut;
-
-  const handleCheckInChange = (val) => {
-    if (onChangeCheckIn) onChangeCheckIn(val);
-    else setLocalCheckIn(val);
-  };
-
-  const handleCheckOutChange = (val) => {
-    if (onChangeCheckOut) onChangeCheckOut(val);
-    else setLocalCheckOut(val);
-  };
-
   const totalGuests = adults + children;
-  const nights = useMemo(() => nightsBetween(checkIn, checkOut), [checkIn, checkOut]);
-  const subtotal = nights * listing.pricePerNight;
+  const { weekdayNights, weekendNights, nights, total: subtotal } = useMemo(
+    () => nightlyBreakdown(checkIn, checkOut, listing.weekdayPrice, listing.weekendPrice),
+    [checkIn, checkOut, listing.weekdayPrice, listing.weekendPrice],
+  );
   const maxGuests = listing.guestCapacity;
 
   // close dropdown on outside click
@@ -92,51 +104,60 @@ export default function BookingWidget({
   function handleSubmit(e) {
     e.preventDefault();
     if (nights === 0) {
-      toast.error('Vui lòng chọn ngày nhận và trả phòng');
+      toast.error(t('listing.booking.selectDatesError'));
       return;
     }
-    toast('Tính năng đặt phòng đang được phát triển, quay lại sau nhé!');
+    toast(t('listing.booking.comingSoon'));
   }
 
   const guestLabel = children > 0
-    ? `${adults} người lớn, ${children} trẻ em`
-    : `${adults} người lớn`;
+    ? t('listing.booking.adultsChildrenLabel', { adults, children })
+    : t('listing.booking.adultsLabel', { count: adults });
 
   return (
     <div className="rounded-xl border border-neutral-200 p-6 shadow-lg">
       <div className="flex items-baseline justify-between">
         <p>
+          {listing.weekdayPrice !== listing.weekendPrice && (
+            <span className="text-neutral-500">{t('listing.priceFrom')} </span>
+          )}
           <span className="text-lg font-semibold">{currencyFormatter.format(listing.pricePerNight)}</span>{' '}
-          <span className="text-neutral-500">/ đêm</span>
+          <span className="text-neutral-500">{t('listing.booking.night')}</span>
         </p>
-        <span className="flex items-center gap-1 text-sm">
-          <StarIcon className="h-3.5 w-3.5" />
-          {listing.rating.toFixed(2)}
-        </span>
+        {listing.rating != null && (
+          <span className="flex items-center gap-1 text-sm">
+            <StarIcon className="h-3.5 w-3.5" />
+            {listing.rating.toFixed(2)}
+          </span>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="mt-4">
         <div className="overflow-hidden rounded-lg border border-neutral-300">
-          {/* Dates */}
+          {/* Dates - bam vao se cuon xuong AvailabilityCalendar (id="availability-calendar")
+              phia duoi trang, dung 1 nguon chon ngay duy nhat thay vi input[type=date]
+              cua trinh duyet (khong theo style trang, luon hien tieng Anh). */}
           <div className="grid grid-cols-2">
-            <label className="border-r border-neutral-300 px-3 py-2 cursor-pointer">
-              <span className="block text-[10px] font-semibold uppercase text-neutral-700">Nhận phòng</span>
-              <input
-                type="date"
-                value={checkIn}
-                onChange={(e) => handleCheckInChange(e.target.value)}
-                className="w-full bg-transparent text-sm outline-none cursor-pointer"
-              />
-            </label>
-            <label className="px-3 py-2 cursor-pointer">
-              <span className="block text-[10px] font-semibold uppercase text-neutral-700">Trả phòng</span>
-              <input
-                type="date"
-                value={checkOut}
-                onChange={(e) => handleCheckOutChange(e.target.value)}
-                className="w-full bg-transparent text-sm outline-none cursor-pointer"
-              />
-            </label>
+            <button
+              type="button"
+              onClick={scrollToCalendar}
+              className="border-r border-neutral-300 px-3 py-2 text-left hover:bg-neutral-50 transition-colors"
+            >
+              <span className="block text-[10px] font-semibold uppercase text-neutral-700">{t('listing.booking.checkIn')}</span>
+              <span className={`block text-sm ${checkIn ? 'text-neutral-900' : 'text-neutral-400'}`}>
+                {checkIn ? format(parseISO(checkIn), 'd MMM yyyy', { locale: dateFnsLocale }) : t('search.addDates')}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={scrollToCalendar}
+              className="px-3 py-2 text-left hover:bg-neutral-50 transition-colors"
+            >
+              <span className="block text-[10px] font-semibold uppercase text-neutral-700">{t('listing.booking.checkOut')}</span>
+              <span className={`block text-sm ${checkOut ? 'text-neutral-900' : 'text-neutral-400'}`}>
+                {checkOut ? format(parseISO(checkOut), 'd MMM yyyy', { locale: dateFnsLocale }) : t('search.addDates')}
+              </span>
+            </button>
           </div>
 
           {/* Guest trigger */}
@@ -146,7 +167,7 @@ export default function BookingWidget({
               onClick={() => setGuestOpen((o) => !o)}
               className="w-full text-left px-3 py-2 hover:bg-neutral-50 transition-colors"
             >
-              <span className="block text-[10px] font-semibold uppercase text-neutral-700">Khách</span>
+              <span className="block text-[10px] font-semibold uppercase text-neutral-700">{t('listing.booking.guests')}</span>
               <span className="text-sm text-neutral-800">{guestLabel}</span>
             </button>
 
@@ -154,8 +175,8 @@ export default function BookingWidget({
             {guestOpen && (
               <div className="absolute left-0 right-0 top-full z-20 bg-white border border-neutral-200 rounded-b-lg shadow-lg px-4 divide-y divide-neutral-100">
                 <Counter
-                  label="Người lớn"
-                  sub="Từ 13 tuổi trở lên"
+                  label={t('listing.booking.adults')}
+                  sub={t('listing.booking.adultsHint')}
                   value={adults}
                   onInc={() => setAdults((v) => v + 1)}
                   onDec={() => setAdults((v) => v - 1)}
@@ -163,8 +184,8 @@ export default function BookingWidget({
                   disableDec={adults <= 1}
                 />
                 <Counter
-                  label="Trẻ em"
-                  sub="Dưới 13 tuổi"
+                  label={t('listing.booking.children')}
+                  sub={t('listing.booking.childrenHint')}
                   value={children}
                   onInc={() => setChildren((v) => v + 1)}
                   onDec={() => setChildren((v) => v - 1)}
@@ -172,7 +193,7 @@ export default function BookingWidget({
                   disableDec={children <= 0}
                 />
                 <div className="py-2 text-xs text-neutral-400">
-                  Tối đa {maxGuests} khách
+                  {t('listing.booking.maxGuests', { count: maxGuests })}
                 </div>
                 <div className="py-3">
                   <button
@@ -180,7 +201,7 @@ export default function BookingWidget({
                     onClick={() => setGuestOpen(false)}
                     className="text-sm font-semibold text-neutral-800 underline"
                   >
-                    Xong
+                    {t('listing.booking.done')}
                   </button>
                 </div>
               </div>
@@ -192,17 +213,30 @@ export default function BookingWidget({
           type="submit"
           className="mt-4 w-full rounded-lg bg-brand-600 py-3 text-sm font-semibold text-white hover:bg-brand-700 transition-colors"
         >
-          Đặt phòng
+          {t('listing.booking.submit')}
         </button>
 
         {nights > 0 && (
           <div className="mt-4 space-y-2 text-sm text-neutral-700">
-            <div className="flex justify-between">
-              <span>{currencyFormatter.format(listing.pricePerNight)} x {nights} đêm</span>
-              <span>{currencyFormatter.format(subtotal)}</span>
-            </div>
+            {weekdayNights > 0 && weekendNights > 0 ? (
+              <>
+                <div className="flex justify-between">
+                  <span>{t('listing.booking.subtotal', { price: currencyFormatter.format(listing.weekdayPrice), nights: weekdayNights })}</span>
+                  <span>{currencyFormatter.format(weekdayNights * listing.weekdayPrice)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>{t('listing.booking.subtotal', { price: currencyFormatter.format(listing.weekendPrice), nights: weekendNights })}</span>
+                  <span>{currencyFormatter.format(weekendNights * listing.weekendPrice)}</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between">
+                <span>{t('listing.booking.subtotal', { price: currencyFormatter.format(weekendNights > 0 ? listing.weekendPrice : listing.weekdayPrice), nights })}</span>
+                <span>{currencyFormatter.format(subtotal)}</span>
+              </div>
+            )}
             <div className="flex justify-between border-t border-neutral-200 pt-2 font-semibold text-neutral-900">
-              <span>Tổng cộng</span>
+              <span>{t('listing.booking.total')}</span>
               <span>{currencyFormatter.format(subtotal)}</span>
             </div>
           </div>

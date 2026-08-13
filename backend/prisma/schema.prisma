@@ -118,7 +118,8 @@ model Listing {
   address        String
   latitude       Decimal?      @db.Decimal(10, 7)
   longitude      Decimal?      @db.Decimal(10, 7)
-  defaultPrice   Decimal       @map("default_price") @db.Decimal(12, 2)
+  weekdayPrice   Decimal       @map("weekday_price") @db.Decimal(12, 2)
+  weekendPrice   Decimal       @map("weekend_price") @db.Decimal(12, 2)
   guestCapacity  Int           @map("guest_capacity")
   bedrooms       Int
   beds           Int

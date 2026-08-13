@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Seo from '../../components/common/Seo';
 import CategoryTabs from '../../components/common/CategoryTabs';
 import ListingCard from '../../components/listing/ListingCard';
@@ -22,21 +23,26 @@ function SkeletonCard() {
 }
 
 export default function Home() {
+  const { t } = useTranslation();
   const [category, setCategory] = useState('all');
   const [searchParams, setSearchParams] = useSearchParams();
   const location = searchParams.get('location') || '';
   const guests = Number(searchParams.get('guests')) || null;
   const hasActiveFilters = category !== 'all' || Boolean(location) || Boolean(guests);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['public-listings', category],
     queryFn: () => getPublicListings({ category: category === 'all' ? undefined : category }),
   });
 
+  // Chi fallback ve mock khi API that su loi (vd backend offline luc dev) -
+  // KHONG fallback khi API tra ve rong, vi rong la trang thai that (chua co
+  // listing nao duoc duyet), khong duoc bia du lieu gia de che lap.
   const rawListings = useMemo(() => {
-    if (data?.listings && data.listings.length > 0) return data.listings;
-    return category === 'all' ? mockListings : mockListings.filter((l) => l.category === category);
-  }, [data, category]);
+    if (data?.listings) return data.listings;
+    if (isError) return category === 'all' ? mockListings : mockListings.filter((l) => l.category === category);
+    return [];
+  }, [data, isError, category]);
 
   const listings = useMemo(
     () => filterListings(rawListings, { location, guests }),
@@ -62,8 +68,8 @@ export default function Home() {
   return (
     <>
       <Seo
-        title="Trang chủ"
-        description="Tìm và đặt căn hộ, nhà nguyên căn, villa, homestay khắp Việt Nam."
+        title={t('home.seoTitle')}
+        description={t('home.seoDescription')}
         path="/"
         jsonLd={jsonLd}
       />
@@ -71,7 +77,7 @@ export default function Home() {
       <CategoryTabs active={category} onChange={setCategory} />
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <h1 className="sr-only">Danh sách chỗ ở cho thuê tại Việt Nam</h1>
+        <h1 className="sr-only">{t('home.srHeading')}</h1>
 
         {isLoading ? (
           <ul className="grid list-none grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -81,19 +87,19 @@ export default function Home() {
           </ul>
         ) : listings.length === 0 ? (
           <div className="py-16 text-center">
-            <p className="text-neutral-500 font-medium">Không tìm thấy chỗ ở nào phù hợp</p>
+            <p className="text-neutral-500 font-medium">{t('home.noResults')}</p>
             {hasActiveFilters && (
               <button
                 type="button"
                 onClick={clearFilters}
                 className="mt-3 text-sm font-semibold text-brand-600 underline hover:text-brand-700"
               >
-                Xoá bộ lọc
+                {t('home.clearFilters')}
               </button>
             )}
           </div>
         ) : (
-          <section aria-label="Kết quả tìm kiếm chỗ ở">
+          <section aria-label={t('home.resultsAriaLabel')}>
             <ul className="grid list-none grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {listings.map((listing) => (
                 <li key={listing.id}>

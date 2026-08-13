@@ -1,18 +1,26 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import Seo from '../../components/common/Seo';
 import Gallery from '../../components/listing/Gallery';
 import AmenityList from '../../components/listing/AmenityList';
 import AvailabilityCalendar from '../../components/listing/AvailabilityCalendar';
 import BookingWidget from '../../components/listing/BookingWidget';
 import { HeartIcon, StarIcon } from '../../components/common/icons';
-import { getListingById } from '../../data/mockListings';
+import { getListingById } from '../../services/listingService';
 
 export default function ListingDetail() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
-  const listing = getListingById(id);
+
+  const { data: listing, isLoading, isError } = useQuery({
+    queryKey: ['listing', id],
+    queryFn: () => getListingById(id),
+    retry: false,
+  });
 
   function handleSelectDate(dateStr) {
     if (!checkIn || (checkIn && checkOut)) {
@@ -26,15 +34,23 @@ export default function ListingDetail() {
     }
   }
 
-  if (!listing) {
+  if (isLoading) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-24 text-center">
+        <p className="text-neutral-500">{t('common.loading')}</p>
+      </main>
+    );
+  }
+
+  if (isError || !listing) {
     return (
       <>
-        <Seo title="Không tìm thấy chỗ ở" path={`/listings/${id}`} noindex />
+        <Seo title={t('listing.notFoundTitle')} path={`/listings/${id}`} noindex />
         <main className="mx-auto max-w-3xl px-4 py-24 text-center">
-          <h1 className="text-2xl font-semibold text-neutral-900">Không tìm thấy chỗ ở này</h1>
-          <p className="mt-2 text-neutral-500">Chỗ ở có thể đã bị gỡ hoặc đường dẫn không đúng.</p>
+          <h1 className="text-2xl font-semibold text-neutral-900">{t('listing.notFoundTitle')}</h1>
+          <p className="mt-2 text-neutral-500">{t('listing.notFoundBody')}</p>
           <Link to="/" className="mt-6 inline-block text-brand-600 underline">
-            Về trang chủ
+            {t('listing.backHome')}
           </Link>
         </main>
       </>
@@ -68,10 +84,12 @@ export default function ListingDetail() {
         <h1 className="text-2xl font-semibold text-neutral-900">{listing.title}</h1>
         <div className="mt-2 flex items-center justify-between">
           <div className="flex items-center gap-4 text-sm text-neutral-700">
-            <span className="flex items-center gap-1">
-              <StarIcon className="h-4 w-4" />
-              {listing.rating.toFixed(2)}
-            </span>
+            {listing.rating != null && (
+              <span className="flex items-center gap-1">
+                <StarIcon className="h-4 w-4" />
+                {listing.rating.toFixed(2)}
+              </span>
+            )}
             <span className="underline">{listing.address}</span>
           </div>
           <button
@@ -79,7 +97,7 @@ export default function ListingDetail() {
             className="flex items-center gap-2 text-sm font-semibold text-neutral-700 hover:underline"
           >
             <HeartIcon className="h-5 w-5 text-brand-600" />
-            Lưu
+            {t('listing.saveBtn')}
           </button>
         </div>
 
@@ -90,23 +108,29 @@ export default function ListingDetail() {
         <div className="mt-8 grid grid-cols-1 gap-12 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <div className="border-b border-neutral-200 pb-6">
-              <h2 className="text-xl font-semibold text-neutral-900">
-                Chỗ ở của {listing.host.name}
-                {listing.host.isSuperhost && (
-                  <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
-                    Superhost
-                  </span>
-                )}
-              </h2>
+              {listing.host && (
+                <h2 className="text-xl font-semibold text-neutral-900">
+                  {t('listing.hostedBy', { name: listing.host.name })}
+                  {listing.host.isSuperhost && (
+                    <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+                      {t('listing.superhost')}
+                    </span>
+                  )}
+                </h2>
+              )}
               <p className="mt-1 text-neutral-500">
-                {listing.guestCapacity} khách · {listing.bedrooms} phòng ngủ · {listing.beds} giường ·{' '}
-                {listing.bathrooms} phòng tắm
+                {t('listing.capacitySummary', {
+                  guests: listing.guestCapacity,
+                  bedrooms: listing.bedrooms,
+                  beds: listing.beds,
+                  bathrooms: listing.bathrooms,
+                })}
               </p>
             </div>
 
             <section aria-labelledby="description-heading" className="border-b border-neutral-200 py-8">
               <h2 id="description-heading" className="sr-only">
-                Mô tả
+                {t('listing.descriptionHeading')}
               </h2>
               <p className="whitespace-pre-line leading-relaxed text-neutral-700">
                 {listing.description}
@@ -129,8 +153,6 @@ export default function ListingDetail() {
                 listing={listing}
                 checkIn={checkIn}
                 checkOut={checkOut}
-                onChangeCheckIn={setCheckIn}
-                onChangeCheckOut={setCheckOut}
               />
             </div>
           </div>

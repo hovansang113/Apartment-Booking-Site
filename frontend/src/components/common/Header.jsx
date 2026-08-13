@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import SearchBar from './SearchBar';
-import { GlobeIcon, MenuIcon, UserCircleIcon } from './icons';
+import LanguageSwitcher from './LanguageSwitcher';
+import { MenuIcon, UserCircleIcon } from './icons';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Header() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -27,7 +30,7 @@ export default function Header() {
   async function handleLogout() {
     await logout();
     setMenuOpen(false);
-    toast.success('Đã đăng xuất tài khoản');
+    toast.success(t('common.loggedOut'));
     navigate('/');
   }
 
@@ -42,7 +45,7 @@ export default function Header() {
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Brand Logo */}
           <Link to="/host/today" className="shrink-0 text-2xl font-bold text-brand-600 tracking-tight">
-            stayhub
+            {t('common.brand')}
           </Link>
 
           {/* Host Navigation Center Tabs */}
@@ -53,7 +56,7 @@ export default function Header() {
                 isToday ? 'text-neutral-900 border-b-2 border-neutral-900 font-bold' : 'text-neutral-600 hover:text-neutral-900'
               }`}
             >
-              Hôm nay
+              {t('header.hostModeHome')}
             </Link>
             <Link
               to="/host/calendar"
@@ -61,7 +64,7 @@ export default function Header() {
                 isCalendar ? 'text-neutral-900 border-b-2 border-neutral-900 font-bold' : 'text-neutral-600 hover:text-neutral-900'
               }`}
             >
-              Lịch
+              {t('header.hostModeCalendar')}
             </Link>
             <Link
               to="/host/listings"
@@ -69,18 +72,18 @@ export default function Header() {
                 isListings ? 'text-neutral-900 border-b-2 border-neutral-900 font-bold' : 'text-neutral-600 hover:text-neutral-900'
               }`}
             >
-              Bài đăng
+              {t('header.hostModeListings')}
             </Link>
-            {/* Note: "Tin nhắn" tab removed as per user request */}
           </nav>
 
           {/* Right Action & Profile Menu */}
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <Link
               to="/"
               className="hidden rounded-full px-4 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 sm:inline-block transition-colors"
             >
-              Chuyển sang chế độ du lịch
+              {t('header.switchToTravel')}
             </Link>
 
             {/* Profile Dropdown */}
@@ -102,7 +105,7 @@ export default function Header() {
                     <p className="font-semibold text-neutral-900 truncate">{user.fullName}</p>
                     <p className="text-xs text-neutral-500 truncate">{user.email}</p>
                     <span className="mt-1.5 inline-block rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold text-brand-700 uppercase">
-                      Chủ nhà (Host)
+                      {t('header.hostBadge')}
                     </span>
                   </div>
 
@@ -111,7 +114,7 @@ export default function Header() {
                     onClick={() => setMenuOpen(false)}
                     className="block px-4 py-2.5 font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
                   >
-                    Tạo bài đăng mới
+                    {t('header.createListing')}
                   </Link>
 
                   <Link
@@ -119,9 +122,9 @@ export default function Header() {
                     onClick={() => setMenuOpen(false)}
                     className="flex items-center justify-between px-4 py-2.5 text-neutral-700 hover:bg-neutral-50 transition-colors"
                   >
-                    Thông tin thuế &amp; giấy tờ
+                    {t('header.taxInfo')}
                     {(!user.verificationStatus || user.verificationStatus === 'unverified') && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-label="Chưa xác minh" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-label="unverified" />
                     )}
                   </Link>
 
@@ -130,7 +133,7 @@ export default function Header() {
                     onClick={() => setMenuOpen(false)}
                     className="block px-4 py-2.5 text-neutral-700 hover:bg-neutral-50 transition-colors"
                   >
-                    Chế độ dành cho Khách
+                    {t('header.guestMode')}
                   </Link>
 
                   <div className="my-1 border-t border-neutral-100" />
@@ -140,7 +143,7 @@ export default function Header() {
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2.5 font-medium text-red-600 hover:bg-red-50 transition-colors"
                   >
-                    Đăng xuất
+                    {t('header.logout')}
                   </button>
                 </div>
               )}
@@ -156,7 +159,7 @@ export default function Header() {
     <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
       <div className="mx-auto flex h-20 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
         <Link to="/" className="shrink-0 text-2xl font-bold text-brand-600 tracking-tight">
-          stayhub
+          {t('common.brand')}
         </Link>
 
         <div className="hidden flex-1 justify-center md:flex">
@@ -165,7 +168,7 @@ export default function Header() {
           </div>
         </div>
 
-        <nav aria-label="Tài khoản" className="ml-auto flex shrink-0 items-center gap-2">
+        <nav aria-label={t('header.myTrips')} className="ml-auto flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={() => {
@@ -175,15 +178,9 @@ export default function Header() {
             }}
             className="hidden rounded-full px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 lg:inline-block transition-colors"
           >
-            Cho thuê chỗ ở của bạn
+            {t('header.becomeHost')}
           </button>
-          <button
-            type="button"
-            aria-label="Ngôn ngữ"
-            className="hidden h-10 w-10 items-center justify-center rounded-full text-neutral-700 hover:bg-neutral-100 sm:flex transition-colors"
-          >
-            <GlobeIcon className="h-5 w-5" />
-          </button>
+          <LanguageSwitcher className="hidden sm:flex" />
 
           {/* User Profile / Auth Dropdown */}
           <div className="relative" ref={menuRef}>
@@ -211,7 +208,7 @@ export default function Header() {
                       <p className="text-xs text-neutral-500 truncate">{user.email}</p>
 
                       <span className="mt-1.5 inline-block rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold text-neutral-600 uppercase">
-                        {user.role === 'host' ? 'Chủ nhà (Host)' : user.role === 'admin' ? 'Quản trị viên' : 'Khách hàng'}
+                        {user.role === 'host' ? t('header.hostRole') : user.role === 'admin' ? t('header.adminRole') : t('header.userRole')}
                       </span>
                     </div>
 
@@ -222,21 +219,21 @@ export default function Header() {
                           onClick={() => setMenuOpen(false)}
                           className="block px-4 py-2.5 font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
                         >
-                          Trang quản lý Hôm nay
+                          {t('header.manageToday')}
                         </Link>
                         <Link
                           to="/host/listings"
                           onClick={() => setMenuOpen(false)}
                           className="block px-4 py-2.5 font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
                         >
-                          Quản lý bài đăng
+                          {t('header.manageListings')}
                         </Link>
                         <Link
                           to="/host/listings/new"
                           onClick={() => setMenuOpen(false)}
                           className="block px-4 py-2.5 font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
                         >
-                          Tạo bài đăng mới
+                          {t('header.createListing')}
                         </Link>
                       </>
                     )}
@@ -246,7 +243,7 @@ export default function Header() {
                       onClick={() => setMenuOpen(false)}
                       className="block px-4 py-2.5 text-neutral-700 hover:bg-neutral-50 transition-colors"
                     >
-                      Chuyến đi đã đặt
+                      {t('header.myTrips')}
                     </Link>
 
                     <div className="my-1 border-t border-neutral-100" />
@@ -256,7 +253,7 @@ export default function Header() {
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2.5 font-medium text-red-600 hover:bg-red-50 transition-colors"
                     >
-                      Đăng xuất
+                      {t('header.logout')}
                     </button>
                   </>
                 ) : (
@@ -266,14 +263,14 @@ export default function Header() {
                       onClick={() => setMenuOpen(false)}
                       className="block px-4 py-2.5 font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors"
                     >
-                      Đăng nhập
+                      {t('header.login')}
                     </Link>
                     <Link
                       to="/auth/register"
                       onClick={() => setMenuOpen(false)}
                       className="block px-4 py-2.5 text-neutral-700 hover:bg-neutral-50 transition-colors"
                     >
-                      Đăng ký tài khoản Chủ nhà
+                      {t('header.registerHost')}
                     </Link>
                     <div className="my-1 border-t border-neutral-100" />
                     <Link
@@ -281,7 +278,7 @@ export default function Header() {
                       onClick={() => setMenuOpen(false)}
                       className="block px-4 py-2.5 text-neutral-700 hover:bg-neutral-50 transition-colors"
                     >
-                      Cho thuê chỗ ở của bạn
+                      {t('header.becomeHost')}
                     </Link>
                   </>
                 )}

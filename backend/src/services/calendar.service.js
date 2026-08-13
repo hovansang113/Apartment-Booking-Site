@@ -2,6 +2,7 @@ const ical = require('node-ical');
 const { CalendarDayStatus, CalendarDaySource } = require('@prisma/client');
 const prisma = require('../config/prisma');
 const AppError = require('../utils/appError');
+const { getBasePrice } = require('../utils/pricing.util');
 
 function pad(n) {
   return String(n).padStart(2, '0');
@@ -63,7 +64,6 @@ async function getMonthView({ listingId, hostId, year, month }) {
   const calendarByDate = new Map(calendarRows.map((r) => [toYMD(r.date), r]));
   const overrideByDate = new Map(overrideRows.map((r) => [toYMD(r.date), Number(r.price)]));
   const stayRuleByDate = new Map(stayRuleRows.map((r) => [toYMD(r.date), r]));
-  const defaultPrice = Number(listing.defaultPrice);
 
   const days = [];
   for (let d = 1; d <= total; d++) {
@@ -71,6 +71,7 @@ async function getMonthView({ listingId, hostId, year, month }) {
     const row = calendarByDate.get(ymd);
     const hasOverride = overrideByDate.has(ymd);
     const stayRule = stayRuleByDate.get(ymd);
+    const basePrice = getBasePrice(listing, ymd);
 
     let guestLabel = null;
     let booking = null;
@@ -92,7 +93,8 @@ async function getMonthView({ listingId, hostId, year, month }) {
     days.push({
       date: ymd,
       day: d,
-      price: hasOverride ? overrideByDate.get(ymd) : defaultPrice,
+      price: hasOverride ? overrideByDate.get(ymd) : basePrice,
+      basePrice,
       hasOverride,
       status: row ? row.status : 'available',
       source: row?.source || null,
@@ -104,7 +106,12 @@ async function getMonthView({ listingId, hostId, year, month }) {
     });
   }
 
-  return { listingId, defaultPrice, days };
+  return {
+    listingId,
+    weekdayPrice: Number(listing.weekdayPrice),
+    weekendPrice: Number(listing.weekendPrice),
+    days,
+  };
 }
 
 // "Custom settings" - so dem toi thieu/toi da neu khach check-in vao dung

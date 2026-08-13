@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { SearchIcon, CloseIcon } from './icons';
 import LocationDropdown from './LocationDropdown';
 import DateRangePicker from './DateRangePicker';
@@ -8,6 +9,7 @@ import { formatDateRange } from '../../utils/formatDateRange';
 
 // Dia diem/khach loc them o client (utils/filterListings.js) tren ket qua me tu GET /api/listings.
 export default function SearchBar() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [active, setActive] = useState(null);
@@ -35,7 +37,7 @@ export default function SearchBar() {
     };
   }, []);
 
-  const dateLabel = formatDateRange(dateRange);
+  const dateLabel = formatDateRange(dateRange, i18n.language);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -55,15 +57,15 @@ export default function SearchBar() {
   }
 
   const TRIGGER_SEGMENTS = [
-    { key: 'dates', label: 'Thời gian', value: dateLabel, placeholder: 'Thêm ngày' },
-    { key: 'guests', label: 'Khách', value: guests ? `${guests} khách` : null, placeholder: 'Thêm khách' },
+    { key: 'dates', label: t('search.dates'), value: dateLabel, placeholder: t('search.addDates') },
+    { key: 'guests', label: t('search.guests'), value: guests ? t('search.guestsCount', { count: guests }) : null, placeholder: t('search.addGuests') },
   ];
 
   return (
     <div ref={containerRef} className="relative">
       <form
         role="search"
-        aria-label="Tìm kiếm chỗ ở"
+        aria-label={t('search.ariaLabel')}
         className="flex items-center rounded-full border border-neutral-200 bg-white shadow-sm hover:shadow-md transition-shadow divide-x divide-neutral-200"
         onSubmit={handleSubmit}
       >
@@ -72,7 +74,7 @@ export default function SearchBar() {
             active === 'location' ? 'bg-neutral-100' : 'hover:bg-neutral-50'
           }`}
         >
-          <span className="block text-xs font-semibold text-neutral-900">Địa điểm</span>
+          <span className="block text-xs font-semibold text-neutral-900">{t('search.location')}</span>
           <div className="flex items-center justify-between">
             <input
               type="text"
@@ -82,7 +84,7 @@ export default function SearchBar() {
                 setLocation(e.target.value);
                 setActive('location');
               }}
-              placeholder="Tìm kiếm điểm đến"
+              placeholder={t('search.locationPlaceholder')}
               className="w-full bg-transparent text-sm text-neutral-700 placeholder:text-neutral-400 outline-none pr-4"
             />
             {location && (
@@ -93,7 +95,7 @@ export default function SearchBar() {
                   setLocation('');
                 }}
                 className="text-neutral-400 hover:text-neutral-700 p-0.5"
-                title="Xóa địa điểm"
+                title={t('search.clearLocation')}
               >
                 <CloseIcon className="h-3.5 w-3.5" />
               </button>
@@ -121,16 +123,16 @@ export default function SearchBar() {
             <button
               type="button"
               onClick={handleClearAll}
-              title="Xóa tất cả bộ lọc"
+              title={t('search.clearAll')}
               className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-colors"
             >
               <CloseIcon className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Xóa bộ lọc</span>
+              <span className="hidden sm:inline">{t('search.clearFilters')}</span>
             </button>
           )}
           <button
             type="submit"
-            aria-label="Tìm kiếm"
+            aria-label={t('search.submit')}
             className="flex items-center gap-2 rounded-full bg-brand-600 px-4 py-3 text-white hover:bg-brand-700 transition-colors"
           >
             <SearchIcon className="h-4 w-4" />

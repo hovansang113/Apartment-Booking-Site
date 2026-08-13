@@ -1,4 +1,4 @@
-const { body } = require('express-validator');
+const { body, query } = require('express-validator');
 const { ListingCategory, Amenity } = require('@prisma/client');
 
 const TITLE_MAX = 191; // matches VARCHAR(191) column
@@ -18,10 +18,15 @@ const addressRule = (optional) =>
     .isLength({ max: ADDRESS_MAX })
     .withMessage(`Address must be at most ${ADDRESS_MAX} characters`);
 
-const defaultPriceRule = (optional) =>
-  (optional ? body('defaultPrice').optional() : body('defaultPrice'))
+const weekdayPriceRule = (optional) =>
+  (optional ? body('weekdayPrice').optional() : body('weekdayPrice'))
     .isFloat({ gt: 0 })
-    .withMessage('Default price must be a positive number');
+    .withMessage('Weekday price must be a positive number');
+
+const weekendPriceRule = (optional) =>
+  (optional ? body('weekendPrice').optional() : body('weekendPrice'))
+    .isFloat({ gt: 0 })
+    .withMessage('Weekend price must be a positive number');
 
 const intFieldRule = (field, optional) =>
   (optional ? body(field).optional() : body(field))
@@ -85,7 +90,8 @@ const atLeastOneImageRule = body('images').custom((_, { req }) => {
 const createListingRules = [
   titleRule(false),
   addressRule(false),
-  defaultPriceRule(false),
+  weekdayPriceRule(false),
+  weekendPriceRule(false),
   intFieldRule('guestCapacity', false),
   intFieldRule('bedrooms', false),
   intFieldRule('beds', false),
@@ -101,7 +107,8 @@ const createListingRules = [
 const updateListingRules = [
   titleRule(true),
   addressRule(true),
-  defaultPriceRule(true),
+  weekdayPriceRule(true),
+  weekendPriceRule(true),
   intFieldRule('guestCapacity', true),
   intFieldRule('bedrooms', true),
   intFieldRule('beds', true),
@@ -113,4 +120,10 @@ const updateListingRules = [
   amenitiesRule,
 ];
 
-module.exports = { createListingRules, updateListingRules };
+// REQ_05: query params cua danh sach listing cong khai
+const publicListRules = [
+  query('category').optional({ checkFalsy: true }).isIn(Object.values(ListingCategory)).withMessage('Invalid category'),
+  query('page').optional({ checkFalsy: true }).isInt({ min: 1 }).withMessage('Page must be a positive integer').toInt(),
+];
+
+module.exports = { createListingRules, updateListingRules, publicListRules };

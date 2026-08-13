@@ -1,7 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import toast from 'react-hot-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { vi, enUS } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import HostMonthGrid from '../../components/calendar/HostMonthGrid';
 import DayEditModal from '../../components/calendar/DayEditModal';
 import BookingDetailModal from '../../components/calendar/BookingDetailModal';
@@ -9,10 +12,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '../../components/common/icons
 import { getHostListings } from '../../services/listingService';
 import * as calendarService from '../../services/calendarService';
 
-const MONTHS_VI = [
-  'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
-  'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12',
-];
+const DATE_FNS_LOCALES = { vi, en: enUS };
 
 function toYMD(date) {
   return date.toISOString().slice(0, 10);
@@ -25,6 +25,8 @@ function errorMessage(err, fallback) {
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 function ConnectCalendarSection({ listing }) {
+  const { t, i18n } = useTranslation();
+  const dateFnsLocale = DATE_FNS_LOCALES[i18n.language] || vi;
   const listingId = listing.id;
   const exportUrl = `${API_BASE}/calendar/${listing.id}/export.ics?t=${listing.icalToken}`;
   const queryClient = useQueryClient();
@@ -54,39 +56,39 @@ function ConnectCalendarSection({ listing }) {
   const connectMutation = useMutation({
     mutationFn: () => calendarService.connectSyncSource(listingId, icalUrl.trim(), label.trim()),
     onSuccess: () => {
-      toast.success('Đã kết nối và đồng bộ lịch ngoài');
+      toast.success(t('hostCalendar.connect.connectSuccess'));
       closeForm();
       invalidateAll();
     },
-    onError: (err) => toast.error(errorMessage(err, 'Không kết nối được — kiểm tra lại link .ics')),
+    onError: (err) => toast.error(errorMessage(err, t('hostCalendar.connect.connectErrorFallback'))),
   });
 
   const updateMutation = useMutation({
     mutationFn: () => calendarService.updateSyncSource(listingId, editingSyncId, { icalUrl: icalUrl.trim(), label: label.trim() }),
     onSuccess: () => {
-      toast.success('Đã cập nhật lịch ngoài');
+      toast.success(t('hostCalendar.connect.updateSuccess'));
       closeForm();
       invalidateAll();
     },
-    onError: (err) => toast.error(errorMessage(err, 'Cập nhật thất bại')),
+    onError: (err) => toast.error(errorMessage(err, t('hostCalendar.connect.updateErrorFallback'))),
   });
 
   const refreshMutation = useMutation({
     mutationFn: (syncId) => calendarService.refreshSyncSource(listingId, syncId),
     onSuccess: () => {
-      toast.success('Đã làm mới đồng bộ');
+      toast.success(t('hostCalendar.connect.refreshSuccess'));
       invalidateAll();
     },
-    onError: (err) => toast.error(errorMessage(err, 'Làm mới thất bại')),
+    onError: (err) => toast.error(errorMessage(err, t('hostCalendar.connect.refreshErrorFallback'))),
   });
 
   const removeMutation = useMutation({
     mutationFn: (syncId) => calendarService.removeSyncSource(listingId, syncId),
     onSuccess: () => {
-      toast.success('Đã ngắt kết nối');
+      toast.success(t('hostCalendar.connect.disconnectSuccess'));
       invalidateAll();
     },
-    onError: (err) => toast.error(errorMessage(err, 'Không ngắt kết nối được')),
+    onError: (err) => toast.error(errorMessage(err, t('hostCalendar.connect.disconnectErrorFallback'))),
   });
 
   function openAddForm() {
@@ -106,7 +108,7 @@ function ConnectCalendarSection({ listing }) {
   function handleSubmit(e) {
     e.preventDefault();
     if (!icalUrl.trim() || !label.trim()) {
-      toast.error('Nhập đủ tên hiển thị và link .ics');
+      toast.error(t('hostCalendar.connect.fillRequired'));
       return;
     }
     if (editingSyncId) updateMutation.mutate();
@@ -118,17 +120,15 @@ function ConnectCalendarSection({ listing }) {
 
   return (
     <div className="mt-8 rounded-2xl border border-neutral-200 p-5">
-      <h2 className="text-base font-bold text-neutral-900 mb-1">Kết nối lịch ngoài</h2>
+      <h2 className="text-base font-bold text-neutral-900 mb-1">{t('hostCalendar.connect.heading')}</h2>
       <p className="text-sm text-neutral-500 mb-4">
-        Đồng bộ 2 chiều với Airbnb/VRBO qua link iCal (.ics) — ngày đã có khách trên hệ thống ngoài sẽ tự động bị
-        chặn ở đây.
+        {t('hostCalendar.connect.description')}
       </p>
 
       <div className="mb-5 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-        <p className="text-xs font-semibold uppercase text-neutral-500 mb-1">Bước 1 — Dán link này sang hệ thống khác</p>
+        <p className="text-xs font-semibold uppercase text-neutral-500 mb-1">{t('hostCalendar.connect.step1Label')}</p>
         <p className="text-xs text-neutral-500 mb-2">
-          Copy link dưới đây, dán vào phần "Kết nối lịch ngoài"/"Connect calendar" của Airbnb hoặc VRBO — để ngày khách
-          đặt trên Stayhub cũng tự động chặn được bên đó.
+          {t('hostCalendar.connect.step1Desc')}
         </p>
         <div className="flex items-center gap-2">
           <input
@@ -142,11 +142,11 @@ function ConnectCalendarSection({ listing }) {
             type="button"
             onClick={() => {
               navigator.clipboard.writeText(exportUrl);
-              toast.success('Đã copy link');
+              toast.success(t('hostCalendar.connect.copied'));
             }}
             className="shrink-0 rounded-lg bg-neutral-900 px-3 py-2 text-xs font-semibold text-white hover:bg-neutral-800"
           >
-            Copy
+            {t('hostCalendar.connect.copy')}
           </button>
         </div>
       </div>
@@ -158,8 +158,8 @@ function ConnectCalendarSection({ listing }) {
               <p className="text-sm font-semibold text-neutral-900 truncate">{src.label}</p>
               <p className="text-xs text-neutral-400">
                 {src.lastSyncedAt
-                  ? `Cập nhật lần cuối ${new Date(src.lastSyncedAt).toLocaleString('vi-VN')}`
-                  : 'Chưa đồng bộ lần nào'}
+                  ? t('hostCalendar.connect.lastSynced', { date: new Date(src.lastSyncedAt).toLocaleString(i18n.language === 'en' ? 'en-US' : 'vi-VN') })
+                  : t('hostCalendar.connect.neverSynced')}
               </p>
             </div>
             <div className="flex items-center gap-3 shrink-0">
@@ -169,14 +169,14 @@ function ConnectCalendarSection({ listing }) {
                 onClick={() => refreshMutation.mutate(src.id)}
                 className="text-xs font-semibold text-brand-700 hover:underline disabled:opacity-50"
               >
-                Làm mới
+                {t('hostCalendar.connect.refresh')}
               </button>
               <button
                 type="button"
                 onClick={() => openEditForm(src)}
                 className="text-xs font-semibold text-neutral-700 hover:underline"
               >
-                Sửa
+                {t('hostCalendar.connect.edit')}
               </button>
               <button
                 type="button"
@@ -184,7 +184,7 @@ function ConnectCalendarSection({ listing }) {
                 onClick={() => removeMutation.mutate(src.id)}
                 className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
               >
-                Ngắt kết nối
+                {t('hostCalendar.connect.disconnect')}
               </button>
             </div>
           </div>
@@ -193,25 +193,25 @@ function ConnectCalendarSection({ listing }) {
         {showForm ? (
           <form onSubmit={handleSubmit} className="rounded-xl border border-neutral-300 p-4 space-y-3">
             <p className="text-xs font-semibold uppercase text-neutral-400">
-              {editingSyncId ? 'Sửa lịch đã kết nối' : 'Kết nối lịch mới'}
+              {editingSyncId ? t('hostCalendar.connect.editHeading') : t('hostCalendar.connect.newHeading')}
             </p>
             <div>
-              <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1">Tên hiển thị</label>
+              <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1">{t('hostCalendar.connect.displayNameLabel')}</label>
               <input
                 type="text"
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
-                placeholder="VD: Airbnb - clean and cosy"
+                placeholder={t('hostCalendar.connect.displayNamePlaceholder')}
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1">Link lịch (.ics)</label>
+              <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1">{t('hostCalendar.connect.icalUrlLabel')}</label>
               <input
                 type="text"
                 value={icalUrl}
                 onChange={(e) => setIcalUrl(e.target.value)}
-                placeholder="https://www.airbnb.com/calendar/ical/....ics?t=..."
+                placeholder={t('hostCalendar.connect.icalUrlPlaceholder')}
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
               />
             </div>
@@ -221,10 +221,10 @@ function ConnectCalendarSection({ listing }) {
                 disabled={isSaving}
                 className="rounded-lg bg-neutral-900 px-4 py-2 text-xs font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
               >
-                {isSaving ? 'Đang lưu...' : editingSyncId ? 'Lưu thay đổi' : 'Kết nối'}
+                {isSaving ? t('hostCalendar.connect.saving') : editingSyncId ? t('hostCalendar.connect.saveChanges') : t('hostCalendar.connect.connectBtn')}
               </button>
               <button type="button" onClick={closeForm} className="text-xs font-semibold text-neutral-500 hover:underline">
-                Huỷ
+                {t('hostCalendar.connect.cancel')}
               </button>
             </div>
           </form>
@@ -234,7 +234,7 @@ function ConnectCalendarSection({ listing }) {
             onClick={openAddForm}
             className="w-full rounded-xl border border-dashed border-neutral-300 px-4 py-3 text-sm font-medium text-neutral-600 hover:border-neutral-900 hover:text-neutral-900 transition-colors"
           >
-            Kết nối thêm lịch khác
+            {t('hostCalendar.connect.connectMore')}
           </button>
         )}
       </div>
@@ -243,6 +243,8 @@ function ConnectCalendarSection({ listing }) {
 }
 
 export default function HostCalendarPage() {
+  const { t, i18n } = useTranslation();
+  const dateFnsLocale = DATE_FNS_LOCALES[i18n.language] || vi;
   const queryClient = useQueryClient();
   const today = new Date();
   const [listingId, setListingId] = useState('');
@@ -279,10 +281,10 @@ export default function HostCalendarPage() {
       }
     },
     onSuccess: (_, { status }) => {
-      toast.success(status === 'blocked' ? 'Đã chặn ngày này' : 'Đã cập nhật ngày này');
+      toast.success(status === 'blocked' ? t('hostCalendar.page.saveBlocked') : t('hostCalendar.page.saveUpdated'));
       queryClient.invalidateQueries({ queryKey: ['calendar', activeListingId, year, month] });
     },
-    onError: (err) => toast.error(errorMessage(err, 'Có lỗi xảy ra, thử lại sau')),
+    onError: (err) => toast.error(errorMessage(err, t('hostCalendar.page.saveErrorFallback'))),
   });
 
   function handleSaveDay({ date, status, price, note, minNights, maxNights }) {
@@ -304,36 +306,36 @@ export default function HostCalendarPage() {
   return (
     <>
       <Helmet>
-        <title>Lịch cho thuê — Stayhub Host</title>
+        <title>{t('hostCalendar.page.pageTitle')}</title>
       </Helmet>
 
       <main className="min-h-[85vh] bg-white px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="border-b border-neutral-200 pb-6 mb-6">
-            <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">Lịch cho thuê</h1>
+            <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">{t('hostCalendar.page.heading')}</h1>
             <p className="mt-1 text-sm text-neutral-500">
-              Xem lượt đặt, đặt giá theo ngày, chặn ngày thủ công và đồng bộ với lịch ngoài (REQ_12).
+              {t('hostCalendar.page.subheading')}
             </p>
           </div>
 
           {listingsQuery.isLoading ? (
-            <p className="text-sm text-neutral-500">Đang tải danh sách bài đăng...</p>
+            <p className="text-sm text-neutral-500">{t('hostCalendar.page.loadingListings')}</p>
           ) : listingsQuery.isError ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
               <p className="text-sm font-medium text-red-700">
-                {errorMessage(listingsQuery.error, 'Không tải được danh sách bài đăng')}
+                {errorMessage(listingsQuery.error, t('hostCalendar.page.loadListingsErrorFallback'))}
               </p>
-              <p className="mt-1 text-sm text-red-500">Cần đăng nhập bằng tài khoản chủ nhà để xem trang này.</p>
+              <p className="mt-1 text-sm text-red-500">{t('hostCalendar.page.loadListingsErrorHint')}</p>
             </div>
           ) : listings.length === 0 ? (
             <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-10 text-center">
-              <p className="text-sm font-medium text-neutral-700">Bạn chưa có bài đăng nào để quản lý lịch.</p>
-              <p className="mt-1 text-sm text-neutral-500">Hoàn tất đăng 1 bài trước, rồi quay lại đây.</p>
+              <p className="text-sm font-medium text-neutral-700">{t('hostCalendar.page.noListings')}</p>
+              <p className="mt-1 text-sm text-neutral-500">{t('hostCalendar.page.noListingsHint')}</p>
             </div>
           ) : (
             <>
               <div className="mb-5">
-                <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1.5">Bài đăng</label>
+                <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1.5">{t('hostCalendar.page.listingLabel')}</label>
                 <select
                   value={activeListingId}
                   onChange={(e) => setListingId(e.target.value)}
@@ -353,18 +355,18 @@ export default function HostCalendarPage() {
                     type="button"
                     onClick={() => setCursor((c) => new Date(c.getFullYear(), c.getMonth() - 1, 1))}
                     className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 hover:bg-neutral-100 transition-colors"
-                    aria-label="Tháng trước"
+                    aria-label={t('dateRangePicker.prevMonth')}
                   >
                     <ChevronLeftIcon className="h-4 w-4" />
                   </button>
-                  <p className="text-base font-semibold text-neutral-900">
-                    {MONTHS_VI[cursor.getMonth()]} {cursor.getFullYear()}
+                  <p className="text-base font-semibold text-neutral-900 capitalize">
+                    {format(cursor, 'LLLL yyyy', { locale: dateFnsLocale })}
                   </p>
                   <button
                     type="button"
                     onClick={() => setCursor((c) => new Date(c.getFullYear(), c.getMonth() + 1, 1))}
                     className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 hover:bg-neutral-100 transition-colors"
-                    aria-label="Tháng sau"
+                    aria-label={t('dateRangePicker.nextMonth')}
                   >
                     <ChevronRightIcon className="h-4 w-4" />
                   </button>
@@ -373,31 +375,31 @@ export default function HostCalendarPage() {
                 <div className="flex flex-wrap gap-4 mb-5 text-xs text-neutral-600">
                   <span className="flex items-center gap-1.5">
                     <span className="h-3 w-3 rounded bg-white border border-neutral-200 inline-block" />
-                    Còn trống
+                    {t('hostCalendar.legend.available')}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="h-3 w-3 rounded bg-brand-600 inline-block" />
-                    Đã có khách
+                    {t('hostCalendar.legend.booked')}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="h-3 w-3 rounded bg-indigo-500 inline-block" />
-                    Đồng bộ ngoài
+                    {t('hostCalendar.legend.syncedExternal')}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="h-3 w-3 rounded bg-neutral-100 border border-neutral-300 inline-block" />
-                    Đã chặn
+                    {t('hostCalendar.legend.blocked')}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="h-3 w-3 rounded ring-2 ring-brand-500 inline-block" />
-                    Hôm nay
+                    {t('hostCalendar.legend.today')}
                   </span>
                 </div>
 
                 {monthQuery.isLoading ? (
-                  <p className="py-10 text-center text-sm text-neutral-500">Đang tải lịch...</p>
+                  <p className="py-10 text-center text-sm text-neutral-500">{t('hostCalendar.page.loadingCalendar')}</p>
                 ) : monthQuery.isError ? (
                   <p className="py-10 text-center text-sm text-red-600">
-                    {errorMessage(monthQuery.error, 'Không tải được lịch, thử lại sau')}
+                    {errorMessage(monthQuery.error, t('hostCalendar.page.loadCalendarErrorFallback'))}
                   </p>
                 ) : (
                   <HostMonthGrid
@@ -420,7 +422,7 @@ export default function HostCalendarPage() {
       {editingDay && monthData && (
         <DayEditModal
           day={editingDay}
-          defaultPrice={monthData.defaultPrice}
+          basePrice={editingDay.basePrice}
           onClose={() => setEditingDay(null)}
           onSave={handleSaveDay}
         />

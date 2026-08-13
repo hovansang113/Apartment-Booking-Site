@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 import {
   PlusIcon,
   GridViewIcon,
@@ -50,6 +51,7 @@ const INITIAL_LISTINGS = [
 ];
 
 export default function HostListingsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [showTaxNotice, setShowTaxNotice] = useState(true);
@@ -57,7 +59,7 @@ export default function HostListingsPage() {
   return (
     <>
       <Helmet>
-        <title>Bài đăng của bạn — Stayhub Host</title>
+        <title>{t('host.listings.pageTitle')}</title>
       </Helmet>
 
       <main className="min-h-[85vh] bg-white px-4 py-8 sm:px-6 lg:px-8">
@@ -73,10 +75,10 @@ export default function HostListingsPage() {
                 <CalculatorIcon />
                 <div>
                   <h2 className="text-base font-semibold text-neutral-900">
-                    Thêm mã số thuế của bạn
+                    {t('host.taxNotice.title')}
                   </h2>
                   <p className="text-xs text-neutral-500 sm:text-sm">
-                    Phải cung cấp cho mục đích khấu trừ thuế
+                    {t('host.taxNotice.body')}
                   </p>
                 </div>
               </button>
@@ -84,7 +86,7 @@ export default function HostListingsPage() {
                 type="button"
                 onClick={() => setShowTaxNotice(false)}
                 className="rounded-full p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
-                aria-label="Đóng thông báo"
+                aria-label={t('host.taxNotice.close')}
               >
                 ✕
               </button>
@@ -94,9 +96,9 @@ export default function HostListingsPage() {
           {/* Header Title & Actions (Matching postPage.png) */}
           <div className="flex items-center justify-between border-b border-neutral-200 pb-6 mb-8">
             <div>
-              <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">Bài đăng của bạn</h1>
+              <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">{t('host.listings.heading')}</h1>
               <p className="mt-1 text-sm text-neutral-500">
-                Quản lý, chỉnh sửa và theo dõi trạng thái các chỗ ở cho thuê
+                {t('host.listings.subheading')}
               </p>
             </div>
 
@@ -109,7 +111,7 @@ export default function HostListingsPage() {
                   className={`p-2 rounded-full transition-colors ${
                     viewMode === 'grid' ? 'bg-neutral-900 text-white shadow-sm' : 'text-neutral-600 hover:bg-neutral-100'
                   }`}
-                  aria-label="Xem dạng lưới"
+                  aria-label={t('host.listings.gridView')}
                 >
                   <GridViewIcon className="h-4 w-4" />
                 </button>
@@ -119,7 +121,7 @@ export default function HostListingsPage() {
                   className={`p-2 rounded-full transition-colors ${
                     viewMode === 'list' ? 'bg-neutral-900 text-white shadow-sm' : 'text-neutral-600 hover:bg-neutral-100'
                   }`}
-                  aria-label="Xem dạng danh sách"
+                  aria-label={t('host.listings.listView')}
                 >
                   <ListViewIcon className="h-4 w-4" />
                 </button>
@@ -130,8 +132,8 @@ export default function HostListingsPage() {
                 type="button"
                 onClick={() => navigate('/host/listings/setup')}
                 className="flex h-11 w-11 items-center justify-center rounded-full border border-neutral-300 bg-white hover:border-neutral-900 hover:bg-neutral-50 hover:shadow-md transition-all text-neutral-900"
-                aria-label="Tạo bài đăng mới"
-                title="Thêm bài đăng mới"
+                aria-label={t('host.listings.createNew')}
+                title={t('host.listings.addNew')}
               >
                 <PlusIcon className="h-5 w-5" />
               </button>
@@ -174,7 +176,7 @@ export default function HostListingsPage() {
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
-                      <span>Tạo: {item.createdAt}</span>
+                      <span>{t('host.listings.createdAt', { date: item.createdAt })}</span>
                       {item.price && <span className="font-bold text-neutral-900">{item.price}</span>}
                     </div>
                   </div>
