@@ -263,7 +263,7 @@ export default function HostCalendarPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async ({ date, status, price, note, previousPrice }) => {
+    mutationFn: async ({ date, status, price, note, minNights, maxNights, previousPrice, previousMinNights, previousMaxNights }) => {
       if (status === 'blocked') {
         await calendarService.blockDates(activeListingId, [date], note);
       } else {
@@ -271,6 +271,9 @@ export default function HostCalendarPage() {
       }
       if (price !== previousPrice) {
         await calendarService.setPriceOverride(activeListingId, date, price);
+      }
+      if (minNights !== previousMinNights || maxNights !== previousMaxNights) {
+        await calendarService.setStayRule(activeListingId, date, minNights, maxNights);
       }
     },
     onSuccess: (_, { status }) => {
@@ -280,8 +283,18 @@ export default function HostCalendarPage() {
     onError: (err) => toast.error(errorMessage(err, 'Có lỗi xảy ra, thử lại sau')),
   });
 
-  function handleSaveDay({ date, status, price, note }) {
-    saveMutation.mutate({ date, status, price, note, previousPrice: editingDay.price });
+  function handleSaveDay({ date, status, price, note, minNights, maxNights }) {
+    saveMutation.mutate({
+      date,
+      status,
+      price,
+      note,
+      minNights,
+      maxNights,
+      previousPrice: editingDay.price,
+      previousMinNights: editingDay.minNights,
+      previousMaxNights: editingDay.maxNights,
+    });
   }
 
   const monthData = monthQuery.data;

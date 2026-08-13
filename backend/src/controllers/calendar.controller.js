@@ -39,6 +39,19 @@ async function setPriceOverride(req, res) {
   return ok(res, result, 'Đã cập nhật giá cho ngày này');
 }
 
+// "Custom settings" - so dem toi thieu/toi da neu check-in dung ngay nay
+async function setStayRule(req, res) {
+  const { date, minNights, maxNights } = req.body;
+  const result = await calendarService.setStayRule({
+    listingId: req.params.listingId,
+    hostId: req.user.id,
+    date,
+    minNights: minNights ?? null,
+    maxNights: maxNights ?? null,
+  });
+  return ok(res, result, 'Đã cập nhật số đêm tối thiểu/tối đa cho ngày này');
+}
+
 async function listSyncSources(req, res) {
   const sources = await calendarService.listSyncSources({
     listingId: req.params.listingId,
@@ -101,6 +114,7 @@ module.exports = {
   blockDates,
   unblockDates,
   setPriceOverride,
+  setStayRule,
   listSyncSources,
   connectSyncSource,
   refreshSyncSource,

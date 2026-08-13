@@ -47,7 +47,7 @@ async function getMonthView({ listingId, hostId, year, month }) {
   const total = daysInMonth(year, month);
   const monthEnd = new Date(`${year}-${pad(month)}-${pad(total)}`);
 
-  const [calendarRows, overrideRows] = await Promise.all([
+  const [calendarRows, overrideRows, stayRuleRows] = await Promise.all([
     prisma.listingCalendar.findMany({
       where: { listingId, date: { gte: monthStart, lte: monthEnd } },
       include: { booking: { include: { guest: true } }, calendarSync: true },
@@ -55,10 +55,14 @@ async function getMonthView({ listingId, hostId, year, month }) {
     prisma.listingPriceOverride.findMany({
       where: { listingId, date: { gte: monthStart, lte: monthEnd } },
     }),
+    prisma.listingStayRule.findMany({
+      where: { listingId, date: { gte: monthStart, lte: monthEnd } },
+    }),
   ]);
 
   const calendarByDate = new Map(calendarRows.map((r) => [toYMD(r.date), r]));
   const overrideByDate = new Map(overrideRows.map((r) => [toYMD(r.date), Number(r.price)]));
+  const stayRuleByDate = new Map(stayRuleRows.map((r) => [toYMD(r.date), r]));
   const defaultPrice = Number(listing.defaultPrice);
 
   const days = [];
@@ -66,6 +70,7 @@ async function getMonthView({ listingId, hostId, year, month }) {
     const ymd = `${year}-${pad(month)}-${pad(d)}`;
     const row = calendarByDate.get(ymd);
     const hasOverride = overrideByDate.has(ymd);
+    const stayRule = stayRuleByDate.get(ymd);
 
     let guestLabel = null;
     if (row?.source === CalendarDaySource.booking && row.booking) {
@@ -83,10 +88,29 @@ async function getMonthView({ listingId, hostId, year, month }) {
       source: row?.source || null,
       note: row?.note || null,
       guestLabel,
+      minNights: stayRule?.minNights ?? null,
+      maxNights: stayRule?.maxNights ?? null,
     });
   }
 
   return { listingId, defaultPrice, days };
+}
+
+// "Custom settings" - so dem toi thieu/toi da neu khach check-in vao dung
+// ngay nay. Xoa dong neu ca 2 gia tri deu rong (khong con rule nao dat ra).
+async function setStayRule({ listingId, hostId, date, minNights, maxNights }) {
+  await assertOwnedByHost(listingId, hostId);
+
+  if (minNights == null && maxNights == null) {
+    await prisma.listingStayRule.deleteMany({ where: { listingId, date: new Date(date) } });
+    return null;
+  }
+
+  return prisma.listingStayRule.upsert({
+    where: { listingId_date: { listingId, date: new Date(date) } },
+    update: { minNights, maxNights },
+    create: { listingId, date: new Date(date), minNights, maxNights },
+  });
 }
 
 // REQ_12: host chan tay 1 hoac nhieu ngay. Khong cho chan de len ngay da co
@@ -324,6 +348,7 @@ module.exports = {
   blockDates,
   unblockDates,
   setPriceOverride,
+  setStayRule,
   listSyncSources,
   connectIcalSource,
   syncIcalSource,

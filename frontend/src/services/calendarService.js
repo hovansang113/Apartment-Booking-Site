@@ -20,6 +20,11 @@ export async function setPriceOverride(listingId, date, price) {
   return data.data;
 }
 
+export async function setStayRule(listingId, date, minNights, maxNights) {
+  const { data } = await api.put(`/calendar/${listingId}/stay-rule`, { date, minNights, maxNights });
+  return data.data;
+}
+
 export async function listSyncSources(listingId) {
   const { data } = await api.get(`/calendar/${listingId}/sync`);
   return data.data;

@@ -7,15 +7,26 @@ function formatDayLabel(ymd) {
   return `${MONTHS_SHORT[Number(month) - 1]} ${Number(day)}`;
 }
 
-// REQ_12: sua trang thai 1 ngay (available/blocked) + gia rieng cho ngay do.
-// onSave goi calendarService that (block/unblock + price override).
+// REQ_12: sua trang thai 1 ngay (available/blocked) + gia rieng cho ngay do +
+// ghi chu + "Custom settings" (so dem toi thieu/toi da neu check-in ngay nay).
+// onSave goi calendarService that (block/unblock + price + stay-rule).
 export default function DayEditModal({ day, defaultPrice, onClose, onSave }) {
   const [blocked, setBlocked] = useState(day.status === 'blocked');
   const [price, setPrice] = useState(day.price);
   const [note, setNote] = useState(day.note || '');
+  const [showCustomSettings, setShowCustomSettings] = useState(Boolean(day.minNights || day.maxNights));
+  const [minNights, setMinNights] = useState(day.minNights || '');
+  const [maxNights, setMaxNights] = useState(day.maxNights || '');
 
   function handleSave() {
-    onSave({ date: day.date, status: blocked ? 'blocked' : 'available', price, note: note.trim() });
+    onSave({
+      date: day.date,
+      status: blocked ? 'blocked' : 'available',
+      price,
+      note: note.trim(),
+      minNights: showCustomSettings && minNights ? Number(minNights) : null,
+      maxNights: showCustomSettings && maxNights ? Number(maxNights) : null,
+    });
     onClose();
   }
 
@@ -91,15 +102,45 @@ export default function DayEditModal({ day, defaultPrice, onClose, onSave }) {
           </div>
         )}
 
-        <button
-          type="button"
-          disabled
-          title="Sắp ra mắt"
-          className="mt-2.5 flex w-full items-center justify-between rounded-xl bg-neutral-900 px-4 py-3.5 text-sm font-medium text-neutral-500 opacity-60 cursor-not-allowed"
-        >
-          Cài đặt khác
-          <span>+</span>
-        </button>
+        {!blocked && (
+          <div className="mt-2.5 rounded-xl bg-neutral-900 px-4 py-3.5 text-white">
+            <button
+              type="button"
+              onClick={() => setShowCustomSettings((s) => !s)}
+              className="flex w-full items-center justify-between text-sm font-medium"
+            >
+              Cài đặt khác
+              <span className={`transition-transform ${showCustomSettings ? 'rotate-45' : ''}`}>+</span>
+            </button>
+
+            {showCustomSettings && (
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-neutral-400">Tối thiểu (đêm)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={minNights}
+                    onChange={(e) => setMinNights(e.target.value)}
+                    placeholder="Không giới hạn"
+                    className="mt-1 w-full border-b border-white/30 bg-transparent text-sm outline-none focus:border-white placeholder:text-neutral-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-neutral-400">Tối đa (đêm)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={maxNights}
+                    onChange={(e) => setMaxNights(e.target.value)}
+                    placeholder="Không giới hạn"
+                    className="mt-1 w-full border-b border-white/30 bg-transparent text-sm outline-none focus:border-white placeholder:text-neutral-500"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <button
           type="button"

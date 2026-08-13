@@ -107,6 +107,7 @@ model Listing {
   images           ListingImage[]
   amenities        ListingAmenity[]
   priceOverrides   ListingPriceOverride[]
+  stayRules        ListingStayRule[]
   calendarDays     ListingCalendar[]
   calendarSyncs    ListingCalendarSync[]
   bookings         Booking[]
@@ -151,6 +152,23 @@ model ListingPriceOverride {
 
   @@unique([listingId, date])
   @@map("listing_price_overrides")
+}
+
+// "Custom settings" trong modal chan ngay (REQ_12) - so dem toi thieu/toi da
+// NEU khach check-in vao dung ngay nay (khop hanh vi min/max nights that cua
+// Airbnb - chi ap dung cho ngay check-in, khong phai moi ngay trong chuyen o).
+model ListingStayRule {
+  id        String   @id @default(uuid())
+  listingId String   @map("listing_id")
+  date      DateTime @db.Date
+  minNights Int?     @map("min_nights")
+  maxNights Int?     @map("max_nights")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, date])
+  @@map("listing_stay_rules")
 }
 
 model Booking {

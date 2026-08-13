@@ -85,9 +85,18 @@ export default function HostMonthGrid({ year, month, days, todayYMD, onDayClick 
                 ) : info.status === 'blocked' ? (
                   <span className="text-[11px] font-semibold text-neutral-500">Đã chặn</span>
                 ) : !isPast ? (
-                  <span className={`text-[11px] font-medium ${info.hasOverride ? 'text-brand-700' : 'text-neutral-600'}`}>
-                    {currencyFormatter.format(info.price)}
-                  </span>
+                  <>
+                    <span className={`text-[11px] font-medium ${info.hasOverride ? 'text-brand-700' : 'text-neutral-600'}`}>
+                      {currencyFormatter.format(info.price)}
+                    </span>
+                    {(info.minNights || info.maxNights) && (
+                      <span className="text-[9px] text-neutral-400">
+                        {info.minNights ? `Tối thiểu ${info.minNights} đêm` : ''}
+                        {info.minNights && info.maxNights ? ' · ' : ''}
+                        {info.maxNights ? `Tối đa ${info.maxNights} đêm` : ''}
+                      </span>
+                    )}
+                  </>
                 ) : null}
               </span>
             </button>

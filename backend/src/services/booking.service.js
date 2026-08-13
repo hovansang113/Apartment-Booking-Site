@@ -45,6 +45,18 @@ async function createBooking({ listingId, guestId, checkIn, checkOut }) {
       throw new AppError(409, `Ngày ${toYMD(conflicts[0].date)} đã có người đặt hoặc đang bị chặn`);
     }
 
+    // "Custom settings" (REQ_12) - so dem toi thieu/toi da NEU check-in dung
+    // ngay checkIn nay. Chi ap dung rule cua ngay check-in, giong Airbnb that.
+    const stayRule = await tx.listingStayRule.findUnique({
+      where: { listingId_date: { listingId, date: new Date(checkIn) } },
+    });
+    if (stayRule?.minNights && dates.length < stayRule.minNights) {
+      throw new AppError(422, `Ngày ${checkIn} yêu cầu ở tối thiểu ${stayRule.minNights} đêm`);
+    }
+    if (stayRule?.maxNights && dates.length > stayRule.maxNights) {
+      throw new AppError(422, `Ngày ${checkIn} chỉ cho ở tối đa ${stayRule.maxNights} đêm`);
+    }
+
     const guest = await tx.user.findUnique({ where: { id: guestId } });
     if (!guest) {
       throw new AppError(404, 'Guest not found');

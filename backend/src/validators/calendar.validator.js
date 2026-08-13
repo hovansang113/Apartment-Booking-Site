@@ -35,6 +35,20 @@ const updateSyncRules = [
   body('label').optional({ checkFalsy: true }).trim().isLength({ max: 191 }).withMessage('Label is too long'),
 ];
 
+const stayRuleRules = [
+  body('date')
+    .matches(/^\d{4}-\d{2}-\d{2}$/)
+    .withMessage('date must be in YYYY-MM-DD format'),
+  body('minNights').optional({ nullable: true }).isInt({ min: 1 }).withMessage('minNights must be a positive integer').toInt(),
+  body('maxNights').optional({ nullable: true }).isInt({ min: 1 }).withMessage('maxNights must be a positive integer').toInt(),
+  body().custom((value) => {
+    if (value.minNights != null && value.maxNights != null && value.minNights > value.maxNights) {
+      throw new Error('minNights cannot be greater than maxNights');
+    }
+    return true;
+  }),
+];
+
 module.exports = {
   monthViewRules,
   blockDatesRules,
@@ -42,4 +56,5 @@ module.exports = {
   priceOverrideRules,
   connectSyncRules,
   updateSyncRules,
+  stayRuleRules,
 };

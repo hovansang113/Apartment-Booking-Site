@@ -10,6 +10,7 @@ const {
   priceOverrideRules,
   connectSyncRules,
   updateSyncRules,
+  stayRuleRules,
 } = require('../validators/calendar.validator');
 const { validate } = require('../validators/validate.util');
 
@@ -24,6 +25,7 @@ router.get('/:listingId', monthViewRules, validate, calendarController.getMonthV
 router.post('/:listingId/block', blockDatesRules, validate, calendarController.blockDates); // REQ_12
 router.post('/:listingId/unblock', unblockDatesRules, validate, calendarController.unblockDates); // REQ_12
 router.put('/:listingId/price', priceOverrideRules, validate, calendarController.setPriceOverride);
+router.put('/:listingId/stay-rule', stayRuleRules, validate, calendarController.setStayRule);
 
 router.get('/:listingId/sync', calendarController.listSyncSources);
 router.post('/:listingId/sync', connectSyncRules, validate, calendarController.connectSyncSource);
