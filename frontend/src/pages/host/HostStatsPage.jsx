@@ -53,13 +53,13 @@ function SectionNum({ n, label }) {
 
 function SmallCard({ label, value, iconPath, sub, valueColor = '#2F4A3E' }) {
   return (
-    <div className="flex flex-col justify-between p-4"
+    <div className="flex flex-col p-4"
       style={{ border: '1px solid #DDD4C4', borderRadius: 6, backgroundColor: '#FAF6EF' }}>
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-start justify-between" style={{ minHeight: 32 }}>
         <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#A89E97] leading-tight">{label}</span>
         <Icon path={iconPath} />
       </div>
-      <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 700, fontSize: 28, color: valueColor, lineHeight: 1, margin: '6px 0' }}>
+      <p style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 700, fontSize: 28, color: valueColor, lineHeight: 1, margin: '4px 0 6px' }}>
         {value}
       </p>
       {sub && (
