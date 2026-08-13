@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import HostMonthGrid from '../../components/calendar/HostMonthGrid';
 import DayEditModal from '../../components/calendar/DayEditModal';
+import BookingDetailModal from '../../components/calendar/BookingDetailModal';
 import { ChevronLeftIcon, ChevronRightIcon } from '../../components/common/icons';
 import { getHostListings } from '../../services/listingService';
 import * as calendarService from '../../services/calendarService';
@@ -247,6 +248,7 @@ export default function HostCalendarPage() {
   const [listingId, setListingId] = useState('');
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [editingDay, setEditingDay] = useState(null);
+  const [viewingBooking, setViewingBooking] = useState(null);
   const todayYMD = toYMD(today);
   const year = cursor.getFullYear();
   const month = cursor.getMonth() + 1; // API la 1-indexed
@@ -404,6 +406,7 @@ export default function HostCalendarPage() {
                     days={monthData.days}
                     todayYMD={todayYMD}
                     onDayClick={setEditingDay}
+                    onBookingClick={setViewingBooking}
                   />
                 )}
               </div>
@@ -420,6 +423,14 @@ export default function HostCalendarPage() {
           defaultPrice={monthData.defaultPrice}
           onClose={() => setEditingDay(null)}
           onSave={handleSaveDay}
+        />
+      )}
+
+      {viewingBooking && (
+        <BookingDetailModal
+          booking={viewingBooking.booking}
+          guestName={viewingBooking.guestName}
+          onClose={() => setViewingBooking(null)}
         />
       )}
     </>

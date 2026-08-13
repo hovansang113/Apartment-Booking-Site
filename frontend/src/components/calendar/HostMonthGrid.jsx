@@ -41,7 +41,7 @@ function groupOccupiedRanges(days) {
     } else {
       if (current) ranges.push(current);
       current = isBar
-        ? { key, startDay: dayNum, endDayExclusive: dayNum + 1, status: d.status, source: d.source, guestLabel: d.guestLabel, note: d.note, date: d.date }
+        ? { key, startDay: dayNum, endDayExclusive: dayNum + 1, status: d.status, source: d.source, guestLabel: d.guestLabel, note: d.note, date: d.date, booking: d.booking }
         : null;
     }
   });
@@ -91,7 +91,7 @@ function barColorClasses(range) {
   return 'bg-neutral-500'; // blocked + manual
 }
 
-function WeekRow({ week, days, todayYMD, onDayClick, ranges }) {
+function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges }) {
   const segmentsWithRange = ranges
     .map((range) => ({ range, seg: segmentForWeek(range, week) }))
     .filter((r) => r.seg);
@@ -148,17 +148,19 @@ function WeekRow({ week, days, todayYMD, onDayClick, ranges }) {
         {segmentsWithRange.map(({ range, seg }, i) => {
           const isPast = range.date < todayYMD;
           const label = range.status === 'blocked' && range.source === 'manual' ? range.note || 'Đã chặn' : range.guestLabel;
+          const isViewableBooking = range.status === 'booked' && range.booking;
 
           return (
             <div
               key={i}
               style={{ gridColumn: `${seg.col + 1} / span ${seg.span}` }}
-              className={`flex items-end px-0.5 pb-1.5 ${isPast ? 'opacity-60' : ''}`}
+              className={`flex items-end px-0.5 pb-1.5 ${isPast ? 'opacity-60' : ''} ${isViewableBooking ? 'pointer-events-auto' : ''}`}
             >
               <span
+                onClick={isViewableBooking ? () => onBookingClick({ booking: range.booking, guestName: range.guestLabel }) : undefined}
                 className={`flex w-full min-w-0 items-center gap-1 overflow-hidden px-2 py-1 text-[11px] font-medium text-white ${barColorClasses(range)} ${
                   seg.roundedLeft ? 'rounded-l-full pl-2' : 'pl-1'
-                } ${seg.roundedRight ? 'rounded-r-full pr-2' : 'pr-1'}`}
+                } ${seg.roundedRight ? 'rounded-r-full pr-2' : 'pr-1'} ${isViewableBooking ? 'cursor-pointer hover:brightness-110' : ''}`}
               >
                 {range.status === 'booked' && <GuestAvatar name={range.guestLabel} />}
                 <span className="truncate">{label}</span>
@@ -182,7 +184,7 @@ function WeekRow({ week, days, todayYMD, onDayClick, ranges }) {
 // (khop UI tham khao cua Jason) thay vi lap lai nhan trong tung o. Moi tuan
 // la 1 cap grid doc lap (o ngay + overlay thanh) de tranh loi can vi khi
 // tron item auto-place voi item dat vi tri tuyet doi trong CUNG 1 grid.
-export default function HostMonthGrid({ year, month, days, todayYMD, onDayClick }) {
+export default function HostMonthGrid({ year, month, days, todayYMD, onDayClick, onBookingClick }) {
   const weeks = buildWeeks(year, month);
   const ranges = groupOccupiedRanges(days);
 
@@ -195,7 +197,15 @@ export default function HostMonthGrid({ year, month, days, todayYMD, onDayClick 
       </div>
       <div className="mt-2 space-y-1.5">
         {weeks.map((week, i) => (
-          <WeekRow key={i} week={week} days={days} todayYMD={todayYMD} onDayClick={onDayClick} ranges={ranges} />
+          <WeekRow
+            key={i}
+            week={week}
+            days={days}
+            todayYMD={todayYMD}
+            onDayClick={onDayClick}
+            onBookingClick={onBookingClick}
+            ranges={ranges}
+          />
         ))}
       </div>
     </div>

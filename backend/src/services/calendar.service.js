@@ -73,8 +73,18 @@ async function getMonthView({ listingId, hostId, year, month }) {
     const stayRule = stayRuleByDate.get(ymd);
 
     let guestLabel = null;
+    let booking = null;
     if (row?.source === CalendarDaySource.booking && row.booking) {
       guestLabel = row.booking.guest?.fullName || null;
+      booking = {
+        id: row.booking.id,
+        checkIn: toYMD(row.booking.checkIn),
+        checkOut: toYMD(row.booking.checkOut),
+        totalPrice: Number(row.booking.totalPrice),
+        contactName: row.booking.contactName,
+        contactEmail: row.booking.contactEmail,
+        contactPhone: row.booking.contactPhone,
+      };
     } else if (row?.source === CalendarDaySource.ical_sync) {
       guestLabel = row.calendarSync ? `Đã đặt qua ${row.calendarSync.label}` : 'Đã đặt (đồng bộ ngoài)';
     }
@@ -88,6 +98,7 @@ async function getMonthView({ listingId, hostId, year, month }) {
       source: row?.source || null,
       note: row?.note || null,
       guestLabel,
+      booking,
       minNights: stayRule?.minNights ?? null,
       maxNights: stayRule?.maxNights ?? null,
     });
