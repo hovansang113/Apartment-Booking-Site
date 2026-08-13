@@ -21,7 +21,11 @@ function errorMessage(err, fallback) {
   return err?.response?.data?.message || fallback;
 }
 
-function ConnectCalendarSection({ listingId }) {
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+function ConnectCalendarSection({ listing }) {
+  const listingId = listing.id;
+  const exportUrl = `${API_BASE}/calendar/${listing.id}/export.ics?t=${listing.icalToken}`;
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingSyncId, setEditingSyncId] = useState(null); // null = dang them moi; co gia tri = dang sua nguon nay
@@ -118,6 +122,34 @@ function ConnectCalendarSection({ listingId }) {
         Đồng bộ 2 chiều với Airbnb/VRBO qua link iCal (.ics) — ngày đã có khách trên hệ thống ngoài sẽ tự động bị
         chặn ở đây.
       </p>
+
+      <div className="mb-5 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+        <p className="text-xs font-semibold uppercase text-neutral-500 mb-1">Bước 1 — Dán link này sang hệ thống khác</p>
+        <p className="text-xs text-neutral-500 mb-2">
+          Copy link dưới đây, dán vào phần "Kết nối lịch ngoài"/"Connect calendar" của Airbnb hoặc VRBO — để ngày khách
+          đặt trên Stayhub cũng tự động chặn được bên đó.
+        </p>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            readOnly
+            value={exportUrl}
+            onFocus={(e) => e.target.select()}
+            className="flex-1 min-w-0 truncate rounded-lg border border-neutral-300 bg-white px-3 py-2 text-xs text-neutral-600 outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(exportUrl);
+              toast.success('Đã copy link');
+            }}
+            className="shrink-0 rounded-lg bg-neutral-900 px-3 py-2 text-xs font-semibold text-white hover:bg-neutral-800"
+          >
+            Copy
+          </button>
+        </div>
+      </div>
+
       <div className="space-y-2">
         {sources.map((src) => (
           <div key={src.id} className="flex items-center justify-between rounded-xl border border-neutral-200 px-4 py-3">
@@ -222,6 +254,7 @@ export default function HostCalendarPage() {
   const listingsQuery = useQuery({ queryKey: ['host-listings'], queryFn: getHostListings });
   const listings = listingsQuery.data || [];
   const activeListingId = listingId || listings[0]?.id || '';
+  const activeListing = listings.find((l) => l.id === activeListingId);
 
   const monthQuery = useQuery({
     queryKey: ['calendar', activeListingId, year, month],
@@ -362,7 +395,7 @@ export default function HostCalendarPage() {
                 )}
               </div>
 
-              <ConnectCalendarSection listingId={activeListingId} />
+              {activeListing && <ConnectCalendarSection listing={activeListing} />}
             </>
           )}
         </div>

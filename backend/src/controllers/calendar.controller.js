@@ -88,7 +88,15 @@ async function removeSyncSource(req, res) {
   return ok(res, null, 'Đã ngắt kết nối lịch ngoài');
 }
 
+// Cong khai, khong can dang nhap - Airbnb/VRBO tu fetch link nay dinh ky.
+async function exportIcal(req, res) {
+  const ics = await calendarService.exportIcal({ listingId: req.params.listingId, token: req.query.t });
+  res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+  return res.send(ics);
+}
+
 module.exports = {
+  exportIcal,
   getMonthView,
   blockDates,
   unblockDates,

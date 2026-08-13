@@ -258,6 +258,67 @@ async function removeSyncSource({ listingId, hostId, syncId }) {
   ]);
 }
 
+// Gop cac ngay YMD lien tiep nhau thanh tung khoang [start, end) - end la ngay
+// SAU ngay cuoi cung cua khoang, khop dung quy uoc DTSTART/DTEND cua iCal.
+function groupConsecutiveDates(sortedYmdDates) {
+  const ranges = [];
+  for (const ymd of sortedYmdDates) {
+    const last = ranges[ranges.length - 1];
+    if (last && last.end === ymd) {
+      last.end = toYMD(new Date(new Date(`${ymd}T00:00:00Z`).getTime() + 86400000));
+    } else {
+      ranges.push({ start: ymd, end: toYMD(new Date(new Date(`${ymd}T00:00:00Z`).getTime() + 86400000)) });
+    }
+  }
+  return ranges;
+}
+
+function buildIcs({ listingId, listingTitle, ranges }) {
+  const dtstamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'PRODID:-//Stayhub//Booking Platform//EN',
+    'VERSION:2.0',
+    'CALSCALE:GREGORIAN',
+    `X-WR-CALNAME:${listingTitle}`,
+  ];
+
+  ranges.forEach(({ start, end }, i) => {
+    lines.push(
+      'BEGIN:VEVENT',
+      `UID:stayhub-${listingId}-${i}@stayhub.local`,
+      `DTSTAMP:${dtstamp}`,
+      `DTSTART;VALUE=DATE:${start.replace(/-/g, '')}`,
+      `DTEND;VALUE=DATE:${end.replace(/-/g, '')}`,
+      'SUMMARY:Reserved',
+      'END:VEVENT',
+    );
+  });
+
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
+
+// Xuat lich cua 1 listing ra dinh dang iCal cong khai - de host copy link nay
+// dan NGUOC vao Airbnb/VRBO (chieu con lai cua "two-way" trong ticket cua
+// Jason, chieu nhap tu ngoai vao da lam o syncIcalSource). Khong yeu cau dang
+// nhap (Airbnb khong tu dang nhap duoc) - bao mat bang icalToken rieng cua
+// tung listing thay vi JWT, dung dung kieu link ".ics?t=..." nhu Airbnb that.
+async function exportIcal({ listingId, token }) {
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing || listing.icalToken !== token) {
+    throw new AppError(404, 'Không tìm thấy lịch này');
+  }
+
+  const rows = await prisma.listingCalendar.findMany({
+    where: { listingId },
+    orderBy: { date: 'asc' },
+  });
+
+  const ranges = groupConsecutiveDates(rows.map((r) => toYMD(r.date)));
+  return buildIcs({ listingId, listingTitle: listing.title, ranges });
+}
+
 module.exports = {
   getMonthView,
   blockDates,
@@ -268,4 +329,5 @@ module.exports = {
   syncIcalSource,
   updateSyncSource,
   removeSyncSource,
+  exportIcal,
 };

@@ -13,6 +13,11 @@ const {
 } = require('../validators/calendar.validator');
 const { validate } = require('../validators/validate.util');
 
+// Cong khai - dat TRUOC router.use(authenticate,...) ben duoi de khong bi
+// chan boi auth. Bao mat bang icalToken rieng cua listing (query ?t=...),
+// khong phai JWT, vi he thong ngoai (Airbnb/VRBO) khong tu dang nhap duoc.
+router.get('/:listingId/export.ics', calendarController.exportIcal);
+
 router.use(authenticate, authorize(UserRole.host));
 
 router.get('/:listingId', monthViewRules, validate, calendarController.getMonthView); // REQ_06/12

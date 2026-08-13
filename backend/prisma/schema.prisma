@@ -99,6 +99,7 @@ model Listing {
   bathrooms      Int
   status         ListingStatus @default(pending)
   suspendReason  String?       @map("suspend_reason") @db.Text
+  icalToken      String        @unique @default(uuid()) @map("ical_token")
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
