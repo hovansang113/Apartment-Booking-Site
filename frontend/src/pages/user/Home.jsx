@@ -66,10 +66,10 @@ export default function Home() {
       <Hero />
       <CategoryTabs active={category} onChange={setCategory} />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="px-4 py-8 sm:px-8 lg:px-12">
         {isLoading ? (
-          <ul className="grid list-none grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {Array.from({ length: 10 }).map((_, i) => (
+          <ul className="grid list-none grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
               <li key={i}><SkeletonCard /></li>
             ))}
           </ul>
@@ -84,7 +84,7 @@ export default function Home() {
             <p className="text-sm text-neutral-500 mb-6">
               {listings.length} place{listings.length !== 1 ? 's' : ''} found
             </p>
-            <ul className="grid list-none grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <ul className="grid list-none grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
               {listings.map((listing) => (
                 <li key={listing.id}>
                   <ListingCard listing={listing} />
