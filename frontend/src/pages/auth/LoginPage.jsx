@@ -37,7 +37,9 @@ export default function LoginPage() {
       login(res.user);
       toast.success(`Chào mừng trở lại, ${res.user.fullName}!`);
 
-      if (res.user.role === 'host') {
+      if (res.user.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else if (res.user.role === 'host') {
         navigate(from, { replace: true });
       } else {
         navigate('/', { replace: true });

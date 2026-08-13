@@ -98,6 +98,8 @@ model User {
   taxpayerType        TaxpayerType?       @map("taxpayer_type")
   idNumber            String?             @map("id_number")
   verificationStatus  VerificationStatus  @default(unverified) @map("verification_status")
+  verificationNote    String?             @map("verification_note") @db.Text
+  lockedReason        String?             @map("locked_reason") @db.Text
   createdAt           DateTime            @default(now()) @map("created_at")
   updatedAt           DateTime            @updatedAt @map("updated_at")
 

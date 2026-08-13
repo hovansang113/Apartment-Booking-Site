@@ -31,10 +31,18 @@ Cập nhật lần cuối: 2026-08-13. Tick `[x]` khi xong, đừng xoá dòng �
   → Backend: thêm field vào `User` (`legalName`, `taxId`, `taxpayerType` enum, `idNumber`, `verificationStatus` enum: unverified/pending/verified/rejected). `PUT /api/auth/tax-info` (auth.service/controller/routes/validator). Nộp xong tự chuyển `pending` — **chưa có màn hình admin duyệt thật** (REQ_03 vẫn chưa làm) nên trạng thái sẽ giữ nguyên `pending` cho tới khi REQ_03 được code
   → Frontend: `pages/host/HostSettingsPage.jsx` (route `/host/settings`) — form tên pháp lý/mã số thuế/loại hình nộp thuế (cá nhân/hộ kinh doanh/doanh nghiệp)/CCCD. Nối luôn 2 banner "Thêm mã số thuế của bạn" (trước đó chỉ trang trí, không bấm được) trong `HostTodayPage.jsx`/`HostListingsPage.jsx` thành link thật tới trang này
   → **Fix bug lúc test**: form không tự điền lại dữ liệu đã lưu sau khi reload trang — do dùng `useState(user?.legalName)` chỉ đọc `user` đúng 1 lần lúc mount, trong khi `AuthContext` nạp `user` bất đồng bộ (`getMe()`) nên lúc đó vẫn `null`. Sửa bằng `useEffect` đồng bộ lại form khi `user` thay đổi
-- [ ] **REQ_03** — Admin duyệt / đình chỉ listing (`pending` → `approved`/`suspended`)
-  → stub: `controllers/admin.controller.js`, `routes/admin.routes.js`
-- [ ] **REQ_04** — Admin quản lý user (khoá / mở khoá tài khoản)
-  → stub: `controllers/admin.controller.js`, `routes/admin.routes.js`
+- [x] **REQ_03** — Admin duyệt / đình chỉ listing (`pending` → `approved`/`suspended`) (13/8)
+  → `services/admin.service.js`, `controllers/admin.controller.js`, `routes/admin.routes.js`, `validators/admin.validator.js`. `GET /api/admin/listings?status=`, `PATCH /:id/approve`, `PATCH /:id/suspend` (bắt buộc `reason`, validate 422 nếu thiếu). Đã test qua UI thật (đình chỉ → duyệt lại)
+- [x] **REQ_04** — Admin quản lý user (khoá / mở khoá tài khoản) (13/8)
+  → cùng file với REQ_03. `GET /api/admin/users`, `PATCH /:id/lock` (bắt buộc `reason`), `PATCH /:id/unlock`. **Guard**: không cho khoá tài khoản `admin` khác (403) — tránh tự khoá hết quyền truy cập hệ thống. Đã test: khoá xong thử login lại → đúng 403 "tài khoản đã khoá"; mở khoá lại → login được bình thường
+- [x] **(Nối tiếp Host Settings) Admin duyệt hồ sơ thuế** (13/8) — `GET /api/admin/tax-verifications?status=` (mặc định `pending`), `PATCH /:id` (`status: verified/rejected` + `note` khi từ chối)
+  → **Chuẩn production đã áp dụng** (theo yêu cầu làm "đúng chuẩn", **giữ nguyên JWT 7 ngày cho mọi role** theo yêu cầu, không rút ngắn riêng cho admin):
+    - `admin` **không tự đăng ký được** — chỉ seed tay qua Prisma (giống pattern host-demo), route `/auth/register` validator chặn cứng chỉ cho `user`/`host`
+    - **Layout admin tách riêng hẳn** (`components/admin/AdminLayout.jsx`) — không dùng chung Header/Footer công khai, giống pattern `isStandalonePage` đã có cho `CreateListingPage`. Mở rộng `isStandalonePage` trong `App.jsx` cho mọi path `/admin/*`
+    - **Rate limit cho `/auth/login`** (`express-rate-limit`, 10 lần/15 phút/IP, áp dụng chung mọi role) — chống dò mật khẩu brute-force. Middleware mới `middlewares/rateLimit.middleware.js`
+    - Fix **bug thật phát hiện lúc build**: `ProtectedRoute.jsx` trước đó **luôn render children bất kể role** (còn sót từ chế độ preview UI trước đó) — khu vực admin sẽ không thực sự được bảo vệ ở frontend nếu không sửa. Giờ check đúng `user`/`roles`, redirect về `/auth/login` hoặc `/` nếu sai quyền. Không phá vỡ hành vi preview của host (vẫn fallback `MOCK_HOST_USER` khi chưa đăng nhập thật)
+    - Sửa `LoginPage.jsx` — trước đó đăng nhập `admin` bị rơi vào nhánh mặc định điều hướng về `/`, giờ điều hướng đúng `/admin`
+  → **Bug phát hiện lúc test bằng Playwright** (không phải lỗi app): script test tự đụng rate limiter do gọi login lặp lại quá nhiều lần liên tục trong ít phút → 429, phải restart backend để reset bộ đếm in-memory. Và 2 lần script dùng selector `button:has-text("Duyệt"/"Đình chỉ")` bị khớp nhầm vào nút tab (chứa cùng chữ) thay vì nút hành động thật — tự để lại listing demo ở trạng thái `suspended` treo, phải khôi phục tay qua Prisma
 - [ ] **REQ_05 / REQ_06** — Xem danh sách listing + chi tiết listing kèm lịch (backend)
   → stub: `routes/listing.routes.js`, `routes/calendar.routes.js`. **FE đã build UI trước** (trang chủ + trang detail) bằng mock data — xem mục Frontend bên dưới. Khi làm backend, nhớ nối `frontend/src/data/mockListings.js` → gọi `listingService` thật, và bỏ mock file đi
 - [ ] **REQ_07** — Khách gửi yêu cầu đặt phòng (tạo `booking`, auto-approved nếu lịch trống)
@@ -67,6 +75,7 @@ Cập nhật lần cuối: 2026-08-13. Tick `[x]` khi xong, đừng xoá dòng �
   → **Thêm xem thông tin booking thật** (13/8) — click vào thanh ngày đã đặt thật (khác với ngày chặn tay/sync ngoài, 2 loại đó không mở gì) mở `BookingDetailModal.jsx` (chỉ xem, không sửa): tên khách, email/SĐT liên hệ, ngày nhận/trả, tổng tiền. `getMonthView` (backend) trả thêm object `booking` đầy đủ trong ngày có `status: booked`
 
 - [x] **Fix bug**: `RegisterPage.jsx` ("Đăng ký tài khoản Chủ nhà") không gửi `role: 'host'` lên backend → tài khoản luôn bị tạo với role mặc định `user`, phát hiện lúc test REQ_12 qua UI thật (route `/listings/mine` yêu cầu role host nên lộ ra ngay). Đã thêm `role: 'host'` vào payload gọi `registerApi`
+- [x] **Khu vực Admin** (`pages/admin/AdminListingsPage.jsx`, `AdminUsersPage.jsx`, `AdminTaxVerificationPage.jsx`, layout riêng `components/admin/AdminLayout.jsx`) (13/8) — routes `/admin`, `/admin/listings`, `/admin/users`, `/admin/tax-verifications`, chặn bằng `ProtectedRoute roles={['admin']}`. Không seed được qua form đăng ký (đúng thiết kế) — tài khoản admin demo tạo tay qua Prisma. Modal dùng chung `ReasonModal.jsx` cho lý do bắt buộc khi đình chỉ/khoá
 
 - [ ] `ProtectedRoute.jsx`, `services/listingService.js` — vẫn là stub/mock (`AuthContext.jsx` vẫn giữ hành vi giả lập host đã đăng nhập khi chưa có session thật — quyết định cũ, chưa đổi). `authService.js`, `calendarService.js`, `bookingService.js` (bản tối giản REQ_07 tạm thời) đã dùng API thật
 

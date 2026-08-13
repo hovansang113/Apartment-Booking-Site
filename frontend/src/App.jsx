@@ -13,6 +13,9 @@ import HostCalendarPage from './pages/host/HostCalendarPage';
 import HostSettingsPage from './pages/host/HostSettingsPage';
 import HostSetupChoicePage from './pages/host/HostSetupChoicePage';
 import CreateListingPage from './pages/host/CreateListingPage';
+import AdminListingsPage from './pages/admin/AdminListingsPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminTaxVerificationPage from './pages/admin/AdminTaxVerificationPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 
@@ -26,7 +29,10 @@ function HostHomeRoute() {
 
 export default function App() {
   const location = useLocation();
-  const isStandalonePage = location.pathname === '/host/listings/new' || location.pathname === '/host/listings/setup';
+  const isStandalonePage =
+    location.pathname === '/host/listings/new' ||
+    location.pathname === '/host/listings/setup' ||
+    location.pathname.startsWith('/admin');
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -88,6 +94,40 @@ export default function App() {
             element={
               <ProtectedRoute roles={['host', 'admin']}>
                 <HostSettingsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin Routes */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <Navigate to="/admin/listings" replace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/listings"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <AdminListingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <AdminUsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/tax-verifications"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <AdminTaxVerificationPage />
               </ProtectedRoute>
             }
           />
