@@ -9,6 +9,7 @@ const {
   unblockDatesRules,
   priceOverrideRules,
   connectSyncRules,
+  updateSyncRules,
 } = require('../validators/calendar.validator');
 const { validate } = require('../validators/validate.util');
 
@@ -22,6 +23,7 @@ router.put('/:listingId/price', priceOverrideRules, validate, calendarController
 router.get('/:listingId/sync', calendarController.listSyncSources);
 router.post('/:listingId/sync', connectSyncRules, validate, calendarController.connectSyncSource);
 router.post('/:listingId/sync/:syncId/refresh', calendarController.refreshSyncSource);
+router.put('/:listingId/sync/:syncId', updateSyncRules, validate, calendarController.updateSyncSource);
 router.delete('/:listingId/sync/:syncId', calendarController.removeSyncSource);
 
 module.exports = router;

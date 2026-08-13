@@ -35,6 +35,11 @@ export async function refreshSyncSource(listingId, syncId) {
   return data.data;
 }
 
+export async function updateSyncSource(listingId, syncId, { icalUrl, label }) {
+  const { data } = await api.put(`/calendar/${listingId}/sync/${syncId}`, { icalUrl, label });
+  return data.data;
+}
+
 export async function removeSyncSource(listingId, syncId) {
   const { data } = await api.delete(`/calendar/${listingId}/sync/${syncId}`);
   return data.data;

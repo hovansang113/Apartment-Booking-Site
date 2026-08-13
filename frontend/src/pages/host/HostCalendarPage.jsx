@@ -24,6 +24,7 @@ function errorMessage(err, fallback) {
 function ConnectCalendarSection({ listingId }) {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [editingSyncId, setEditingSyncId] = useState(null); // null = dang them moi; co gia tri = dang sua nguon nay
   const [icalUrl, setIcalUrl] = useState('');
   const [label, setLabel] = useState('');
 
@@ -38,16 +39,31 @@ function ConnectCalendarSection({ listingId }) {
     queryClient.invalidateQueries({ queryKey: ['calendar', listingId] });
   }
 
+  function closeForm() {
+    setShowForm(false);
+    setEditingSyncId(null);
+    setIcalUrl('');
+    setLabel('');
+  }
+
   const connectMutation = useMutation({
     mutationFn: () => calendarService.connectSyncSource(listingId, icalUrl.trim(), label.trim()),
     onSuccess: () => {
       toast.success('Đã kết nối và đồng bộ lịch ngoài');
-      setIcalUrl('');
-      setLabel('');
-      setShowForm(false);
+      closeForm();
       invalidateAll();
     },
     onError: (err) => toast.error(errorMessage(err, 'Không kết nối được — kiểm tra lại link .ics')),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: () => calendarService.updateSyncSource(listingId, editingSyncId, { icalUrl: icalUrl.trim(), label: label.trim() }),
+    onSuccess: () => {
+      toast.success('Đã cập nhật lịch ngoài');
+      closeForm();
+      invalidateAll();
+    },
+    onError: (err) => toast.error(errorMessage(err, 'Cập nhật thất bại')),
   });
 
   const refreshMutation = useMutation({
@@ -68,16 +84,32 @@ function ConnectCalendarSection({ listingId }) {
     onError: (err) => toast.error(errorMessage(err, 'Không ngắt kết nối được')),
   });
 
+  function openAddForm() {
+    setEditingSyncId(null);
+    setIcalUrl('');
+    setLabel('');
+    setShowForm(true);
+  }
+
+  function openEditForm(src) {
+    setEditingSyncId(src.id);
+    setIcalUrl(src.icalUrl);
+    setLabel(src.label);
+    setShowForm(true);
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
     if (!icalUrl.trim() || !label.trim()) {
       toast.error('Nhập đủ tên hiển thị và link .ics');
       return;
     }
-    connectMutation.mutate();
+    if (editingSyncId) updateMutation.mutate();
+    else connectMutation.mutate();
   }
 
   const sources = sourcesQuery.data || [];
+  const isSaving = connectMutation.isPending || updateMutation.isPending;
 
   return (
     <div className="mt-8 rounded-2xl border border-neutral-200 p-5">
@@ -108,6 +140,13 @@ function ConnectCalendarSection({ listingId }) {
               </button>
               <button
                 type="button"
+                onClick={() => openEditForm(src)}
+                className="text-xs font-semibold text-neutral-700 hover:underline"
+              >
+                Sửa
+              </button>
+              <button
+                type="button"
                 disabled={removeMutation.isPending}
                 onClick={() => removeMutation.mutate(src.id)}
                 className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
@@ -120,6 +159,9 @@ function ConnectCalendarSection({ listingId }) {
 
         {showForm ? (
           <form onSubmit={handleSubmit} className="rounded-xl border border-neutral-300 p-4 space-y-3">
+            <p className="text-xs font-semibold uppercase text-neutral-400">
+              {editingSyncId ? 'Sửa lịch đã kết nối' : 'Kết nối lịch mới'}
+            </p>
             <div>
               <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1">Tên hiển thị</label>
               <input
@@ -143,16 +185,12 @@ function ConnectCalendarSection({ listingId }) {
             <div className="flex items-center gap-2">
               <button
                 type="submit"
-                disabled={connectMutation.isPending}
+                disabled={isSaving}
                 className="rounded-lg bg-neutral-900 px-4 py-2 text-xs font-semibold text-white hover:bg-neutral-800 disabled:opacity-50"
               >
-                {connectMutation.isPending ? 'Đang kết nối...' : 'Kết nối'}
+                {isSaving ? 'Đang lưu...' : editingSyncId ? 'Lưu thay đổi' : 'Kết nối'}
               </button>
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="text-xs font-semibold text-neutral-500 hover:underline"
-              >
+              <button type="button" onClick={closeForm} className="text-xs font-semibold text-neutral-500 hover:underline">
                 Huỷ
               </button>
             </div>
@@ -160,7 +198,7 @@ function ConnectCalendarSection({ listingId }) {
         ) : (
           <button
             type="button"
-            onClick={() => setShowForm(true)}
+            onClick={openAddForm}
             className="w-full rounded-xl border border-dashed border-neutral-300 px-4 py-3 text-sm font-medium text-neutral-600 hover:border-neutral-900 hover:text-neutral-900 transition-colors"
           >
             Kết nối thêm lịch khác
@@ -192,9 +230,9 @@ export default function HostCalendarPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async ({ date, status, price, previousPrice }) => {
+    mutationFn: async ({ date, status, price, note, previousPrice }) => {
       if (status === 'blocked') {
-        await calendarService.blockDates(activeListingId, [date]);
+        await calendarService.blockDates(activeListingId, [date], note);
       } else {
         await calendarService.unblockDates(activeListingId, [date]);
       }
@@ -209,8 +247,8 @@ export default function HostCalendarPage() {
     onError: (err) => toast.error(errorMessage(err, 'Có lỗi xảy ra, thử lại sau')),
   });
 
-  function handleSaveDay({ date, status, price }) {
-    saveMutation.mutate({ date, status, price, previousPrice: editingDay.price });
+  function handleSaveDay({ date, status, price, note }) {
+    saveMutation.mutate({ date, status, price, note, previousPrice: editingDay.price });
   }
 
   const monthData = monthQuery.data;

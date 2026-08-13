@@ -1,6 +1,6 @@
 # TODO — Booking Platform
 
-Cập nhật lần cuối: 2026-08-10. Tick `[x]` khi xong, đừng xoá dòng đã làm — để lịch sử.
+Cập nhật lần cuối: 2026-08-13. Tick `[x]` khi xong, đừng xoá dòng đã làm — để lịch sử.
 
 ## Hạ tầng / setup
 
@@ -34,8 +34,8 @@ Cập nhật lần cuối: 2026-08-10. Tick `[x]` khi xong, đừng xoá dòng �
 - [ ] **REQ_05 / REQ_06** — Xem danh sách listing + chi tiết listing kèm lịch (backend)
   → stub: `routes/listing.routes.js`, `routes/calendar.routes.js`. **FE đã build UI trước** (trang chủ + trang detail) bằng mock data — xem mục Frontend bên dưới. Khi làm backend, nhớ nối `frontend/src/data/mockListings.js` → gọi `listingService` thật, và bỏ mock file đi
 - [ ] **REQ_07** — Khách gửi yêu cầu đặt phòng (tạo `booking`, auto-approved nếu lịch trống)
-  → stub: `services/booking.service.js`, `controllers/booking.controller.js`, `routes/booking.routes.js`
-- [ ] **REQ_09** — Chống trùng lịch: check `listing_calendar` trong `prisma.$transaction` ngay lúc tạo booking (đi kèm REQ_07, không phải route riêng)
+  → **Đã có bản tối giản tạm thời** (13/8) `POST /api/bookings` — chỉ đủ để chứng minh REQ_09 chống trùng lịch hoạt động thật (test bằng đúng dữ liệu sync Airbnb thật). **Còn thiếu so với REQ_07 đầy đủ**: chưa hỗ trợ khách đặt không cần tài khoản (chưa nối REQ_14 `guestLogin`/tự tạo `isGuest` user), chưa dùng `pricing.service.js` để tính giá theo từng đêm (đang lấy `default_price` phẳng nhân số đêm, chưa nhìn `listing_price_overrides`), chưa có `contactPhone` nhập tay, chưa có `GET /bookings/mine`
+- [x] **REQ_09** — Chống trùng lịch: check `listing_calendar` trong `prisma.$transaction` ngay lúc tạo booking (nằm trong `booking.service.js` ở trên, dùng chung transaction với REQ_07 tạm thời) — **đã test thật**: đặt trùng ngày vừa đặt → 409, đặt ngày đã chặn tay → 409, đặt ngày đang bị chặn bởi sync Airbnb thật → 409
 - [ ] **REQ_10** — Giả lập thanh toán thành công cho booking
   → stub: `controllers/payment.controller.js`, `routes/payment.routes.js`
 - [ ] **REQ_08** — Host huỷ (reject) một booking đã approved
@@ -45,6 +45,7 @@ Cập nhật lần cuối: 2026-08-10. Tick `[x]` khi xong, đừng xoá dòng �
 - [x] **REQ_12** — Host tự block lịch thủ công + xem lịch tháng + **đồng bộ 2 chiều iCal** (Airbnb/VRBO, mở rộng ngoài REQ gốc theo yêu cầu Jason)
   → `services/calendar.service.js`, `controllers/calendar.controller.js`, `routes/calendar.routes.js`, `validators/calendar.validator.js`. Dùng `node-ical` để parse `.ics`. Đã test end-to-end (API script + Playwright qua UI thật) bằng file `.ics` thật của Airbnb: `GET /:listingId` (lịch tháng), `POST /:listingId/block`, `POST /:listingId/unblock`, `PUT /:listingId/price`, `GET/POST /:listingId/sync`, `POST /:listingId/sync/:syncId/refresh`, `DELETE /:listingId/sync/:syncId`. **Lưu ý xử lý ngày**: `node-ical` trả `Date` cho field `VALUE=DATE` theo giờ local (không phải UTC) — server chạy `Asia/Ho_Chi_Minh`, nếu convert bằng `toISOString()` sẽ bị lệch lùi 1 ngày; phải đọc lại bằng getter local (`getFullYear/getMonth/getDate`), xem comment trong `calendar.service.js`. **Xung đột nguồn**: 1 ngày chỉ 1 dòng `listing_calendar` (`unique(listingId,date)`) — sync bỏ qua ngày nào đã có block tay/booking thật, ưu tiên dữ liệu tại chỗ. Thêm 2 field vào schema (`ListingCalendarSync.label`, `ListingCalendar.calendarSyncId`) + migration `add_calendar_sync_label_and_link`. Thêm route phụ trợ `GET /api/listings/mine` (host xem bài đăng của mình, cần để chọn listing thật cho trang lịch — trước đó chưa có route GET nào cho listings)
   → **Không có tên khách khi sync từ Airbnb thật** (chỉ có `SUMMARY: Reserved` + link đặt phòng + 4 số điện thoại cuối, không có tên) — ngày sync hiển thị nhãn chung "Đã đặt qua {label}" thay vì tên khách, phân biệt màu (indigo) với booking thật (teal/brand, cần REQ_07 mới có dữ liệu thật)
+  → **Bổ sung sau khi đối chiếu lại đúng text ticket của Jason** (13/8): thêm nút **"Sửa"** cho từng lịch đã kết nối (`PUT /:listingId/sync/:syncId` — sửa label/URL rồi tự sync lại theo dữ liệu mới) — trước đó chỉ có Làm mới/Ngắt kết nối, thiếu đúng nút Edit trong ticket. Thêm **ô ghi chú (Notes)** khi chặn ngày trong `DayEditModal.jsx` — backend đã có sẵn cột `note` từ đầu nhưng chưa từng có UI nhập, sót đúng chữ "Add Notes" trong tên task gốc của Jason ("Calendar Management + Calendar Sync + Block Dates off **and Add Notes**")
 
 ## Frontend
 
@@ -59,7 +60,7 @@ Cập nhật lần cuối: 2026-08-10. Tick `[x]` khi xong, đừng xoá dòng �
 
 - [x] **Fix bug**: `RegisterPage.jsx` ("Đăng ký tài khoản Chủ nhà") không gửi `role: 'host'` lên backend → tài khoản luôn bị tạo với role mặc định `user`, phát hiện lúc test REQ_12 qua UI thật (route `/listings/mine` yêu cầu role host nên lộ ra ngay). Đã thêm `role: 'host'` vào payload gọi `registerApi`
 
-- [ ] `AuthContext.jsx`, `ProtectedRoute.jsx`, `services/api.js`, `services/listingService.js`, `services/bookingService.js` — phần lớn vẫn là stub/mock (`AuthContext` mặc định giả lập host đã đăng nhập khi chưa có token thật), `authService.js` đã dùng thật (login/register/guestLogin), `calendarService.js` đã dùng thật (REQ_12)
+- [ ] `ProtectedRoute.jsx`, `services/listingService.js` — vẫn là stub/mock (`AuthContext.jsx` vẫn giữ hành vi giả lập host đã đăng nhập khi chưa có session thật — quyết định cũ, chưa đổi). `authService.js`, `calendarService.js`, `bookingService.js` (bản tối giản REQ_07 tạm thời) đã dùng API thật
 
 - [ ] Domain thật — `SITE_URL` trong `Seo.jsx` và `index.html`/`robots.txt`/`sitemap.xml` đang để `https://example.com`, cần đổi khi có domain deploy thật
 

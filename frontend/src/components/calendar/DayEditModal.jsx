@@ -12,9 +12,10 @@ function formatDayLabel(ymd) {
 export default function DayEditModal({ day, defaultPrice, onClose, onSave }) {
   const [blocked, setBlocked] = useState(day.status === 'blocked');
   const [price, setPrice] = useState(day.price);
+  const [note, setNote] = useState(day.note || '');
 
   function handleSave() {
-    onSave({ date: day.date, status: blocked ? 'blocked' : 'available', price });
+    onSave({ date: day.date, status: blocked ? 'blocked' : 'available', price, note: note.trim() });
     onClose();
   }
 
@@ -76,6 +77,19 @@ export default function DayEditModal({ day, defaultPrice, onClose, onSave }) {
             )}
           </div>
         </div>
+
+        {blocked && (
+          <div className="mt-2.5 rounded-xl bg-neutral-900 px-4 py-3.5 text-white">
+            <p className="text-xs text-neutral-400">Ghi chú (lý do chặn ngày này)</p>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={2}
+              placeholder="VD: Bảo trì điều hoà"
+              className="mt-1 w-full resize-none bg-transparent text-sm outline-none placeholder:text-neutral-500"
+            />
+          </div>
+        )}
 
         <button
           type="button"

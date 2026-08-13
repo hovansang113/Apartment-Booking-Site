@@ -1,3 +1,17 @@
-// TODO: REQ_07 - dat phong, tu dong approved neu lich con trong (check trong transaction)
-// TODO: REQ_08 - host huy 1 booking da approved
-// TODO: REQ_11 - huy booking
+const bookingService = require('../services/booking.service');
+const { created } = require('../utils/response.util');
+
+// TAM THOI - ban toi gian de test REQ_12 (chan booking len ngay bi block).
+// Xem comment day du trong services/booking.service.js.
+async function create(req, res) {
+  const { listingId, checkIn, checkOut } = req.body;
+  const booking = await bookingService.createBooking({
+    listingId,
+    guestId: req.user.id,
+    checkIn,
+    checkOut,
+  });
+  return created(res, booking, 'Đặt phòng thành công');
+}
+
+module.exports = { create };

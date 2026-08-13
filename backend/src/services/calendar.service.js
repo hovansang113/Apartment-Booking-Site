@@ -230,6 +230,25 @@ async function syncIcalSource({ listingId, hostId, syncId }) {
   });
 }
 
+// Sua ten hien thi va/hoac link .ics cua 1 nguon da ket noi (nut "Edit" trong
+// ticket cua Jason). Neu link thay doi thi dong bo lai luon theo link moi.
+async function updateSyncSource({ listingId, hostId, syncId, icalUrl, label }) {
+  await assertOwnedByHost(listingId, hostId);
+
+  const existing = await prisma.listingCalendarSync.findUnique({ where: { id: syncId } });
+  if (!existing || existing.listingId !== listingId) {
+    throw new AppError(404, 'Calendar sync source not found');
+  }
+
+  await prisma.listingCalendarSync.update({
+    where: { id: syncId },
+    data: { icalUrl: icalUrl || existing.icalUrl, label: label || existing.label },
+  });
+
+  await syncIcalSource({ listingId, hostId, syncId });
+  return prisma.listingCalendarSync.findUnique({ where: { id: syncId } });
+}
+
 async function removeSyncSource({ listingId, hostId, syncId }) {
   await assertOwnedByHost(listingId, hostId);
 
@@ -247,5 +266,6 @@ module.exports = {
   listSyncSources,
   connectIcalSource,
   syncIcalSource,
+  updateSyncSource,
   removeSyncSource,
 };

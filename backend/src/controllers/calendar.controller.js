@@ -67,6 +67,18 @@ async function refreshSyncSource(req, res) {
   return ok(res, sync, 'Đã làm mới đồng bộ lịch');
 }
 
+async function updateSyncSource(req, res) {
+  const { icalUrl, label } = req.body;
+  const sync = await calendarService.updateSyncSource({
+    listingId: req.params.listingId,
+    hostId: req.user.id,
+    syncId: req.params.syncId,
+    icalUrl,
+    label,
+  });
+  return ok(res, sync, 'Đã cập nhật lịch ngoài');
+}
+
 async function removeSyncSource(req, res) {
   await calendarService.removeSyncSource({
     listingId: req.params.listingId,
@@ -84,5 +96,6 @@ module.exports = {
   listSyncSources,
   connectSyncSource,
   refreshSyncSource,
+  updateSyncSource,
   removeSyncSource,
 };

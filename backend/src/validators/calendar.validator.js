@@ -30,10 +30,16 @@ const connectSyncRules = [
   body('label').trim().notEmpty().isLength({ max: 191 }).withMessage('Label is required'),
 ];
 
+const updateSyncRules = [
+  body('icalUrl').optional({ checkFalsy: true }).trim().isURL().withMessage('icalUrl must be a valid URL'),
+  body('label').optional({ checkFalsy: true }).trim().isLength({ max: 191 }).withMessage('Label is too long'),
+];
+
 module.exports = {
   monthViewRules,
   blockDatesRules,
   unblockDatesRules,
   priceOverrideRules,
   connectSyncRules,
+  updateSyncRules,
 };
