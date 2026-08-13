@@ -101,4 +101,24 @@ async function getMe(userId) {
   return sanitizeUser(user);
 }
 
-module.exports = { register, login, guestLogin, getMe, sanitizeUser };
+// Host "Settings" - nop thong tin thue/giay to. Mo phong theo cach Airbnb thu
+// thap thong tin nay (Form W-9: ten phap ly, dia chi, tax ID, tax
+// classification) - KHONG phai tu van phap ly/thue Viet Nam chinh thuc, chi
+// la UI mo phong cho du an hoc tap. Chuyen sang "pending" moi lan nop de cho
+// admin duyet (REQ_03 - hien chua co UI duyet that, giu lai trang thai nay de
+// dung sau).
+async function updateTaxInfo(userId, { legalName, taxId, taxpayerType, idNumber }) {
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      legalName,
+      taxId,
+      taxpayerType,
+      idNumber: idNumber || null,
+      verificationStatus: 'pending',
+    },
+  });
+  return sanitizeUser(user);
+}
+
+module.exports = { register, login, guestLogin, getMe, updateTaxInfo, sanitizeUser };

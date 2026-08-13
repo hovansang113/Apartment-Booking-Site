@@ -65,17 +65,41 @@ enum Amenity {
   workspace
 }
 
+// Loai hinh nop thue - mo phong theo tax classification cua Airbnb (individual
+// vs business entity), doi ten cho phu hop boi canh Viet Nam.
+enum TaxpayerType {
+  individual
+  household_business
+  company
+}
+
+// Mo phong trang thai xac minh thue/giay to cua host, giong Airbnb that
+// (khong phai tu van phap ly chinh thuc - chi la UI mo phong cho du an hoc tap).
+// unverified -> host chua nop gi. pending -> da nop, cho admin duyet (REQ_03,
+// chua co UI duyet that). verified/rejected -> admin da xu ly.
+enum VerificationStatus {
+  unverified
+  pending
+  verified
+  rejected
+}
+
 model User {
-  id           String     @id @default(uuid())
-  email        String     @unique
-  passwordHash String?    @map("password_hash")
-  fullName     String     @map("full_name")
-  phone        String?
-  role         UserRole   @default(user)
-  status       UserStatus @default(active)
-  isGuest      Boolean    @default(false) @map("is_guest")
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
+  id                  String              @id @default(uuid())
+  email               String              @unique
+  passwordHash        String?             @map("password_hash")
+  fullName            String              @map("full_name")
+  phone               String?
+  role                UserRole            @default(user)
+  status              UserStatus          @default(active)
+  isGuest             Boolean             @default(false) @map("is_guest")
+  legalName           String?             @map("legal_name")
+  taxId               String?             @map("tax_id")
+  taxpayerType        TaxpayerType?       @map("taxpayer_type")
+  idNumber            String?             @map("id_number")
+  verificationStatus  VerificationStatus  @default(unverified) @map("verification_status")
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
 
   listings Listing[]
   bookings Booking[]

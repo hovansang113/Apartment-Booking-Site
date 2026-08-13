@@ -10,6 +10,7 @@ import BecomeHostPage from './pages/host/BecomeHostPage';
 import HostTodayPage from './pages/host/HostTodayPage';
 import HostListingsPage from './pages/host/HostListingsPage';
 import HostCalendarPage from './pages/host/HostCalendarPage';
+import HostSettingsPage from './pages/host/HostSettingsPage';
 import HostSetupChoicePage from './pages/host/HostSetupChoicePage';
 import CreateListingPage from './pages/host/CreateListingPage';
 import ProtectedRoute from './routes/ProtectedRoute';
@@ -79,6 +80,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={['host', 'admin']}>
                 <HostCalendarPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/host/settings"
+            element={
+              <ProtectedRoute roles={['host', 'admin']}>
+                <HostSettingsPage />
               </ProtectedRoute>
             }
           />

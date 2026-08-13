@@ -25,3 +25,9 @@ export async function getMe() {
 export async function logout() {
   await api.post('/auth/logout');
 }
+
+// Host "Settings" - nop mao so thue/giay to (mo phong theo Airbnb)
+export async function updateTaxInfo(payload) {
+  const { data } = await api.put('/auth/tax-info', payload);
+  return data.data;
+}

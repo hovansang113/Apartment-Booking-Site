@@ -40,4 +40,11 @@ async function me(req, res) {
   return ok(res, { user });
 }
 
-module.exports = { register, login, guestLogin, logout, me };
+// Host "Settings" - nop mao so thue/giay to (mo phong)
+async function updateTaxInfo(req, res) {
+  const { legalName, taxId, taxpayerType, idNumber } = req.body;
+  const user = await authService.updateTaxInfo(req.user.id, { legalName, taxId, taxpayerType, idNumber });
+  return ok(res, { user }, 'Đã gửi thông tin, đang chờ xác minh');
+}
+
+module.exports = { register, login, guestLogin, logout, me, updateTaxInfo };

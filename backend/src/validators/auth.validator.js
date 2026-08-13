@@ -1,5 +1,5 @@
 const { body } = require('express-validator');
-const { UserRole } = require('@prisma/client');
+const { UserRole, TaxpayerType } = require('@prisma/client');
 
 const EMAIL_MAX = 191; // matches VARCHAR(191) column
 const NAME_MAX = 191; // matches VARCHAR(191) column
@@ -50,4 +50,13 @@ const loginRules = [
 
 const guestLoginRules = [emailRule, fullNameRule, phoneRule];
 
-module.exports = { registerRules, loginRules, guestLoginRules };
+const taxInfoRules = [
+  body('legalName').trim().notEmpty().withMessage('Vui lòng nhập họ tên đầy đủ theo giấy tờ').isLength({ max: NAME_MAX }),
+  body('taxId').trim().notEmpty().withMessage('Vui lòng nhập mã số thuế').isLength({ max: 50 }),
+  body('taxpayerType')
+    .isIn(Object.values(TaxpayerType))
+    .withMessage('Loại hình nộp thuế không hợp lệ'),
+  body('idNumber').optional({ checkFalsy: true }).trim().isLength({ max: 20 }).withMessage('Số CCCD/CMND không hợp lệ'),
+];
+
+module.exports = { registerRules, loginRules, guestLoginRules, taxInfoRules };
