@@ -80,6 +80,9 @@ export default function Header() {
                     )}
                     {user.role === 'host' && (
                       <>
+                        <Link to="/host/stats" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
+                          Doanh thu
+                        </Link>
                         <Link to="/host/listings" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
                           My listings
                         </Link>
