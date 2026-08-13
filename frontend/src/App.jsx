@@ -20,6 +20,7 @@ import GuestBookingPage from './pages/user/GuestBookingPage';
 import HostCalendarPage from './pages/host/HostCalendarPage';
 import HostPricingPage from './pages/host/HostPricingPage';
 import HostStatsPage from './pages/host/HostStatsPage';
+import HostLayout from './pages/host/HostLayout';
 
 function MainLayout({ children }) {
   return (
@@ -72,40 +73,40 @@ export default function App() {
           </ProtectedRoute>
         } />
 
-        {/* Host */}
+        {/* Host — dùng HostLayout (có tab nav riêng) */}
+        <Route path="/host/stats" element={
+          <ProtectedRoute roles={['host']}>
+            <HostLayout><HostStatsPage /></HostLayout>
+          </ProtectedRoute>
+        } />
         <Route path="/host/listings" element={
           <ProtectedRoute roles={['host']}>
-            <MainLayout><HostListingsPage /></MainLayout>
+            <HostLayout><HostListingsPage /></HostLayout>
           </ProtectedRoute>
         } />
         <Route path="/host/bookings" element={
           <ProtectedRoute roles={['host']}>
-            <MainLayout><HostBookingsPage /></MainLayout>
+            <HostLayout><HostBookingsPage /></HostLayout>
           </ProtectedRoute>
         } />
         <Route path="/host/calendar" element={
           <ProtectedRoute roles={['host']}>
-            <MainLayout><HostCalendarPage /></MainLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/host/stats" element={
-          <ProtectedRoute roles={['host']}>
-            <MainLayout><HostStatsPage /></MainLayout>
+            <HostLayout><HostCalendarPage /></HostLayout>
           </ProtectedRoute>
         } />
         <Route path="/host/pricing" element={
           <ProtectedRoute roles={['host']}>
-            <MainLayout><HostPricingPage /></MainLayout>
+            <HostLayout><HostPricingPage /></HostLayout>
           </ProtectedRoute>
         } />
         <Route path="/host/listings/new" element={
           <ProtectedRoute roles={['host']}>
-            <MainLayout><HostListingFormPage /></MainLayout>
+            <HostLayout><HostListingFormPage /></HostLayout>
           </ProtectedRoute>
         } />
         <Route path="/host/listings/:id/edit" element={
           <ProtectedRoute roles={['host']}>
-            <MainLayout><HostListingFormPage /></MainLayout>
+            <HostLayout><HostListingFormPage /></HostLayout>
           </ProtectedRoute>
         } />
 

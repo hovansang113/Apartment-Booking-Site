@@ -1,0 +1,77 @@
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+
+const TABS = [
+  { to: '/host/stats',    label: 'Doanh thu', end: true },
+  { to: '/host/listings', label: 'Phòng' },
+  { to: '/host/bookings', label: 'Booking' },
+  { to: '/host/calendar', label: 'Lịch' },
+  { to: '/host/pricing',  label: 'Giá' },
+];
+
+export default function HostLayout({ children }) {
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate('/auth/login');
+  }
+
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: '#FAF6EF' }}>
+      <div style={{ backgroundColor: '#0d9488' }}>
+        <div className="mx-auto max-w-5xl px-8">
+          <div className="flex items-center gap-8 h-14">
+            <span
+              className="shrink-0 text-[15px] font-bold tracking-tight text-white"
+              style={{ letterSpacing: '-0.01em' }}
+            >
+              stayhub
+            </span>
+
+            <div style={{ width: 1, height: 16, backgroundColor: 'rgba(255,255,255,0.25)' }} />
+
+            <nav className="flex h-full flex-1">
+              {TABS.map((t) => (
+                <NavLink
+                  key={t.to}
+                  to={t.to}
+                  end={t.end}
+                  className={({ isActive }) =>
+                    `flex items-center h-full px-1 mr-6 text-[13px] font-medium border-b-2 transition-colors duration-150 ${
+                      isActive
+                        ? 'border-white text-white'
+                        : 'border-transparent text-white/60 hover:text-white'
+                    }`
+                  }
+                >
+                  {t.label}
+                </NavLink>
+              ))}
+            </nav>
+
+            <div className="flex items-center gap-4 shrink-0">
+              <a href="/" target="_blank" rel="noopener noreferrer"
+                className="text-[12px] text-white/50 hover:text-white transition-colors">
+                View site ↗
+              </a>
+              <div style={{ width: 1, height: 14, backgroundColor: 'rgba(255,255,255,0.2)' }} />
+              <div className="text-right">
+                <p className="text-[11px] font-semibold text-white leading-tight">{user?.fullName}</p>
+                <p className="text-[10px] text-white/50 leading-tight">Host</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="text-[12px] font-medium text-white/50 hover:text-white transition-colors"
+              >
+                Log out
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="mx-auto max-w-5xl px-8 py-10">{children}</div>
+    </div>
+  );
+}

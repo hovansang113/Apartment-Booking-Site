@@ -88,7 +88,7 @@ export default function HostStatsPage() {
   }));
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10 space-y-10">
+    <div className="space-y-10">
 
       {/* 01 Tổng quan */}
       <section>
