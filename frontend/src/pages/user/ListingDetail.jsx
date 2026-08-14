@@ -6,6 +6,7 @@ import Gallery from '../../components/listing/Gallery';
 import AmenityList from '../../components/listing/AmenityList';
 import BookingWidget from '../../components/listing/BookingWidget';
 import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 async function fetchListing(id) {
   const { data } = await api.get(`/listings/${id}`);
@@ -143,6 +144,7 @@ function AvailabilityCalendar({ listingId, defaultPrice, checkIn, checkOut, onSe
 
 export default function ListingDetail() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [priceOverrides, setPriceOverrides] = useState([]);
@@ -223,14 +225,20 @@ export default function ListingDetail() {
           </div>
 
           <div className="lg:col-span-1">
-            <BookingWidget
-              listing={listing}
-              checkIn={checkIn}
-              checkOut={checkOut}
-              onChangeCheckIn={setCheckIn}
-              onChangeCheckOut={setCheckOut}
-              priceOverrides={priceOverrides}
-            />
+            {user?.id === listing.host?.id ? (
+              <div className="rounded-xl border border-neutral-200 p-6 text-center text-sm text-neutral-500">
+                This is your listing — you cannot book it.
+              </div>
+            ) : (
+              <BookingWidget
+                listing={listing}
+                checkIn={checkIn}
+                checkOut={checkOut}
+                onChangeCheckIn={setCheckIn}
+                onChangeCheckOut={setCheckOut}
+                priceOverrides={priceOverrides}
+              />
+            )}
           </div>
         </div>
       </main>

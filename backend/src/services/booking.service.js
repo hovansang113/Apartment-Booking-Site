@@ -316,6 +316,7 @@ async function createGuestBooking({ listingId, checkIn, checkOut, guestCount = 1
   const listing = await prisma.listing.findUnique({ where: { id: listingId } });
   if (!listing) throw new AppError(404, 'Listing not found');
   if (listing.status !== 'approved') throw new AppError(400, 'Listing is not available for booking');
+  if (listing.hostId === guestUser.id) throw new AppError(400, 'Host cannot book their own listing');
 
   if (guestCount < 1 || guestCount > listing.guestCapacity)
     throw new AppError(400, `So khach phai tu 1 den ${listing.guestCapacity}`);
