@@ -63,7 +63,11 @@ export default function Header() {
               className="flex items-center gap-3 rounded-full border border-neutral-300 py-2 pl-3 pr-2 hover:shadow-md transition-shadow"
             >
               <MenuIcon className="h-4 w-4 text-neutral-700" />
-              <UserCircleIcon className="h-7 w-7 text-neutral-500" />
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.fullName} className="h-7 w-7 rounded-full object-cover" />
+              ) : (
+                <UserCircleIcon className="h-7 w-7 text-neutral-500" />
+              )}
             </button>
 
             {open && (
@@ -102,9 +106,12 @@ export default function Header() {
                         My bookings
                       </Link>
                     )}
+                    <Link to="/profile" onClick={() => setOpen(false)} className="block px-4 py-2 hover:bg-neutral-50 text-neutral-700">
+                      Edit profile
+                    </Link>
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 hover:bg-neutral-50 text-neutral-700"
+                      className="w-full text-left px-4 py-2 hover:bg-neutral-50 text-neutral-700 border-t border-neutral-100 mt-1"
                     >
                       Log out
                     </button>

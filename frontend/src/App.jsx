@@ -21,6 +21,7 @@ import HostCalendarPage from './pages/host/HostCalendarPage';
 import HostPricingPage from './pages/host/HostPricingPage';
 import HostStatsPage from './pages/host/HostStatsPage';
 import HostLayout from './pages/host/HostLayout';
+import ProfilePage from './pages/user/ProfilePage';
 
 function MainLayout({ children }) {
   return (
@@ -43,6 +44,13 @@ export default function App() {
 
         {/* Guest booking (no auth) */}
         <Route path="/bookings/guest/:token" element={<GuestBookingPage />} />
+
+        {/* Profile */}
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <MainLayout><ProfilePage /></MainLayout>
+          </ProtectedRoute>
+        } />
 
         {/* Bookings */}
         <Route path="/bookings" element={
