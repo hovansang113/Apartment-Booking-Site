@@ -15,10 +15,14 @@ export default function ProfilePage() {
 
   const { data: profile } = useQuery({ queryKey: ['me'], queryFn: fetchMe });
 
-  const [form, setForm] = useState({ fullName: '', phone: '' });
+  const [form, setForm] = useState({
+    fullName: user?.fullName || '',
+    phone: user?.phone || '',
+  });
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const [pwError, setPwError] = useState('');
 
+  // Overwrite with fresher data from API once loaded
   useEffect(() => {
     if (profile) {
       setForm({ fullName: profile.fullName, phone: profile.phone || '' });
