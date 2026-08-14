@@ -123,7 +123,7 @@ export default function ProfilePage() {
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-1">Email</label>
             <input
-              value={profile?.email || ''}
+              value={profile?.email || user?.email || ''}
               disabled
               className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-400 cursor-not-allowed"
             />
