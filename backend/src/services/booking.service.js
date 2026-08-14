@@ -273,10 +273,10 @@ async function getHostStats(hostId, period = 'month') {
 
   const periodStart = getHostPeriodRange(period);
 
-  const [allBookings, revenueAllTime, revenuePeriod] = await Promise.all([
+  const [periodBookings, revenueAllTime, revenuePeriod] = await Promise.all([
     prisma.booking.groupBy({
       by: ['status'],
-      where: { listingId: { in: listingIds } },
+      where: { listingId: { in: listingIds }, createdAt: { gte: periodStart } },
       _count: { id: true },
     }),
     prisma.booking.findMany({
@@ -289,9 +289,9 @@ async function getHostStats(hostId, period = 'month') {
     }),
   ]);
 
-  const byStatus = Object.fromEntries(allBookings.map((g) => [g.status, g._count.id]));
+  const byStatus = Object.fromEntries(periodBookings.map((g) => [g.status, g._count.id]));
   const totalRevenue = Number(revenuePeriod._sum.totalPrice || 0);
-  const totalBookings = allBookings.reduce((sum, g) => sum + g._count.id, 0);
+  const totalBookings = periodBookings.reduce((sum, g) => sum + g._count.id, 0);
   const chartData = buildHostChartData(period, revenueAllTime);
 
   return { totalRevenue, totalBookings, byStatus, chartData, period };
