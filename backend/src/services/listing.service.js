@@ -128,8 +128,30 @@ async function deleteListing({ listingId, hostId }) {
 }
 
 // REQ_05: public listing search - chỉ approved
-async function getPublicListings({ category, page = 1, limit = 20 } = {}) {
-  const where = { status: 'approved', ...(category ? { category } : {}) };
+async function getPublicListings({ category, location, checkIn, checkOut, guests, page = 1, limit = 20 } = {}) {
+  const where = {
+    status: 'approved',
+    ...(category ? { category } : {}),
+    ...(location ? { address: { contains: location } } : {}),
+    ...(guests ? { guestCapacity: { gte: Number(guests) } } : {}),
+  };
+
+  // Exclude listings that have booked/blocked days overlapping the requested range
+  if (checkIn && checkOut) {
+    const bookedListingIds = await prisma.listingCalendar.findMany({
+      where: {
+        date: { gte: new Date(checkIn), lt: new Date(checkOut) },
+        status: { in: ['booked', 'blocked'] },
+      },
+      select: { listingId: true },
+      distinct: ['listingId'],
+    });
+    const unavailableIds = bookedListingIds.map((r) => r.listingId);
+    if (unavailableIds.length > 0) {
+      where.id = { notIn: unavailableIds };
+    }
+  }
+
   const skip = (Number(page) - 1) * Number(limit);
   const [listings, total] = await Promise.all([
     prisma.listing.findMany({

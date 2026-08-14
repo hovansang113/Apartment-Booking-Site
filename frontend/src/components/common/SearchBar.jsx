@@ -1,24 +1,52 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SearchIcon } from './icons';
-
-const SEGMENTS = [
-  { key: 'location', label: 'Location',   placeholder: 'Search destination' },
-  { key: 'checkIn',  label: 'Check-in',   placeholder: 'Add date' },
-  { key: 'checkOut', label: 'Check-out',  placeholder: 'Add date' },
-  { key: 'guests',   label: 'Guests',     placeholder: 'Add guests' },
-];
 
 const C_BRAND = '#2F4A3E';
 
 export default function SearchBar() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [active, setActive] = useState(null);
-  const [values, setValues] = useState({ location: '', checkIn: '', checkOut: '', guests: '' });
+  const [values, setValues] = useState({
+    location: '',
+    checkIn: '',
+    checkOut: '',
+    guests: '',
+  });
+
+  // Sync from URL on mount
+  useEffect(() => {
+    setValues({
+      location: searchParams.get('location') || '',
+      checkIn: searchParams.get('checkIn') || '',
+      checkOut: searchParams.get('checkOut') || '',
+      guests: searchParams.get('guests') || '',
+    });
+  }, []);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (values.location) params.set('location', values.location);
+    if (values.checkIn) params.set('checkIn', values.checkIn);
+    if (values.checkOut) params.set('checkOut', values.checkOut);
+    if (values.guests) params.set('guests', values.guests);
+    navigate(`/?${params.toString()}`);
+  }
+
+  const SEGMENTS = [
+    { key: 'location', label: 'Location',  placeholder: 'Search destination', type: 'text' },
+    { key: 'checkIn',  label: 'Check-in',  placeholder: 'Add date',           type: 'date' },
+    { key: 'checkOut', label: 'Check-out', placeholder: 'Add date',           type: 'date' },
+    { key: 'guests',   label: 'Guests',    placeholder: 'Add guests',         type: 'number' },
+  ];
 
   return (
     <form
       role="search"
       aria-label="Search listings"
-      onSubmit={(e) => e.preventDefault()}
+      onSubmit={handleSubmit}
       className="flex items-center bg-white"
       style={{
         border: '1.5px solid #E8E8E6',
@@ -42,8 +70,9 @@ export default function SearchBar() {
               {seg.label}
             </span>
             <input
-              type="text"
+              type={seg.type}
               value={values[seg.key]}
+              min={seg.key === 'guests' ? 1 : undefined}
               onFocus={() => setActive(seg.key)}
               onBlur={() => setActive(null)}
               onChange={(e) => setValues((v) => ({ ...v, [seg.key]: e.target.value }))}

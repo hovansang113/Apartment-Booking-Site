@@ -63,8 +63,8 @@ async function remove(req, res) {
 
 // REQ_05 - public listing list
 async function getPublicListings(req, res) {
-  const { category, page, limit } = req.query;
-  const result = await listingService.getPublicListings({ category, page, limit });
+  const { category, location, checkIn, checkOut, guests, page, limit } = req.query;
+  const result = await listingService.getPublicListings({ category, location, checkIn, checkOut, guests, page, limit });
   return ok(res, result);
 }
 

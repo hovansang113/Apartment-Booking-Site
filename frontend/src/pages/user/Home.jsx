@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import Seo from '../../components/common/Seo';
 import CategoryTabs from '../../components/common/CategoryTabs';
 import ListingCard from '../../components/listing/ListingCard';
@@ -47,13 +48,26 @@ function SkeletonCard() {
 
 export default function Home() {
   const [category, setCategory] = useState('all');
+  const [searchParams] = useSearchParams();
+
+  const location = searchParams.get('location') || '';
+  const checkIn = searchParams.get('checkIn') || '';
+  const checkOut = searchParams.get('checkOut') || '';
+  const guests = searchParams.get('guests') || '';
 
   const { data, isLoading } = useQuery({
-    queryKey: ['public-listings', category],
-    queryFn: () => getPublicListings({ category: category === 'all' ? undefined : category }),
+    queryKey: ['public-listings', category, location, checkIn, checkOut, guests],
+    queryFn: () => getPublicListings({
+      category: category === 'all' ? undefined : category,
+      location: location || undefined,
+      checkIn: checkIn || undefined,
+      checkOut: checkOut || undefined,
+      guests: guests || undefined,
+    }),
   });
 
   const listings = data?.listings ?? [];
+  const hasFilters = location || checkIn || checkOut || guests;
 
   return (
     <>
@@ -76,8 +90,10 @@ export default function Home() {
         ) : listings.length === 0 ? (
           <div className="py-24 text-center">
             <p className="text-4xl mb-3">🏠</p>
-            <p className="text-neutral-600 font-medium">No listings found in this category</p>
-            <p className="text-sm text-neutral-400 mt-1">Try selecting a different category</p>
+            <p className="text-neutral-600 font-medium">No listings found</p>
+            <p className="text-sm text-neutral-400 mt-1">
+              {hasFilters ? 'Try adjusting your search filters' : 'Try selecting a different category'}
+            </p>
           </div>
         ) : (
           <section aria-label="Search results">

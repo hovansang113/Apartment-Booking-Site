@@ -1,7 +1,7 @@
 import api from './api';
 
-export async function getPublicListings({ category, page } = {}) {
-  const { data } = await api.get('/listings', { params: { category, page } });
+export async function getPublicListings({ category, location, checkIn, checkOut, guests, page } = {}) {
+  const { data } = await api.get('/listings', { params: { category, location, checkIn, checkOut, guests, page } });
   return data.data;
 }
 
