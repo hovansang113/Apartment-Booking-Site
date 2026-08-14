@@ -1,7 +1,6 @@
 const authService = require('../services/auth.service');
 const { created, ok } = require('../utils/response.util');
 
-// REQ_01 - register, login, issue JWT
 async function register(req, res) {
   const { email, password, fullName, phone, role } = req.body;
   const result = await authService.register({ email, password, fullName, phone, role });
@@ -14,4 +13,10 @@ async function login(req, res) {
   return ok(res, result, 'Logged in successfully');
 }
 
-module.exports = { register, login };
+async function googleLogin(req, res) {
+  const { credential } = req.body;
+  const result = await authService.googleLogin({ credential });
+  return ok(res, result, 'Logged in with Google');
+}
+
+module.exports = { register, login, googleLogin };

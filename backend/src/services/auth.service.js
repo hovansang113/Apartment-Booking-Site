@@ -1,9 +1,12 @@
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
+const { OAuth2Client } = require('google-auth-library');
 const { UserRole, UserStatus } = require('@prisma/client');
 const prisma = require('../config/prisma');
 const { signToken } = require('../utils/jwt.util');
 const AppError = require('../utils/appError');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const SALT_ROUNDS = 10;
 
@@ -57,4 +60,36 @@ async function login({ email, password }) {
   return issueSession(user);
 }
 
-module.exports = { register, login, sanitizeUser };
+async function googleLogin({ credential }) {
+  const ticket = await googleClient.verifyIdToken({
+    idToken: credential,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  }).catch(() => { throw new AppError(401, 'Invalid Google token'); });
+
+  const { email, name, picture } = ticket.getPayload();
+
+  let user = await prisma.user.findUnique({ where: { email } });
+
+  if (user) {
+    if (user.status === UserStatus.locked) throw new AppError(403, 'This account has been locked');
+    // Update avatar if not set
+    if (!user.avatarUrl && picture) {
+      user = await prisma.user.update({ where: { id: user.id }, data: { avatarUrl: picture } });
+    }
+  } else {
+    // Auto-create as host
+    user = await prisma.user.create({
+      data: {
+        email,
+        fullName: name,
+        avatarUrl: picture,
+        role: UserRole.host,
+        isGuest: false,
+      },
+    });
+  }
+
+  return issueSession(user);
+}
+
+module.exports = { register, login, googleLogin, sanitizeUser };

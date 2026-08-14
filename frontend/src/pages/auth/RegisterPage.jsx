@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { register as registerApi } from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
+import GoogleLoginButton from '../../components/common/GoogleLoginButton';
 
 export default function RegisterPage() {
   const { login: authLogin } = useAuth();
@@ -86,6 +87,17 @@ export default function RegisterPage() {
             {loading ? 'Đang đăng ký...' : 'Đăng ký'}
           </button>
         </form>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200" />
+          </div>
+          <div className="relative flex justify-center text-xs text-gray-400">
+            <span className="bg-white px-3">or</span>
+          </div>
+        </div>
+
+        <GoogleLoginButton redirectTo="/host/listings" />
 
         <p className="text-center text-sm text-gray-500 mt-6">
           Đã có tài khoản?{' '}
