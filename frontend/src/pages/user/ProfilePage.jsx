@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
@@ -18,12 +18,12 @@ export default function ProfilePage() {
   const [form, setForm] = useState({ fullName: '', phone: '' });
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const [pwError, setPwError] = useState('');
-  const [initialized, setInitialized] = useState(false);
 
-  if (profile && !initialized) {
-    setForm({ fullName: profile.fullName, phone: profile.phone || '' });
-    setInitialized(true);
-  }
+  useEffect(() => {
+    if (profile) {
+      setForm({ fullName: profile.fullName, phone: profile.phone || '' });
+    }
+  }, [profile]);
 
   const updateProfile = useMutation({
     mutationFn: (values) => api.patch('/users/me', values),
