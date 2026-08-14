@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const TABS = [
@@ -57,10 +57,19 @@ export default function HostLayout({ children }) {
                 View site ↗
               </a>
               <div style={{ width: 1, height: 14, backgroundColor: 'rgba(255,255,255,0.2)' }} />
-              <div className="text-right">
-                <p className="text-[11px] font-semibold text-white leading-tight">{user?.fullName}</p>
-                <p className="text-[10px] text-white/50 leading-tight">Host</p>
-              </div>
+              <Link to="/profile" className="flex items-center gap-2 group">
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user?.fullName} className="h-7 w-7 rounded-full object-cover ring-1 ring-white/30" />
+                ) : (
+                  <div className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">
+                    {(user?.fullName || 'H')[0].toUpperCase()}
+                  </div>
+                )}
+                <div className="text-right">
+                  <p className="text-[11px] font-semibold text-white leading-tight group-hover:underline">{user?.fullName}</p>
+                  <p className="text-[10px] text-white/50 leading-tight">Host</p>
+                </div>
+              </Link>
               <button
                 onClick={handleLogout}
                 className="text-[12px] font-medium text-white/50 hover:text-white transition-colors"
