@@ -61,7 +61,7 @@ export default function AdminLayout({ children }) {
               <div style={{ width: 1, height: 14, backgroundColor: 'rgba(255,255,255,0.2)' }} />
               <Link to="/profile" className="flex items-center gap-2 group">
                 {user?.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user?.fullName} className="h-7 w-7 rounded-full object-cover ring-1 ring-white/30" />
+                  <img src={user.avatarUrl} alt={user?.fullName} referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover ring-1 ring-white/30" />
                 ) : (
                   <div className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">
                     {(user?.fullName || 'A')[0].toUpperCase()}

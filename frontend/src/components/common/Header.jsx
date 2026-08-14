@@ -64,9 +64,20 @@ export default function Header() {
             >
               <MenuIcon className="h-4 w-4 text-neutral-700" />
               {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.fullName} className="h-7 w-7 rounded-full object-cover" />
-              ) : (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.fullName}
+                  referrerPolicy="no-referrer"
+                  className="h-7 w-7 rounded-full object-cover"
+                  onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                />
+              ) : null}
+              {(!user?.avatarUrl) ? (
                 <UserCircleIcon className="h-7 w-7 text-neutral-500" />
+              ) : (
+                <div style={{display:'none'}} className="h-7 w-7 rounded-full bg-teal-600 items-center justify-center text-white text-xs font-bold">
+                  {(user?.fullName || '?')[0].toUpperCase()}
+                </div>
               )}
             </button>
 

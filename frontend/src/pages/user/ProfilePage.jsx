@@ -97,7 +97,7 @@ export default function ProfilePage() {
             className="relative group shrink-0"
           >
             {avatar ? (
-              <img src={avatar} alt="Avatar" className="h-20 w-20 rounded-full object-cover ring-2 ring-neutral-200" />
+              <img src={avatar} alt="Avatar" referrerPolicy="no-referrer" className="h-20 w-20 rounded-full object-cover ring-2 ring-neutral-200" />
             ) : (
               <div className="h-20 w-20 rounded-full bg-teal-600 flex items-center justify-center text-white text-2xl font-bold ring-2 ring-neutral-200">
                 {initials}
