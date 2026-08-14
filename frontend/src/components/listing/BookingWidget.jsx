@@ -16,7 +16,7 @@ function calcNights(checkIn, checkOut) {
   return Math.max(0, Math.round(ms / (1000 * 60 * 60 * 24)));
 }
 
-export default function BookingWidget({ listing, checkIn, checkOut, onChangeCheckIn, onChangeCheckOut }) {
+export default function BookingWidget({ listing, checkIn, checkOut, onChangeCheckIn, onChangeCheckOut, priceOverrides = [] }) {
   const { user, login: authLogin } = useAuth();
   const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
@@ -29,8 +29,28 @@ export default function BookingWidget({ listing, checkIn, checkOut, onChangeChec
     },
   });
 
+  const overrideMap = Object.fromEntries(
+    priceOverrides.map((o) => [new Date(o.date).toISOString().split('T')[0], Number(o.price)])
+  );
+
   const nights = calcNights(checkIn, checkOut);
-  const total = nights * Number(listing.defaultPrice);
+
+  // Calculate total using per-day override prices where available
+  const { total, hasMixedPrices } = (() => {
+    if (!checkIn || !checkOut || nights <= 0) return { total: 0, hasMixedPrices: false };
+    let sum = 0;
+    let mixed = false;
+    const defaultPrice = Number(listing.defaultPrice);
+    for (let i = 0; i < nights; i++) {
+      const d = new Date(checkIn);
+      d.setDate(d.getDate() + i);
+      const key = d.toISOString().split('T')[0];
+      const dayPrice = overrideMap[key] ?? defaultPrice;
+      if (dayPrice !== defaultPrice) mixed = true;
+      sum += dayPrice;
+    }
+    return { total: sum, hasMixedPrices: mixed };
+  })();
 
   const mutation = useMutation({
     mutationFn: async (values) => {
@@ -115,10 +135,17 @@ export default function BookingWidget({ listing, checkIn, checkOut, onChangeChec
 
           {nights > 0 && (
             <div className="mt-4 space-y-2 text-sm text-neutral-700">
-              <div className="flex justify-between">
-                <span>{currencyFormatter.format(listing.defaultPrice)} × {nights} đêm</span>
-                <span>{currencyFormatter.format(total)}</span>
-              </div>
+              {hasMixedPrices ? (
+                <div className="flex justify-between">
+                  <span>Giá theo ngày × {nights} đêm</span>
+                  <span>{currencyFormatter.format(total)}</span>
+                </div>
+              ) : (
+                <div className="flex justify-between">
+                  <span>{currencyFormatter.format(listing.defaultPrice)} × {nights} đêm</span>
+                  <span>{currencyFormatter.format(total)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-semibold border-t border-neutral-200 pt-2">
                 <span>Tổng cộng</span>
                 <span>{currencyFormatter.format(total)}</span>
@@ -129,8 +156,8 @@ export default function BookingWidget({ listing, checkIn, checkOut, onChangeChec
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="bg-neutral-50 rounded-lg p-3 text-sm text-neutral-700 flex justify-between">
-            <span>{checkIn} → {checkOut}</span>
-            <span className="font-semibold">{nights} đêm · {currencyFormatter.format(total)}</span>
+            <span>{checkIn} → {checkOut} · {nights} đêm</span>
+            <span className="font-semibold">{currencyFormatter.format(total)}</span>
           </div>
 
           <div>

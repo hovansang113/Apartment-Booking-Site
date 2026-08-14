@@ -4,6 +4,9 @@ const pricingController = require('../controllers/pricing.controller');
 const { authenticate } = require('../middlewares/auth.middleware');
 const { authorize } = require('../middlewares/role.middleware');
 
+// Public: guest xem price override theo tháng (không cần auth)
+router.get('/:listingId/public', pricingController.getPublicPriceOverrides);
+
 // Host: xem price override theo tháng
 router.get('/:listingId', authenticate, authorize(UserRole.host), pricingController.getPriceOverrides);
 

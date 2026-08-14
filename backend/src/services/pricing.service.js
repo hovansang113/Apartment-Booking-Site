@@ -72,4 +72,18 @@ async function getPriceOverrides({ listingId, hostId, year, month }) {
   });
 }
 
-module.exports = { setPriceOverrides, deletePriceOverride, getPriceOverrides };
+async function getPublicPriceOverrides({ listingId, year, month }) {
+  const where = { listingId };
+  if (year && month) {
+    const start = new Date(Number(year), Number(month) - 1, 1);
+    const end = new Date(Number(year), Number(month), 1);
+    where.date = { gte: start, lt: end };
+  }
+  return prisma.listingPriceOverride.findMany({
+    where,
+    orderBy: { date: 'asc' },
+    select: { date: true, price: true },
+  });
+}
+
+module.exports = { setPriceOverrides, deletePriceOverride, getPriceOverrides, getPublicPriceOverrides };

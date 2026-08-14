@@ -17,7 +17,14 @@ async function fetchCalendar(listingId, year, month) {
   return data.data;
 }
 
-function AvailabilityCalendar({ listingId, checkIn, checkOut, onSelectDate }) {
+async function fetchPriceOverrides(listingId, year, month) {
+  const { data } = await api.get(`/pricing/${listingId}/public`, { params: { year, month } });
+  return data.data;
+}
+
+const vnd = (n) => Number(n).toLocaleString('vi-VN') + '₫';
+
+function AvailabilityCalendar({ listingId, defaultPrice, checkIn, checkOut, onSelectDate, onOverridesChange }) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
@@ -27,8 +34,18 @@ function AvailabilityCalendar({ listingId, checkIn, checkOut, onSelectDate }) {
     queryFn: () => fetchCalendar(listingId, year, month),
   });
 
-  const bookedSet = new Set(
-    bookedDays.map((d) => new Date(d.date).toISOString().split('T')[0])
+  const { data: overrides = [] } = useQuery({
+    queryKey: ['price-overrides-public', listingId, year, month],
+    queryFn: () => fetchPriceOverrides(listingId, year, month),
+    onSuccess: (data) => onOverridesChange?.(data),
+  });
+
+  const overrideMap = Object.fromEntries(
+    overrides.map((o) => [new Date(o.date).toISOString().split('T')[0], Number(o.price)])
+  );
+
+  const unavailableMap = Object.fromEntries(
+    bookedDays.map((d) => [new Date(d.date).toISOString().split('T')[0], d.status])
   );
 
   const firstDay = new Date(year, month - 1, 1).getDay();
@@ -70,36 +87,46 @@ function AvailabilityCalendar({ listingId, checkIn, checkOut, onSelectDate }) {
         {['CN','T2','T3','T4','T5','T6','T7'].map(d => <div key={d}>{d}</div>)}
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-sm text-center">
+      <div className="grid grid-cols-7 gap-1 text-center">
         {cells.map((day, i) => {
           if (!day) return <div key={`empty-${i}`} />;
           const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
           const isPast = dateStr < todayStr;
-          const isBooked = bookedSet.has(dateStr);
+          const dayStatus = unavailableMap[dateStr];
+          const isUnavailable = Boolean(dayStatus);
           const isToday = dateStr === todayStr;
           const isCheckIn = dateStr === checkIn;
           const isCheckOut = dateStr === checkOut;
           const isInRange = checkIn && checkOut && dateStr > checkIn && dateStr < checkOut;
-          const isSelectable = !isPast && !isBooked;
+          const isSelectable = !isPast && !isUnavailable;
+          const overridePrice = overrideMap[dateStr];
 
           return (
             <div
               key={dateStr}
-              onClick={() => handleClickDay(dateStr, isPast, isBooked)}
-              title={isBooked ? 'Đã có khách đặt' : isPast ? 'Đã qua' : 'Click để chọn'}
+              onClick={() => handleClickDay(dateStr, isPast, isUnavailable)}
+              title={isUnavailable ? (dayStatus === 'booked' ? 'Đã có khách đặt' : 'Không nhận đặt phòng') : isPast ? 'Đã qua' : 'Click để chọn'}
               className={[
-                'py-1.5 rounded-full text-sm font-medium transition-colors',
+                'py-1 rounded-lg text-sm font-medium transition-colors flex flex-col items-center',
                 isSelectable ? 'cursor-pointer' : 'cursor-default',
                 isCheckIn || isCheckOut ? 'bg-teal-600 text-white' : '',
                 isInRange ? 'bg-teal-100 text-teal-700' : '',
-                isBooked ? 'bg-red-100 text-red-400 line-through' : '',
+                isUnavailable ? 'bg-red-100 text-red-400 line-through' : '',
                 isToday && !isCheckIn && !isCheckOut ? 'ring-2 ring-teal-500' : '',
-                isPast && !isBooked ? 'text-neutral-300' : '',
-                !isPast && !isBooked && !isCheckIn && !isCheckOut && !isInRange
+                isPast && !isUnavailable ? 'text-neutral-300' : '',
+                !isPast && !isUnavailable && !isCheckIn && !isCheckOut && !isInRange
                   ? 'text-neutral-700 hover:bg-neutral-100' : '',
               ].join(' ')}
             >
-              {day}
+              <span>{day}</span>
+              {overridePrice && !isUnavailable && !isPast && (
+                <span className={[
+                  'text-[9px] leading-tight font-semibold',
+                  isCheckIn || isCheckOut ? 'text-white/80' : 'text-amber-600',
+                ].join(' ')}>
+                  {(overridePrice / 1000).toFixed(0)}k
+                </span>
+              )}
             </div>
           );
         })}
@@ -118,6 +145,7 @@ export default function ListingDetail() {
   const { id } = useParams();
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
+  const [priceOverrides, setPriceOverrides] = useState([]);
 
   const { data: listing, isLoading, isError } = useQuery({
     queryKey: ['listing', id],
@@ -186,9 +214,11 @@ export default function ListingDetail() {
 
             <AvailabilityCalendar
               listingId={listing.id}
+              defaultPrice={listing.defaultPrice}
               checkIn={checkIn}
               checkOut={checkOut}
               onSelectDate={handleSelectDate}
+              onOverridesChange={setPriceOverrides}
             />
           </div>
 
@@ -199,6 +229,7 @@ export default function ListingDetail() {
               checkOut={checkOut}
               onChangeCheckIn={setCheckIn}
               onChangeCheckOut={setCheckOut}
+              priceOverrides={priceOverrides}
             />
           </div>
         </div>

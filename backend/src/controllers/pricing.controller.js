@@ -32,4 +32,14 @@ async function getPriceOverrides(req, res) {
   return ok(res, result);
 }
 
-module.exports = { setPriceOverrides, deletePriceOverride, getPriceOverrides };
+async function getPublicPriceOverrides(req, res) {
+  const { year, month } = req.query;
+  const result = await pricingService.getPublicPriceOverrides({
+    listingId: req.params.listingId,
+    year,
+    month,
+  });
+  return ok(res, result);
+}
+
+module.exports = { setPriceOverrides, deletePriceOverride, getPriceOverrides, getPublicPriceOverrides };
