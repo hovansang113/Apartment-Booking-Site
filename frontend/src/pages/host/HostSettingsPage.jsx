@@ -1,11 +1,8 @@
-import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import { updateTaxInfo } from '../../services/authService';
-
-const TAXPAYER_TYPE_VALUES = ['individual', 'household_business', 'company'];
+import { CalculatorIcon, BankIcon, ChevronRightIcon } from '../../components/common/icons';
 
 const STATUS_CLASSNAME = {
   unverified: 'bg-neutral-100 text-neutral-600',
@@ -14,154 +11,74 @@ const STATUS_CLASSNAME = {
   rejected: 'bg-red-100 text-red-700',
 };
 
-// "Settings" giay to/thue cho host - mo phong theo cach Airbnb thu thap thong
-// tin thue that (Form W-9: ten phap ly, dia chi, tax ID, tax classification).
-// KHONG phai tu van phap ly/thue Viet Nam chinh thuc - chi la UI mo phong cho
-// du an hoc tap. Chua co man hinh admin duyet that (REQ_03) nen trang thai se
-// giu o "pending" sau khi nop.
+// Trang "hub" cai dat tai khoan host - liet ke tung muc rieng de bam vao, khop
+// dung pattern trang Account settings that (Airbnb: Personal info/Payments &
+// payouts/Taxes... deu la cac muc rieng, khong don het vao 1 trang dai). Tung
+// muc co the mo rong sau nay (VD: bao mat, thong bao...) chi can them 1 item.
 export default function HostSettingsPage() {
   const { t } = useTranslation();
-  const { user, login } = useAuth();
-  const [legalName, setLegalName] = useState('');
-  const [taxId, setTaxId] = useState('');
-  const [taxpayerType, setTaxpayerType] = useState('individual');
-  const [idNumber, setIdNumber] = useState('');
-  const [saving, setSaving] = useState(false);
+  const { user } = useAuth();
 
-  // AuthContext nap user bat dong bo (goi getMe() luc mount), nen o lan render
-  // dau user van con null - phai dong bo lai form bang useEffect thay vi chi
-  // dua vao gia tri khoi tao cua useState (chi chay 1 lan, khong tu cap nhat
-  // khi user den sau).
-  useEffect(() => {
-    if (user) {
-      setLegalName(user.legalName || '');
-      setTaxId(user.taxId || '');
-      setTaxpayerType(user.taxpayerType || 'individual');
-      setIdNumber(user.idNumber || '');
-    }
-  }, [user]);
+  const taxStatusKey = user?.verificationStatus || 'unverified';
+  const hasBankInfo = Boolean(user?.bankAccountNumber);
 
-  const statusKey = user?.verificationStatus || 'unverified';
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    if (!legalName.trim() || !taxId.trim()) {
-      toast.error(t('hostSettings.fillRequired'));
-      return;
-    }
-
-    try {
-      setSaving(true);
-      const res = await updateTaxInfo({ legalName: legalName.trim(), taxId: taxId.trim(), taxpayerType, idNumber: idNumber.trim() });
-      login(res.user);
-      toast.success(t('hostSettings.submitSuccess'));
-    } catch (err) {
-      toast.error(err.response?.data?.message || t('hostSettings.submitErrorFallback'));
-    } finally {
-      setSaving(false);
-    }
-  }
+  const items = [
+    {
+      to: '/host/settings/tax',
+      icon: CalculatorIcon,
+      title: t('hostSettings.hub.taxItemTitle'),
+      desc: t('hostSettings.hub.taxItemDesc'),
+      badge: {
+        text: t(`hostSettings.status.${taxStatusKey}`),
+        className: STATUS_CLASSNAME[taxStatusKey],
+      },
+    },
+    {
+      to: '/host/settings/payout',
+      icon: BankIcon,
+      title: t('hostSettings.hub.payoutItemTitle'),
+      desc: t('hostSettings.hub.payoutItemDesc'),
+      badge: {
+        text: hasBankInfo ? t('hostSettings.hub.payoutStatusSet') : t('hostSettings.hub.payoutStatusUnset'),
+        className: hasBankInfo ? STATUS_CLASSNAME.verified : STATUS_CLASSNAME.unverified,
+      },
+    },
+  ];
 
   return (
     <>
       <Helmet>
-        <title>{t('hostSettings.pageTitle')}</title>
+        <title>{t('hostSettings.hub.pageTitle')}</title>
       </Helmet>
 
       <main className="min-h-[85vh] bg-white px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl">
           <div className="border-b border-neutral-200 pb-6 mb-6">
-            <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">{t('hostSettings.heading')}</h1>
-            <p className="mt-1 text-sm text-neutral-500">
-              {t('hostSettings.subheading')}
-            </p>
+            <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">{t('hostSettings.hub.heading')}</h1>
+            <p className="mt-1 text-sm text-neutral-500">{t('hostSettings.hub.subheading')}</p>
           </div>
 
-          <div className="mb-6 flex items-center gap-2">
-            <span className="text-sm text-neutral-500">{t('hostSettings.verificationStatus')}</span>
-            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_CLASSNAME[statusKey]}`}>
-              {t(`hostSettings.status.${statusKey}`)}
-            </span>
+          <div className="divide-y divide-neutral-200 rounded-2xl border border-neutral-200 overflow-hidden">
+            {items.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="flex items-center gap-4 p-5 hover:bg-neutral-50 transition-colors"
+              >
+                <item.icon />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-neutral-900">{item.title}</p>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${item.badge.className}`}>
+                      {item.badge.text}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-sm text-neutral-500">{item.desc}</p>
+                </div>
+                <ChevronRightIcon className="h-5 w-5 shrink-0 text-neutral-400" />
+              </Link>
+            ))}
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="rounded-2xl border border-neutral-200 p-5">
-              <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1.5">
-                {t('hostSettings.legalNameLabel')} <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={legalName}
-                onChange={(e) => setLegalName(e.target.value)}
-                placeholder={t('hostSettings.legalNamePlaceholder')}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none focus:border-neutral-900"
-              />
-            </div>
-
-            <div className="rounded-2xl border border-neutral-200 p-5">
-              <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1.5">
-                {t('hostSettings.taxIdLabel')} <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={taxId}
-                onChange={(e) => setTaxId(e.target.value)}
-                placeholder={t('hostSettings.taxIdPlaceholder')}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none focus:border-neutral-900"
-              />
-              <p className="mt-1.5 text-xs text-neutral-400">{t('hostSettings.taxIdHint')}</p>
-            </div>
-
-            <div className="rounded-2xl border border-neutral-200 p-5">
-              <label className="block text-xs font-semibold uppercase text-neutral-500 mb-3">{t('hostSettings.taxpayerTypeLabel')}</label>
-              <div className="space-y-2">
-                {TAXPAYER_TYPE_VALUES.map((value) => (
-                  <label
-                    key={value}
-                    className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors ${
-                      taxpayerType === value ? 'border-neutral-900 bg-neutral-50' : 'border-neutral-200 hover:border-neutral-400'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="taxpayerType"
-                      value={value}
-                      checked={taxpayerType === value}
-                      onChange={(e) => setTaxpayerType(e.target.value)}
-                      className="mt-1"
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-neutral-900">{t(`hostSettings.taxpayerTypes.${value}.label`)}</p>
-                      <p className="text-xs text-neutral-500">{t(`hostSettings.taxpayerTypes.${value}.desc`)}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-neutral-200 p-5">
-              <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1.5">{t('hostSettings.idNumberLabel')}</label>
-              <input
-                type="text"
-                value={idNumber}
-                onChange={(e) => setIdNumber(e.target.value)}
-                placeholder={t('hostSettings.idNumberPlaceholder')}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none focus:border-neutral-900"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full rounded-xl bg-brand-600 py-3.5 text-sm font-semibold text-white hover:bg-brand-700 transition-colors disabled:opacity-50"
-            >
-              {saving ? t('hostSettings.saving') : t('hostSettings.save')}
-            </button>
-
-            <p className="text-xs text-neutral-400 text-center">
-              {t('hostSettings.disclaimer')}
-            </p>
-          </form>
         </div>
       </main>
     </>

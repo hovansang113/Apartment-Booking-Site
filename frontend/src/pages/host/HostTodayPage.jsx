@@ -23,7 +23,7 @@ export default function HostTodayPage() {
           {/* Top Banner Notice Card */}
           {showTaxNotice && (
             <div className="mb-10 flex items-center justify-between rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition-all sm:p-5">
-              <Link to="/host/settings" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
+              <Link to="/host/settings/tax" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
                 <CalculatorIcon />
                 <div>
                   <h2 className="text-base font-semibold text-neutral-900">

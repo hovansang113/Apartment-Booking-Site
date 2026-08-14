@@ -47,4 +47,11 @@ async function updateTaxInfo(req, res) {
   return ok(res, { user }, 'Đã gửi thông tin, đang chờ xác minh');
 }
 
-module.exports = { register, login, guestLogin, logout, me, updateTaxInfo };
+// Host "Thong tin nhan tien" - tai khoan ngan hang de nhan payout
+async function updateBankInfo(req, res) {
+  const { bankCode, bankAccountNumber, bankAccountHolder } = req.body;
+  const user = await authService.updateBankInfo(req.user.id, { bankCode, bankAccountNumber, bankAccountHolder });
+  return ok(res, { user }, 'Đã lưu thông tin nhận tiền');
+}
+
+module.exports = { register, login, guestLogin, logout, me, updateTaxInfo, updateBankInfo };

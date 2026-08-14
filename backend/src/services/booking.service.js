@@ -1,7 +1,18 @@
-const { BookingStatus, CalendarDayStatus, CalendarDaySource } = require('@prisma/client');
+const crypto = require('crypto');
+const { BookingStatus, PaymentStatus, CalendarDayStatus, CalendarDaySource } = require('@prisma/client');
 const prisma = require('../config/prisma');
 const AppError = require('../utils/appError');
 const pricingService = require('./pricing.service');
+const { findOrCreateGuestUser } = require('./auth.service');
+
+// Hoa hong nen tang (REQ_13-ish/luong thanh toan) - chot 15% sau khi doi
+// chieu Airbnb (host-only fee 15.5%, ap dung toan cau tu 2026) va Booking.com
+// (trung binh ~15%). Chua co UI cho admin doi so nay - hardcode 1 cho tam
+// thoi, muon doi thi sua o day.
+const COMMISSION_RATE_PERCENT = 15;
+
+// Thoi gian giu cho truoc khi tu huy neu khach chua thanh toan xong.
+const PAYMENT_HOLD_MINUTES = 15;
 
 function toYMD(date) {
   return date.toISOString().slice(0, 10);
@@ -20,13 +31,28 @@ function datesBetween(checkIn, checkOut) {
   return dates;
 }
 
-// TAM THOI: ban toi gian cua REQ_07 (tao booking) + REQ_09 (chong trung lich),
-// chi du de kiem chung yeu cau trong ticket cua Jason ve REQ_12 - "neu ngay bi
-// chan (block tay/booking/sync ngoai) thi khong cho dat". Con thieu so voi
-// REQ_07 day du: chua ho tro khach dat khong can tai khoan (REQ_14 tu tao
-// user). Gia tien da dung pricing.service.js (weekday/weekend + override
-// tung ngay, xem REQ_13).
-async function createBooking({ listingId, guestId, checkIn, checkOut }) {
+// Ma tra cuu ngan, de doc/go tay - dung trong email xac nhan + trang "Tra
+// cuu dat phong" (bookingCode + email, khong can dang nhap). 8 ky tu hex la
+// du hiem va cho quy mo du an nay, khong can vong lap thu lai neu trung.
+function generateBookingCode() {
+  return crypto.randomBytes(4).toString('hex').toUpperCase();
+}
+
+// Ma giao dich gui cho VNPay (vnp_TxnRef) - sinh san tu luc tao booking de
+// Phase 3 (tao payment URL) dung lai, khong phai tao lai booking.
+function generateVnpTxnRef() {
+  return crypto.randomBytes(8).toString('hex');
+}
+
+// REQ_07 (luong "chuan production" da duyet 14/8): khach dat phong KHONG can
+// dang nhap - tu tim/tao tai khoan isGuest (dung chung logic voi REQ_14
+// guestLogin qua findOrCreateGuestUser). Booking tao ra o trang thai
+// pending_payment (KHONG con auto-approved nhu ban cu) va CHAN LICH NGAY -
+// giong REQ_09 dang lam - de tranh 2 khach cung giu 1 ngay trong luc cho
+// thanh toan. Payment.service.js (Phase 3) se tao URL VNPay dua tren
+// vnpTxnRef da sinh san o day; job rieng (Phase 5) se tu huy booking qua han
+// paymentExpiresAt chua thanh toan.
+async function createBooking({ listingId, checkIn, checkOut, contactName, contactEmail, contactPhone }) {
   const dates = datesBetween(checkIn, checkOut);
   if (dates.length === 0) {
     throw new AppError(422, 'checkOut phải sau checkIn ít nhất 1 đêm');
@@ -58,26 +84,41 @@ async function createBooking({ listingId, guestId, checkIn, checkOut }) {
       throw new AppError(422, `Ngày ${checkIn} chỉ cho ở tối đa ${stayRule.maxNights} đêm`);
     }
 
-    const guest = await tx.user.findUnique({ where: { id: guestId } });
-    if (!guest) {
-      throw new AppError(404, 'Guest not found');
-    }
+    const guest = await findOrCreateGuestUser(tx, {
+      email: contactEmail,
+      fullName: contactName,
+      phone: contactPhone,
+    });
 
     const totalPrice = await pricingService.calculateTotalPrice(tx, { listing, dates });
+    const commissionAmount = Math.round(totalPrice * COMMISSION_RATE_PERCENT) / 100;
+    const hostPayoutAmount = totalPrice - commissionAmount;
 
     const booking = await tx.booking.create({
       data: {
         listingId,
-        guestId,
+        guestId: guest.id,
         checkIn: new Date(checkIn),
         checkOut: new Date(checkOut),
         totalPrice,
-        status: BookingStatus.approved,
-        approvedAt: new Date(),
-        contactName: guest.fullName,
-        contactEmail: guest.email,
-        contactPhone: guest.phone,
+        status: BookingStatus.pending_payment,
+        bookingCode: generateBookingCode(),
+        commissionRate: COMMISSION_RATE_PERCENT,
+        commissionAmount,
+        hostPayoutAmount,
+        paymentExpiresAt: new Date(Date.now() + PAYMENT_HOLD_MINUTES * 60 * 1000),
+        contactName,
+        contactEmail,
+        contactPhone: contactPhone || null,
+        payment: {
+          create: {
+            amount: totalPrice,
+            status: PaymentStatus.pending,
+            vnpTxnRef: generateVnpTxnRef(),
+          },
+        },
       },
+      include: { payment: true },
     });
 
     await tx.listingCalendar.createMany({

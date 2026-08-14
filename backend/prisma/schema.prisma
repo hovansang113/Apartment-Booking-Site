@@ -26,8 +26,11 @@ enum ListingStatus {
 
 enum BookingStatus {
   pending
+  pending_payment
   approved
+  confirmed
   rejected
+  expired
   canceled
 }
 
@@ -43,7 +46,10 @@ enum CalendarDaySource {
 }
 
 enum PaymentStatus {
-  simulated_success
+  pending
+  success
+  failed
+  refunded
 }
 
 enum ListingCategory {
@@ -99,6 +105,9 @@ model User {
   idNumber            String?             @map("id_number")
   verificationStatus  VerificationStatus  @default(unverified) @map("verification_status")
   verificationNote    String?             @map("verification_note") @db.Text
+  bankCode            String?             @map("bank_code")
+  bankAccountNumber   String?             @map("bank_account_number")
+  bankAccountHolder   String?             @map("bank_account_holder")
   lockedReason        String?             @map("locked_reason") @db.Text
   createdAt           DateTime            @default(now()) @map("created_at")
   updatedAt           DateTime            @updatedAt @map("updated_at")
@@ -199,21 +208,26 @@ model ListingStayRule {
 }
 
 model Booking {
-  id              String        @id @default(uuid())
-  listingId       String        @map("listing_id")
-  guestId         String        @map("guest_id")
-  checkIn         DateTime      @map("check_in") @db.Date
-  checkOut        DateTime      @map("check_out") @db.Date
-  totalPrice      Decimal       @map("total_price") @db.Decimal(12, 2)
-  status          BookingStatus @default(approved)
-  contactName     String        @map("contact_name")
-  contactEmail    String        @map("contact_email")
-  contactPhone    String?       @map("contact_phone")
-  rejectedReason  String?       @map("rejected_reason") @db.Text
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
-  approvedAt      DateTime?     @map("approved_at")
-  canceledAt      DateTime?     @map("canceled_at")
+  id                String        @id @default(uuid())
+  listingId         String        @map("listing_id")
+  guestId           String        @map("guest_id")
+  checkIn           DateTime      @map("check_in") @db.Date
+  checkOut          DateTime      @map("check_out") @db.Date
+  totalPrice        Decimal       @map("total_price") @db.Decimal(12, 2)
+  status            BookingStatus @default(approved)
+  bookingCode       String        @unique @map("booking_code")
+  commissionRate    Decimal       @map("commission_rate") @db.Decimal(5, 2)
+  commissionAmount  Decimal       @map("commission_amount") @db.Decimal(12, 2)
+  hostPayoutAmount  Decimal       @map("host_payout_amount") @db.Decimal(12, 2)
+  paymentExpiresAt  DateTime?     @map("payment_expires_at")
+  contactName       String        @map("contact_name")
+  contactEmail      String        @map("contact_email")
+  contactPhone      String?       @map("contact_phone")
+  rejectedReason    String?       @map("rejected_reason") @db.Text
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  approvedAt        DateTime?     @map("approved_at")
+  canceledAt        DateTime?     @map("canceled_at")
 
   listing        Listing           @relation(fields: [listingId], references: [id], onDelete: Cascade)
   guest          User              @relation(fields: [guestId], references: [id], onDelete: Cascade)
@@ -259,12 +273,24 @@ model ListingCalendarSync {
   @@map("listing_calendar_sync")
 }
 
+// REQ_10: theo doi 1 giao dich thanh toan VNPay cho 1 booking (1-1). Tach
+// rieng khoi Booking vi Booking la vong doi "cho thue" (pending_payment ->
+// confirmed/expired/canceled), con Payment la vong doi "giao dich tien"
+// (pending -> success/failed, roi co the refunded rieng) - 2 khai niem khac
+// nhau du lien quan chat.
 model Payment {
-  id          String        @id @default(uuid())
-  bookingId   String        @unique @map("booking_id")
-  amount      Decimal       @db.Decimal(12, 2)
-  status      PaymentStatus @default(simulated_success)
-  confirmedAt DateTime      @default(now()) @map("confirmed_at")
+  id               String        @id @default(uuid())
+  bookingId        String        @unique @map("booking_id")
+  provider         String        @default("vnpay")
+  amount           Decimal       @db.Decimal(12, 2)
+  status           PaymentStatus @default(pending)
+  vnpTxnRef        String        @unique @map("vnp_txn_ref")
+  vnpTransactionNo String?       @map("vnp_transaction_no")
+  vnpResponseCode  String?       @map("vnp_response_code")
+  confirmedAt      DateTime?     @map("confirmed_at")
+  refundedAt       DateTime?     @map("refunded_at")
+  refundAmount     Decimal?      @map("refund_amount") @db.Decimal(12, 2)
+  createdAt        DateTime      @default(now()) @map("created_at")
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 

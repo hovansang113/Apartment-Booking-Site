@@ -11,6 +11,8 @@ import HostTodayPage from './pages/host/HostTodayPage';
 import HostListingsPage from './pages/host/HostListingsPage';
 import HostCalendarPage from './pages/host/HostCalendarPage';
 import HostSettingsPage from './pages/host/HostSettingsPage';
+import HostTaxSettingsPage from './pages/host/HostTaxSettingsPage';
+import HostPayoutSettingsPage from './pages/host/HostPayoutSettingsPage';
 import HostSetupChoicePage from './pages/host/HostSetupChoicePage';
 import CreateListingPage from './pages/host/CreateListingPage';
 import AdminListingsPage from './pages/admin/AdminListingsPage';
@@ -94,6 +96,22 @@ export default function App() {
             element={
               <ProtectedRoute roles={['host', 'admin']}>
                 <HostSettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/host/settings/tax"
+            element={
+              <ProtectedRoute roles={['host', 'admin']}>
+                <HostTaxSettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/host/settings/payout"
+            element={
+              <ProtectedRoute roles={['host', 'admin']}>
+                <HostPayoutSettingsPage />
               </ProtectedRoute>
             }
           />

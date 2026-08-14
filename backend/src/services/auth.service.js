@@ -4,6 +4,7 @@ const { UserRole, UserStatus } = require('@prisma/client');
 const prisma = require('../config/prisma');
 const { signToken } = require('../utils/jwt.util');
 const AppError = require('../utils/appError');
+const { normalizeBankAccountHolder } = require('../utils/text.util');
 
 const SALT_ROUNDS = 10;
 
@@ -57,9 +58,13 @@ async function login({ email, password }) {
   return issueSession(user);
 }
 
-// REQ_14: guest quick login - book without registering first
-async function guestLogin({ email, fullName, phone }) {
-  let user = await prisma.user.findUnique({ where: { email } });
+// REQ_14 (dung chung voi luong dat phong khong can tai khoan) - tim user
+// isGuest theo email, tao moi neu chua co; tu choi neu email da thuoc ve 1
+// tai khoan that (chan chiem tai khoan). Nhan `db` (PrismaClient hoac tx cua
+// 1 transaction dang chay) de goi duoc atomically tu booking.service.js,
+// cung pattern voi pricing.service.js.
+async function findOrCreateGuestUser(db, { email, fullName, phone }) {
+  let user = await db.user.findUnique({ where: { email } });
   if (user && !user.isGuest) {
     throw new AppError(409, 'This email already has an account, please log in instead');
   }
@@ -68,14 +73,14 @@ async function guestLogin({ email, fullName, phone }) {
     if (user.status === UserStatus.locked) {
       throw new AppError(403, 'This account has been locked');
     }
-    user = await prisma.user.update({
+    user = await db.user.update({
       where: { id: user.id },
       data: { fullName, phone },
     });
   } else {
     const randomPassword = crypto.randomBytes(16).toString('hex');
     const passwordHash = await bcrypt.hash(randomPassword, SALT_ROUNDS);
-    user = await prisma.user.create({
+    user = await db.user.create({
       data: {
         email,
         passwordHash,
@@ -87,6 +92,12 @@ async function guestLogin({ email, fullName, phone }) {
     });
   }
 
+  return user;
+}
+
+// REQ_14: guest quick login - book without registering first
+async function guestLogin({ email, fullName, phone }) {
+  const user = await findOrCreateGuestUser(prisma, { email, fullName, phone });
   return issueSession(user);
 }
 
@@ -121,4 +132,31 @@ async function updateTaxInfo(userId, { legalName, taxId, taxpayerType, idNumber 
   return sanitizeUser(user);
 }
 
-module.exports = { register, login, guestLogin, getMe, updateTaxInfo, sanitizeUser };
+// Host "Thong tin nhan tien" - tai khoan ngan hang de platform tra tien host
+// sau khi tru hoa hong (thanh toan qua VNPay vao tai khoan platform, chua co
+// he thong tra tien tu dong cho host - xem TODO.md). Ten chu tai khoan LUON
+// duoc chuan hoa KHONG DAU + VIET HOA truoc khi luu (chuan lien ngan hang
+// that, xem utils/text.util.js) - khong luu nguyen van host go vao vi rat de
+// bi tu choi luc chuyen khoan that neu con dau.
+async function updateBankInfo(userId, { bankCode, bankAccountNumber, bankAccountHolder }) {
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      bankCode,
+      bankAccountNumber,
+      bankAccountHolder: normalizeBankAccountHolder(bankAccountHolder),
+    },
+  });
+  return sanitizeUser(user);
+}
+
+module.exports = {
+  register,
+  login,
+  guestLogin,
+  findOrCreateGuestUser,
+  getMe,
+  updateTaxInfo,
+  updateBankInfo,
+  sanitizeUser,
+};

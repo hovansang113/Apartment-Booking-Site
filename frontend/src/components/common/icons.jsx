@@ -201,6 +201,14 @@ export function CalculatorIcon(props) {
   );
 }
 
+export function BankIcon(props) {
+  return (
+    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-neutral-100 p-2.5 border border-neutral-200 shadow-sm shrink-0">
+      <span className="text-2xl" role="img" aria-label="bank">🏦</span>
+    </div>
+  );
+}
+
 export function GridViewIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} {...props}>

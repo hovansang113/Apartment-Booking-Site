@@ -1,5 +1,6 @@
 const { body } = require('express-validator');
 const { UserRole, TaxpayerType } = require('@prisma/client');
+const { VIETNAM_BANK_CODES } = require('../utils/vietnamBanks');
 
 const EMAIL_MAX = 191; // matches VARCHAR(191) column
 const NAME_MAX = 191; // matches VARCHAR(191) column
@@ -59,4 +60,30 @@ const taxInfoRules = [
   body('idNumber').optional({ checkFalsy: true }).trim().isLength({ max: 20 }).withMessage('Số CCCD/CMND không hợp lệ'),
 ];
 
-module.exports = { registerRules, loginRules, guestLoginRules, taxInfoRules };
+// Host "Thong tin nhan tien" - tai khoan ngan hang de nhan tien host sau khi
+// tru hoa hong. bankAccountNumber chi thuan so (dung dinh dang lien ngan
+// hang that), bankCode phai nam trong danh sach co san (khong go tu do).
+const bankInfoRules = [
+  body('bankCode')
+    .trim()
+    .notEmpty()
+    .withMessage('Vui lòng chọn ngân hàng')
+    .isIn(VIETNAM_BANK_CODES)
+    .withMessage('Ngân hàng không hợp lệ'),
+  body('bankAccountNumber')
+    .trim()
+    .notEmpty()
+    .withMessage('Vui lòng nhập số tài khoản')
+    .isNumeric()
+    .withMessage('Số tài khoản chỉ được chứa chữ số')
+    .isLength({ min: 6, max: 19 })
+    .withMessage('Số tài khoản phải từ 6 đến 19 chữ số'),
+  body('bankAccountHolder')
+    .trim()
+    .notEmpty()
+    .withMessage('Vui lòng nhập tên chủ tài khoản')
+    .isLength({ max: NAME_MAX })
+    .withMessage(`Tên chủ tài khoản phải tối đa ${NAME_MAX} ký tự`),
+];
+
+module.exports = { registerRules, loginRules, guestLoginRules, taxInfoRules, bankInfoRules };

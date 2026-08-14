@@ -69,7 +69,7 @@ export default function HostListingsPage() {
             <div className="mb-8 flex items-center justify-between rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition-all sm:p-5">
               <button
                 type="button"
-                onClick={() => navigate('/host/settings')}
+                onClick={() => navigate('/host/settings/tax')}
                 className="flex items-center gap-4 text-left hover:opacity-80 transition-opacity"
               >
                 <CalculatorIcon />

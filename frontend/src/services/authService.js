@@ -31,3 +31,9 @@ export async function updateTaxInfo(payload) {
   const { data } = await api.put('/auth/tax-info', payload);
   return data.data;
 }
+
+// Host "Thong tin nhan tien" - tai khoan ngan hang de nhan payout
+export async function updateBankInfo(payload) {
+  const { data } = await api.put('/auth/bank-info', payload);
+  return data.data;
+}

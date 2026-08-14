@@ -1,11 +1,11 @@
 const router = require('express').Router();
 const bookingController = require('../controllers/booking.controller');
-const { authenticate } = require('../middlewares/auth.middleware');
 const { createBookingRules } = require('../validators/booking.validator');
 const { validate } = require('../validators/validate.util');
 
-// TAM THOI - ban toi gian, xem comment services/booking.service.js
-router.post('/', authenticate, createBookingRules, validate, bookingController.create);
+// REQ_07 - cong khai, KHONG can dang nhap (khach dat phong tu do, xem
+// comment day du trong services/booking.service.js).
+router.post('/', createBookingRules, validate, bookingController.create);
 
 // router.get('/mine', ...);              // REQ_07/11
 // router.patch('/:id/cancel', ...);      // REQ_11

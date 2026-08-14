@@ -1,17 +1,19 @@
 const bookingService = require('../services/booking.service');
 const { created } = require('../utils/response.util');
 
-// TAM THOI - ban toi gian de test REQ_12 (chan booking len ngay bi block).
-// Xem comment day du trong services/booking.service.js.
+// REQ_07 - khach dat phong khong can dang nhap. Xem comment day du trong
+// services/booking.service.js.
 async function create(req, res) {
-  const { listingId, checkIn, checkOut } = req.body;
+  const { listingId, checkIn, checkOut, contactName, contactEmail, contactPhone } = req.body;
   const booking = await bookingService.createBooking({
     listingId,
-    guestId: req.user.id,
     checkIn,
     checkOut,
+    contactName,
+    contactEmail,
+    contactPhone,
   });
-  return created(res, booking, 'Đặt phòng thành công');
+  return created(res, booking, 'Đã giữ chỗ, vui lòng hoàn tất thanh toán trong 15 phút');
 }
 
 module.exports = { create };
