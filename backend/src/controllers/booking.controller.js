@@ -27,6 +27,7 @@ async function create(req, res) {
   const { listingId, checkIn, checkOut, guestCount, contactName, contactEmail, contactPhone } = req.body;
   const booking = await bookingService.createBooking({
     guestId: req.user.id,
+    guestRole: req.user.role,
     listingId, checkIn, checkOut, guestCount, contactName, contactEmail, contactPhone,
   });
   return created(res, booking, 'Đặt phòng thành công');

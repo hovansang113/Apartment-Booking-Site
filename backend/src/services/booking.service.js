@@ -38,12 +38,12 @@ async function calcTotalPrice(listingId, defaultPrice, checkIn, checkOut) {
 }
 
 // REQ_07: tạo booking, kiểm tra conflict ngày trong transaction
-async function createBooking({ guestId, listingId, checkIn, checkOut, guestCount = 1, contactName, contactEmail, contactPhone }) {
+async function createBooking({ guestId, guestRole, listingId, checkIn, checkOut, guestCount = 1, contactName, contactEmail, contactPhone }) {
   const listing = await prisma.listing.findUnique({ where: { id: listingId } });
   if (!listing) throw new AppError(404, 'Listing not found');
   if (listing.status !== 'approved') throw new AppError(400, 'Listing is not available for booking');
 
-  // Bug #5: host/admin không được self-book
+  if (guestRole === 'admin') throw new AppError(403, 'Admins cannot make bookings');
   if (listing.hostId === guestId) throw new AppError(400, 'Host cannot book their own listing');
 
   if (guestCount < 1 || guestCount > listing.guestCapacity)

@@ -225,9 +225,9 @@ export default function ListingDetail() {
           </div>
 
           <div className="lg:col-span-1">
-            {user?.id === listing.host?.id ? (
+            {user?.id === listing.host?.id || user?.role === 'admin' ? (
               <div className="rounded-xl border border-neutral-200 p-6 text-center text-sm text-neutral-500">
-                This is your listing — you cannot book it.
+                {user?.role === 'admin' ? 'Admins cannot make bookings.' : 'This is your listing — you cannot book it.'}
               </div>
             ) : (
               <BookingWidget
