@@ -12,10 +12,15 @@ async function getMe(userId) {
   return user;
 }
 
-async function updateProfile(userId, { fullName, phone }) {
+async function updateProfile(userId, { email, fullName, phone }) {
+  if (email) {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing && existing.id !== userId) throw new AppError(409, 'Email is already in use');
+  }
   return prisma.user.update({
     where: { id: userId },
     data: {
+      ...(email && { email }),
       ...(fullName !== undefined && { fullName }),
       ...(phone !== undefined && { phone }),
     },

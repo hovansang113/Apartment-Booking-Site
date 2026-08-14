@@ -16,6 +16,7 @@ export default function ProfilePage() {
   const { data: profile } = useQuery({ queryKey: ['me'], queryFn: fetchMe });
 
   const [form, setForm] = useState({
+    email: user?.email || '',
     fullName: user?.fullName || '',
     phone: user?.phone || '',
   });
@@ -25,7 +26,7 @@ export default function ProfilePage() {
   // Overwrite with fresher data from API once loaded
   useEffect(() => {
     if (profile) {
-      setForm({ fullName: profile.fullName, phone: profile.phone || '' });
+      setForm({ email: profile.email, fullName: profile.fullName, phone: profile.phone || '' });
     }
   }, [profile]);
 
@@ -62,7 +63,7 @@ export default function ProfilePage() {
 
   function handleProfileSubmit(e) {
     e.preventDefault();
-    updateProfile.mutate({ fullName: form.fullName, phone: form.phone });
+    updateProfile.mutate({ email: form.email, fullName: form.fullName, phone: form.phone });
   }
 
   function handlePasswordSubmit(e) {
@@ -123,9 +124,11 @@ export default function ProfilePage() {
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-1">Email</label>
             <input
-              value={profile?.email || user?.email || ''}
-              disabled
-              className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-400 cursor-not-allowed"
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              required
+              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
           <div>
