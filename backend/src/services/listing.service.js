@@ -194,4 +194,19 @@ async function getListing(listingId) {
   return listing;
 }
 
-module.exports = { createListing, updateListing, deleteListing, getPublicListings, getHostListings, getListing };
+// Autocomplete: return up to 8 distinct addresses matching query
+async function getLocations(q) {
+  const listings = await prisma.listing.findMany({
+    where: {
+      status: 'approved',
+      ...(q ? { address: { contains: q } } : {}),
+    },
+    select: { address: true },
+    distinct: ['address'],
+    take: 8,
+    orderBy: { address: 'asc' },
+  });
+  return listings.map((l) => l.address);
+}
+
+module.exports = { createListing, updateListing, deleteListing, getPublicListings, getHostListings, getListing, getLocations };

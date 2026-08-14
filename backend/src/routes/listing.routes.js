@@ -8,6 +8,7 @@ const { createListingRules, updateListingRules } = require('../validators/listin
 const { validate } = require('../validators/validate.util');
 
 router.get('/', listingController.getPublicListings); // REQ_05 - public, chỉ approved
+router.get('/locations', listingController.getLocations); // autocomplete
 router.get('/mine', authenticate, authorize(UserRole.host), listingController.getHostListings); // REQ_02
 router.get('/:id', listingController.getOne); // REQ_06 - public
 

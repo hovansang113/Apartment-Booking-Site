@@ -80,4 +80,11 @@ async function getHostListings(req, res) {
   return ok(res, listings);
 }
 
-module.exports = { create, update, remove, getPublicListings, getOne, getHostListings };
+// Autocomplete: distinct address fragments matching query
+async function getLocations(req, res) {
+  const { q } = req.query;
+  const locations = await listingService.getLocations(q);
+  return ok(res, locations);
+}
+
+module.exports = { create, update, remove, getPublicListings, getOne, getHostListings, getLocations };
