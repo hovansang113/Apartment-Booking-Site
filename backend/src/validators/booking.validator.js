@@ -2,6 +2,9 @@ const { body } = require('express-validator');
 
 const NAME_MAX = 191; // matches VARCHAR(191) column
 const EMAIL_MAX = 191; // matches VARCHAR(191) column
+const ADDRESS_MAX = 191;
+const CITY_MAX = 100;
+const POSTCODE_MAX = 20;
 
 const createBookingRules = [
   body('listingId').isUUID().withMessage('listingId không hợp lệ'),
@@ -30,6 +33,23 @@ const createBookingRules = [
     .trim()
     .isMobilePhone('any')
     .withMessage('Số điện thoại không hợp lệ'),
+  body('contactAddress')
+    .trim()
+    .notEmpty()
+    .withMessage('Vui lòng nhập địa chỉ')
+    .isLength({ max: ADDRESS_MAX })
+    .withMessage(`Địa chỉ phải tối đa ${ADDRESS_MAX} ký tự`),
+  body('contactCity')
+    .trim()
+    .notEmpty()
+    .withMessage('Vui lòng nhập thành phố/tỉnh')
+    .isLength({ max: CITY_MAX })
+    .withMessage(`Thành phố/tỉnh phải tối đa ${CITY_MAX} ký tự`),
+  body('contactPostcode')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ max: POSTCODE_MAX })
+    .withMessage(`Mã bưu chính phải tối đa ${POSTCODE_MAX} ký tự`),
 ];
 
 module.exports = { createBookingRules };

@@ -7,6 +7,9 @@ const { validate } = require('../validators/validate.util');
 // comment day du trong services/booking.service.js).
 router.post('/', createBookingRules, validate, bookingController.create);
 
+// Cong khai (UUID khong doan duoc) - dung cho trang thanh toan rieng
+router.get('/:id', bookingController.getOne);
+
 // router.get('/mine', ...);              // REQ_07/11
 // router.patch('/:id/cancel', ...);      // REQ_11
 // router.patch('/:id/reject', ...);      // REQ_08 - host huy 1 booking da approved

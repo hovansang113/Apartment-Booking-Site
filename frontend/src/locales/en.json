@@ -158,8 +158,58 @@
       "successHeading": "Reservation held!",
       "successBody": "Please complete payment within {{minutes}} minutes to confirm your booking.",
       "bookingCodeLabel": "Booking code",
-      "paymentComingSoon": "The payment step is coming soon."
+      "paymentComingSoon": "The payment step is coming soon.",
+      "payNow": "Pay now",
+      "redirecting": "Redirecting to the payment page...",
+      "paymentUrlErrorFallback": "Couldn't create a payment link, please try again later",
+      "sandboxNote": "Using the VNPay Sandbox test environment - no real money is charged."
     }
+  },
+  "checkout": {
+    "pageTitle": "Confirm your booking",
+    "heading": "Contact information",
+    "subheading": "Please fill in the details below to complete your booking.",
+    "missingDatesHeading": "Missing check-in/check-out dates",
+    "backToListing": "Back to listing",
+    "listingNotFoundHeading": "This listing could not be found",
+    "address": "Address",
+    "city": "City",
+    "postcode": "Postcode (optional)",
+    "continue": "Continue",
+    "nightsStay_one": "{{count}} Night Stay",
+    "nightsStay_other": "{{count}} Nights Stay",
+    "roomsHeading": "Stay",
+    "steps": {
+      "dates": "Select dates",
+      "guest": "Guest details",
+      "payment": "Payment"
+    },
+    "errors": {
+      "nameRequired": "Please enter your full name",
+      "emailRequired": "Please enter your email",
+      "emailInvalid": "Please enter a valid email",
+      "addressRequired": "Address is required",
+      "cityRequired": "City is required"
+    }
+  },
+  "payment": {
+    "pageTitle": "Booking payment",
+    "heading": "Complete your payment",
+    "notFoundHeading": "This booking could not be found",
+    "backHome": "Back to home",
+    "holdNotice": "Please pay within {{time}} to keep your reservation",
+    "expired": "Your reservation hold has expired. Please book again.",
+    "notPayable": "This booking is no longer awaiting payment.",
+    "alreadyConfirmed": "This booking has already been paid and confirmed.",
+    "urlErrorFallback": "Couldn't create a payment link, please try again later",
+    "returnPageTitle": "Payment result",
+    "verifying": "Confirming your payment result with VNPay...",
+    "returnSuccessHeading": "Payment successful!",
+    "returnSuccessBody": "Your booking has been confirmed.",
+    "returnFailedHeading": "Payment unsuccessful",
+    "returnFailedBody": "The transaction wasn't completed. You can go back to the booking page to try again.",
+    "returnErrorHeading": "Couldn't confirm the result",
+    "returnErrorBody": "Something went wrong while confirming your payment. If you were charged, please contact support with your booking code."
   },
   "auth": {
     "googleComingSoon": "Google sign-in is coming in a future release!",

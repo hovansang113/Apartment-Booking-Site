@@ -18,6 +18,9 @@ import CreateListingPage from './pages/host/CreateListingPage';
 import AdminListingsPage from './pages/admin/AdminListingsPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminTaxVerificationPage from './pages/admin/AdminTaxVerificationPage';
+import CheckoutPage from './pages/booking/CheckoutPage';
+import PaymentPage from './pages/booking/PaymentPage';
+import VnpayReturnPage from './pages/booking/VnpayReturnPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 
@@ -34,7 +37,9 @@ export default function App() {
   const isStandalonePage =
     location.pathname === '/host/listings/new' ||
     location.pathname === '/host/listings/setup' ||
-    location.pathname.startsWith('/admin');
+    location.pathname.startsWith('/admin') ||
+    location.pathname.startsWith('/booking/') ||
+    location.pathname.endsWith('/checkout');
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -44,6 +49,11 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/listings/:id" element={<ListingDetail />} />
+          <Route path="/listings/:id/checkout" element={<CheckoutPage />} />
+
+          {/* Booking / Payment Routes (Phase 4) */}
+          <Route path="/booking/:bookingId/payment" element={<PaymentPage />} />
+          <Route path="/booking/vnpay-return" element={<VnpayReturnPage />} />
 
           {/* Auth Routes */}
           <Route path="/auth/login" element={<LoginPage />} />

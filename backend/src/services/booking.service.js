@@ -52,7 +52,17 @@ function generateVnpTxnRef() {
 // thanh toan. Payment.service.js (Phase 3) se tao URL VNPay dua tren
 // vnpTxnRef da sinh san o day; job rieng (Phase 5) se tu huy booking qua han
 // paymentExpiresAt chua thanh toan.
-async function createBooking({ listingId, checkIn, checkOut, contactName, contactEmail, contactPhone }) {
+async function createBooking({
+  listingId,
+  checkIn,
+  checkOut,
+  contactName,
+  contactEmail,
+  contactPhone,
+  contactAddress,
+  contactCity,
+  contactPostcode,
+}) {
   const dates = datesBetween(checkIn, checkOut);
   if (dates.length === 0) {
     throw new AppError(422, 'checkOut phải sau checkIn ít nhất 1 đêm');
@@ -110,6 +120,9 @@ async function createBooking({ listingId, checkIn, checkOut, contactName, contac
         contactName,
         contactEmail,
         contactPhone: contactPhone || null,
+        contactAddress,
+        contactCity,
+        contactPostcode: contactPostcode || null,
         payment: {
           create: {
             amount: totalPrice,
@@ -135,4 +148,29 @@ async function createBooking({ listingId, checkIn, checkOut, contactName, contac
   });
 }
 
-module.exports = { createBooking };
+// Cho trang thanh toan (payment page) - cong khai qua UUID khong doan duoc,
+// khong yeu cau dang nhap/email khop (khac voi Phase 7 "tra cuu bang
+// bookingCode+email" se lam sau, dung cho khach tu tim lai booking cu). Trang
+// thanh toan luon dieu huong toi day ngay sau khi tao booking nen chi can
+// UUID la du an toan cho quy mo du an nay.
+async function getBookingById(id) {
+  const booking = await prisma.booking.findUnique({
+    where: { id },
+    include: {
+      payment: true,
+      listing: {
+        select: {
+          title: true,
+          address: true,
+          images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+        },
+      },
+    },
+  });
+  if (!booking) {
+    throw new AppError(404, 'Booking not found');
+  }
+  return booking;
+}
+
+module.exports = { createBooking, getBookingById };

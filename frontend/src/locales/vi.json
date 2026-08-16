@@ -157,8 +157,57 @@
       "successHeading": "Đã giữ chỗ thành công!",
       "successBody": "Vui lòng hoàn tất thanh toán trong {{minutes}} phút để xác nhận đặt phòng.",
       "bookingCodeLabel": "Mã đặt phòng",
-      "paymentComingSoon": "Bước thanh toán sẽ sớm được bổ sung."
+      "paymentComingSoon": "Bước thanh toán sẽ sớm được bổ sung.",
+      "payNow": "Thanh toán ngay",
+      "redirecting": "Đang chuyển tới trang thanh toán...",
+      "paymentUrlErrorFallback": "Không tạo được liên kết thanh toán, thử lại sau",
+      "sandboxNote": "Đang dùng môi trường thử nghiệm VNPay Sandbox, chưa phải giao dịch tiền thật."
     }
+  },
+  "checkout": {
+    "pageTitle": "Xác nhận đặt phòng",
+    "heading": "Thông tin liên hệ",
+    "subheading": "Vui lòng điền đầy đủ thông tin bên dưới để hoàn tất đặt phòng.",
+    "missingDatesHeading": "Thiếu thông tin ngày nhận/trả phòng",
+    "backToListing": "Quay lại trang chỗ ở",
+    "listingNotFoundHeading": "Không tìm thấy chỗ ở này",
+    "address": "Địa chỉ",
+    "city": "Thành phố/Tỉnh",
+    "postcode": "Mã bưu chính (không bắt buộc)",
+    "continue": "Tiếp tục",
+    "nightsStay": "{{count}} đêm ở",
+    "roomsHeading": "Chỗ ở",
+    "steps": {
+      "dates": "Chọn ngày",
+      "guest": "Thông tin khách",
+      "payment": "Thanh toán"
+    },
+    "errors": {
+      "nameRequired": "Vui lòng nhập họ tên",
+      "emailRequired": "Vui lòng nhập email",
+      "emailInvalid": "Email không hợp lệ",
+      "addressRequired": "Vui lòng nhập địa chỉ",
+      "cityRequired": "Vui lòng nhập thành phố/tỉnh"
+    }
+  },
+  "payment": {
+    "pageTitle": "Thanh toán đặt phòng",
+    "heading": "Hoàn tất thanh toán",
+    "notFoundHeading": "Không tìm thấy đơn đặt phòng này",
+    "backHome": "Về trang chủ",
+    "holdNotice": "Vui lòng thanh toán trong {{time}} để giữ chỗ",
+    "expired": "Đã hết thời gian giữ chỗ. Vui lòng đặt lại từ đầu.",
+    "notPayable": "Đơn đặt phòng này không còn ở trạng thái chờ thanh toán.",
+    "alreadyConfirmed": "Đơn đặt phòng này đã được thanh toán và xác nhận.",
+    "urlErrorFallback": "Không tạo được liên kết thanh toán, thử lại sau",
+    "returnPageTitle": "Kết quả thanh toán",
+    "verifying": "Đang xác nhận kết quả thanh toán với VNPay...",
+    "returnSuccessHeading": "Thanh toán thành công!",
+    "returnSuccessBody": "Đặt phòng của bạn đã được xác nhận.",
+    "returnFailedHeading": "Thanh toán không thành công",
+    "returnFailedBody": "Giao dịch chưa hoàn tất, bạn có thể quay lại trang đặt phòng để thử thanh toán lại.",
+    "returnErrorHeading": "Không xác nhận được kết quả",
+    "returnErrorBody": "Có lỗi xảy ra khi xác nhận thanh toán. Nếu tiền đã bị trừ, vui lòng liên hệ hỗ trợ kèm mã đặt phòng."
   },
   "auth": {
     "googleComingSoon": "Tính năng đăng nhập với Google sẽ ra mắt ở phiên bản tiếp theo!",

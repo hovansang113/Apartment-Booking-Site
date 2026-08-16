@@ -1,0 +1,45 @@
+import { useTranslation } from 'react-i18next';
+
+const STEP_KEYS = ['dates', 'guest', 'payment'];
+
+// Thanh buoc tren dau CheckoutPage/PaymentPage - tham khao bo cuc stepper cua
+// booking-directly.com (Room Selection -> Booking Extras -> Guest Details ->
+// Payments), rut gon con 3 buoc khop dung luong that cua minh (chon ngay dien
+// ra ngay tren trang listing, khong phai 1 trang rieng). `current` la step
+// dang o - cac step truoc do tu dong hien dau tick.
+export default function BookingStepper({ current }) {
+  const { t } = useTranslation();
+  const currentIndex = STEP_KEYS.indexOf(current);
+
+  return (
+    <div className="flex items-center justify-center gap-2 py-5 text-sm">
+      {STEP_KEYS.map((key, i) => {
+        const isDone = i < currentIndex;
+        const isCurrent = i === currentIndex;
+        return (
+          <div key={key} className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold ${
+                  isDone
+                    ? 'bg-brand-600 text-white'
+                    : isCurrent
+                      ? 'border-2 border-brand-600 text-brand-600'
+                      : 'border border-neutral-300 text-neutral-400'
+                }`}
+              >
+                {isDone ? '✓' : i + 1}
+              </span>
+              <span className={isCurrent ? 'font-semibold text-neutral-900' : isDone ? 'text-brand-600' : 'text-neutral-400'}>
+                {t(`checkout.steps.${key}`)}
+              </span>
+            </div>
+            {i < STEP_KEYS.length - 1 && (
+              <span className={`h-px w-8 sm:w-16 ${isDone ? 'bg-brand-600' : 'bg-neutral-200'}`} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
