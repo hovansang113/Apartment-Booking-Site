@@ -11,8 +11,8 @@ i18n.use(initReactI18next).init({
     vi: { translation: vi },
     en: { translation: en },
   },
-  lng: savedLang || 'vi', // mac dinh tieng Viet
-  fallbackLng: 'vi',
+  lng: savedLang || 'en', // mac dinh tieng Anh theo yeu cau (17/8)
+  fallbackLng: 'en',
   interpolation: { escapeValue: false }, // React da tu chong XSS san
 });
 
