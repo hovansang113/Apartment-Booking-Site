@@ -56,6 +56,17 @@ export default function BookingDetailModal({ booking, guestName, onClose }) {
             </div>
           </div>
 
+          {booking.adultsCount != null && (
+            <div>
+              <p className="text-xs font-semibold uppercase text-neutral-400">{t('hostCalendar.bookingModal.guests')}</p>
+              <p className="font-medium text-neutral-900">
+                {booking.childrenCount > 0
+                  ? t('listing.booking.adultsChildrenLabel', { adults: booking.adultsCount, children: booking.childrenCount })
+                  : t('listing.booking.adultsLabel', { count: booking.adultsCount })}
+              </p>
+            </div>
+          )}
+
           <div>
             <p className="text-xs font-semibold uppercase text-neutral-400">{t('hostCalendar.bookingModal.contact')}</p>
             <p className="font-medium text-neutral-900">{booking.contactEmail}</p>

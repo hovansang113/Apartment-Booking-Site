@@ -119,7 +119,7 @@ export default function PaymentPage() {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 border-t border-neutral-100 pt-4 text-sm">
+        <div className="mt-4 grid grid-cols-3 gap-3 border-t border-neutral-100 pt-4 text-sm">
           <div>
             <p className="text-[10px] font-semibold uppercase text-neutral-400">{t('listing.booking.checkIn')}</p>
             <p className="text-neutral-800">
@@ -132,6 +132,16 @@ export default function PaymentPage() {
               {format(parseISO(booking.checkOut), 'd MMM yyyy', { locale: dateFnsLocale })}
             </p>
           </div>
+          {booking.adultsCount != null && (
+            <div>
+              <p className="text-[10px] font-semibold uppercase text-neutral-400">{t('listing.booking.guests')}</p>
+              <p className="text-neutral-800">
+                {booking.childrenCount > 0
+                  ? t('listing.booking.adultsChildrenLabel', { adults: booking.adultsCount, children: booking.childrenCount })
+                  : t('listing.booking.adultsLabel', { count: booking.adultsCount })}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-center">

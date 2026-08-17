@@ -81,6 +81,8 @@ async function getMonthView({ listingId, hostId, year, month }) {
         id: row.booking.id,
         checkIn: toYMD(row.booking.checkIn),
         checkOut: toYMD(row.booking.checkOut),
+        adultsCount: row.booking.adultsCount,
+        childrenCount: row.booking.childrenCount,
         totalPrice: Number(row.booking.totalPrice),
         contactName: row.booking.contactName,
         contactEmail: row.booking.contactEmail,

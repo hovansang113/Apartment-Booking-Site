@@ -50,6 +50,15 @@ const createBookingRules = [
     .trim()
     .isLength({ max: POSTCODE_MAX })
     .withMessage(`Mã bưu chính phải tối đa ${POSTCODE_MAX} ký tự`),
+  body('adults')
+    .isInt({ min: 1 })
+    .withMessage('Số người lớn phải tối thiểu 1')
+    .toInt(),
+  body('children')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Số trẻ em không hợp lệ')
+    .toInt(),
 ];
 
 module.exports = { createBookingRules };

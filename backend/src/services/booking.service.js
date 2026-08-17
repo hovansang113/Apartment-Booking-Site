@@ -62,6 +62,8 @@ async function createBooking({
   contactAddress,
   contactCity,
   contactPostcode,
+  adults,
+  children,
 }) {
   const dates = datesBetween(checkIn, checkOut);
   if (dates.length === 0) {
@@ -72,6 +74,11 @@ async function createBooking({
     const listing = await tx.listing.findUnique({ where: { id: listingId } });
     if (!listing) {
       throw new AppError(404, 'Listing not found');
+    }
+
+    const totalGuests = adults + (children || 0);
+    if (totalGuests > listing.guestCapacity) {
+      throw new AppError(422, `Chỗ ở này chỉ cho tối đa ${listing.guestCapacity} khách`);
     }
 
     const targets = dates.map((d) => new Date(d));
@@ -110,6 +117,8 @@ async function createBooking({
         guestId: guest.id,
         checkIn: new Date(checkIn),
         checkOut: new Date(checkOut),
+        adultsCount: adults,
+        childrenCount: children || 0,
         totalPrice,
         status: BookingStatus.pending_payment,
         bookingCode: generateBookingCode(),

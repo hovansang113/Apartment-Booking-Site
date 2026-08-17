@@ -118,6 +118,8 @@ export default function CheckoutPage() {
         contactAddress: form.contactAddress.trim(),
         contactCity: form.contactCity.trim(),
         contactPostcode: form.contactPostcode.trim(),
+        adults,
+        children,
       });
       navigate(`/booking/${booking.id}/payment`);
     } catch (err) {

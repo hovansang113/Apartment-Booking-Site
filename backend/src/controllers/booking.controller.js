@@ -14,6 +14,8 @@ async function create(req, res) {
     contactAddress,
     contactCity,
     contactPostcode,
+    adults,
+    children,
   } = req.body;
   const booking = await bookingService.createBooking({
     listingId,
@@ -25,6 +27,8 @@ async function create(req, res) {
     contactAddress,
     contactCity,
     contactPostcode,
+    adults,
+    children,
   });
   return created(res, booking, 'Đã giữ chỗ, vui lòng hoàn tất thanh toán trong 15 phút');
 }

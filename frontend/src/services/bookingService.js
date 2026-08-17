@@ -13,6 +13,8 @@ export async function createBooking({
   contactAddress,
   contactCity,
   contactPostcode,
+  adults,
+  children,
 }) {
   const { data } = await api.post('/bookings', {
     listingId,
@@ -24,6 +26,8 @@ export async function createBooking({
     contactAddress,
     contactCity,
     contactPostcode: contactPostcode || undefined,
+    adults,
+    children,
   });
   return data.data;
 }
