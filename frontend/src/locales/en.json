@@ -219,6 +219,7 @@
       "fillRequired": "Please enter your Email and Password",
       "welcomeBack": "Welcome back, {{name}}!",
       "genericError": "Login failed. Please check your Email/Password!",
+      "pageTitle": "Log in — Stayhub",
       "title": "Log in to your account",
       "subtitle": "Manage your rentals and bookings",
       "email": "Email address",
@@ -238,6 +239,7 @@
       "mustAgree": "You must agree to the Terms of Service to continue",
       "success": "Host account created successfully!",
       "genericError": "Registration failed, please try again!",
+      "pageTitle": "Sign up as a Host — Stayhub",
       "title": "Sign up as a Host",
       "subtitle": "Start hosting and earn extra income with Stayhub",
       "fullName": "Full name",
@@ -267,6 +269,8 @@
       "close": "Dismiss notice"
     },
     "becomeHost": {
+      "pageTitle": "Host your place on Stayhub",
+      "pageDescription": "List for free, control your own availability and pricing. Stayhub confirms bookings automatically whenever your calendar is open.",
       "heroTitle": "Host your place, earn extra income",
       "heroBody": "List for free, control your availability and pricing. Stayhub auto-confirms bookings whenever your calendar is open — no need to approve every request.",
       "heroImgAlt": "A host preparing to welcome guests",

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../../components/common/Seo';
 import toast from 'react-hot-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -58,9 +58,7 @@ export default function AdminListingsPage() {
 
   return (
     <AdminLayout>
-      <Helmet>
-        <title>{t('admin.listings.pageTitle')}</title>
-      </Helmet>
+      <Seo title={t('admin.listings.pageTitle')} noindex />
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-neutral-900">{t('admin.listings.heading')}</h1>

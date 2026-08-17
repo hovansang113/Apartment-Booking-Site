@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../../components/common/Seo';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -18,9 +18,7 @@ export default function HostSetupChoicePage() {
 
   return (
     <>
-      <Helmet>
-        <title>{t('host.setupChoice.pageTitle')}</title>
-      </Helmet>
+      <Seo title={t('host.setupChoice.pageTitle')} noindex />
 
       <div className="flex min-h-screen flex-col bg-white text-neutral-900">
         {/* Top Minimal Header (Matching Header.jsx layout) */}

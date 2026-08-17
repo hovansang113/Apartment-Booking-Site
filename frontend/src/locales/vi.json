@@ -217,6 +217,7 @@
       "fillRequired": "Vui lòng điền Email và Mật khẩu",
       "welcomeBack": "Chào mừng trở lại, {{name}}!",
       "genericError": "Đăng nhập thất bại. Kiểm tra lại Email/Mật khẩu!",
+      "pageTitle": "Đăng nhập — Stayhub",
       "title": "Đăng nhập tài khoản",
       "subtitle": "Quản lý phòng cho thuê và các đơn đặt phòng của bạn",
       "email": "Địa chỉ Email",
@@ -236,6 +237,7 @@
       "mustAgree": "Bạn cần đồng ý với Điều khoản dịch vụ để tiếp tục",
       "success": "Đăng ký tài khoản Chủ nhà thành công!",
       "genericError": "Đăng ký thất bại, vui lòng thử lại!",
+      "pageTitle": "Đăng ký tài khoản Chủ nhà — Stayhub",
       "title": "Đăng ký tài khoản Chủ nhà",
       "subtitle": "Bắt đầu cho thuê chỗ ở và đón thêm thu nhập cùng Stayhub",
       "fullName": "Họ và tên",
@@ -265,6 +267,8 @@
       "close": "Đóng thông báo"
     },
     "becomeHost": {
+      "pageTitle": "Cho thuê chỗ ở cùng Stayhub",
+      "pageDescription": "Đăng tin miễn phí, kiểm soát lịch trống và giá cả theo ý bạn. Stayhub tự động xác nhận đặt phòng ngay khi lịch còn trống.",
       "heroTitle": "Cho thuê chỗ ở, đón thêm thu nhập",
       "heroBody": "Đăng tin miễn phí, kiểm soát lịch trống và giá cả theo ý bạn. Stayhub tự động xác nhận đặt phòng ngay khi lịch còn trống — không cần chờ duyệt từng yêu cầu.",
       "heroImgAlt": "Chủ nhà chuẩn bị đón khách",

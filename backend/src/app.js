@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 
 const { notFound, errorHandler } = require('./middlewares/error.middleware');
+const seoController = require('./controllers/seo.controller');
 
 const authRoutes = require('./routes/auth.routes');
 const listingRoutes = require('./routes/listing.routes');
@@ -22,6 +23,11 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+// O goc domain (khong phai /api) - dung chuan crawler/SEO tool tim dung vi
+// tri. Xem comment day du trong seo.controller.js.
+app.get('/robots.txt', seoController.robots);
+app.get('/sitemap.xml', seoController.sitemap);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/listings', listingRoutes);

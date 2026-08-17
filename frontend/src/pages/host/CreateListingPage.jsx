@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../../components/common/Seo';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import {
@@ -152,9 +152,7 @@ export default function CreateListingPage() {
 
   return (
     <>
-      <Helmet>
-        <title>{t('createListing.pageTitle')}</title>
-      </Helmet>
+      <Seo title={t('createListing.pageTitle')} noindex />
 
       <div className="flex min-h-screen flex-col bg-white text-neutral-900">
         {/* Top Minimal Header (Matching Header.jsx layout) */}

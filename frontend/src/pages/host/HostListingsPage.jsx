@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../../components/common/Seo';
 import { useTranslation } from 'react-i18next';
 import {
   PlusIcon,
@@ -58,9 +58,7 @@ export default function HostListingsPage() {
 
   return (
     <>
-      <Helmet>
-        <title>{t('host.listings.pageTitle')}</title>
-      </Helmet>
+      <Seo title={t('host.listings.pageTitle')} noindex />
 
       <main className="min-h-[85vh] bg-white px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">

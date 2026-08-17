@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../../components/common/Seo';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { CalculatorIcon, BankIcon, ChevronRightIcon } from '../../components/common/icons';
@@ -47,9 +47,7 @@ export default function HostSettingsPage() {
 
   return (
     <>
-      <Helmet>
-        <title>{t('hostSettings.hub.pageTitle')}</title>
-      </Helmet>
+      <Seo title={t('hostSettings.hub.pageTitle')} noindex />
 
       <main className="min-h-[85vh] bg-white px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl">

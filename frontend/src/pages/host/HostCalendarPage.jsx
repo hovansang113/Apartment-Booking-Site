@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../../components/common/Seo';
 import toast from 'react-hot-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -305,9 +305,7 @@ export default function HostCalendarPage() {
 
   return (
     <>
-      <Helmet>
-        <title>{t('hostCalendar.page.pageTitle')}</title>
-      </Helmet>
+      <Seo title={t('hostCalendar.page.pageTitle')} noindex />
 
       <main className="min-h-[85vh] bg-white px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">

@@ -1,11 +1,14 @@
 import { Helmet } from 'react-helmet-async';
 
 const SITE_NAME = 'Stayhub';
-const SITE_URL = 'https://example.com'; // TODO: doi thanh domain that khi deploy
 
 export default function Seo({ title, description, path = '/', jsonLd, noindex = false }) {
   const fullTitle = title ? `${title} — ${SITE_NAME}` : `${SITE_NAME} — Đặt phòng khắp Việt Nam`;
-  const url = `${SITE_URL}${path}`;
+  // window.location.origin - luon dung theo domain/IP that dang phuc vu trang
+  // (dev, staging, production...), khong can hardcode/config rieng tung noi.
+  // SPA thuan (khong SSR) nen component nay chi render trong trinh duyet,
+  // `window` luon co san.
+  const url = `${window.location.origin}${path}`;
 
   return (
     <Helmet>

@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { CategoryIcon } from '../../components/common/icons';
+import Seo from '../../components/common/Seo';
 
 const STEP_ICONS = ['homestay', 'apartment', 'house'];
 
@@ -26,6 +27,7 @@ export default function BecomeHostPage() {
 
   return (
     <main>
+      <Seo title={t('host.becomeHost.pageTitle')} description={t('host.becomeHost.pageDescription')} path="/host" />
       <section className="border-b border-neutral-200 bg-brand-50">
         <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8">
           <div>

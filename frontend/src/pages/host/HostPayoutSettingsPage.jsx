@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../../components/common/Seo';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -75,9 +75,7 @@ export default function HostPayoutSettingsPage() {
 
   return (
     <>
-      <Helmet>
-        <title>{t('hostSettings.bankPageTitle')}</title>
-      </Helmet>
+      <Seo title={t('hostSettings.bankPageTitle')} noindex />
 
       <main className="min-h-[85vh] bg-white px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl">

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../../components/common/Seo';
 import { useTranslation } from 'react-i18next';
 import { BookIllustration, CalculatorIcon } from '../../components/common/icons';
 
@@ -14,9 +14,7 @@ export default function HostTodayPage() {
 
   return (
     <>
-      <Helmet>
-        <title>{t('host.today.pageTitle')}</title>
-      </Helmet>
+      <Seo title={t('host.today.pageTitle')} noindex />
 
       <main className="min-h-[85vh] bg-white px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">

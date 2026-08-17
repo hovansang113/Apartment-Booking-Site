@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { register as registerApi } from '../../services/authService';
 import { GoogleIcon } from '../../components/common/icons';
+import Seo from '../../components/common/Seo';
 
 export default function RegisterPage() {
   const { t } = useTranslation();
@@ -74,6 +75,7 @@ export default function RegisterPage() {
 
   return (
     <main className="flex min-h-[80vh] items-center justify-center px-4 py-12">
+      <Seo title={t('auth.register.pageTitle')} path="/auth/register" noindex />
       <div className="w-full max-w-md rounded-3xl border border-neutral-200 bg-white p-8 shadow-xl">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-neutral-900">{t('auth.register.title')}</h1>
