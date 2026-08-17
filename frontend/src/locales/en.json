@@ -440,7 +440,13 @@
       "loadCalendarErrorFallback": "Couldn't load the calendar, please try again later",
       "saveBlocked": "This date has been blocked",
       "saveUpdated": "This date has been updated",
-      "saveErrorFallback": "Something went wrong, please try again later"
+      "saveErrorFallback": "Something went wrong, please try again later",
+      "selectMultiple": "Select multiple days",
+      "selectMultipleHint": "Click the days you want to block/unblock at once",
+      "selectedCount": "{{count}} days selected",
+      "edit": "Edit",
+      "cancelSelection": "Cancel",
+      "bulkSaveSuccess": "Updated {{count}} days"
     },
     "legend": {
       "available": "Available",
@@ -495,7 +501,12 @@
       "minNights": "Minimum (nights)",
       "maxNights": "Maximum (nights)",
       "noLimit": "No limit",
-      "save": "Save changes"
+      "save": "Save changes",
+      "saving": "Saving..."
+    },
+    "bulkModal": {
+      "daysCount": "{{count}} days selected",
+      "priceHint": "Per-day pricing can still be edited later by clicking each day individually."
     },
     "bookingModal": {
       "heading": "Booking details",

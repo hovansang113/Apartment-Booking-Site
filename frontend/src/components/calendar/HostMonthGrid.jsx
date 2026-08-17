@@ -87,7 +87,7 @@ function barColorClasses(range) {
   return 'bg-neutral-500'; // blocked + manual
 }
 
-function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges, t, language }) {
+function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges, t, language, multiSelectMode, selectedDates, onToggleDate }) {
   const segmentsWithRange = ranges
     .map((range) => ({ range, seg: segmentForWeek(range, week) }))
     .filter((r) => r.seg);
@@ -102,17 +102,18 @@ function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges, t, 
           const isPast = info.date < todayYMD;
           const isSynced = info.source === 'ical_sync';
           const clickable = !isPast && info.status !== 'booked' && !isSynced;
+          const isSelected = multiSelectMode && selectedDates?.includes(info.date);
 
           return (
             <button
               key={info.date}
               type="button"
               disabled={!clickable}
-              onClick={() => clickable && onDayClick(info)}
+              onClick={() => clickable && (multiSelectMode ? onToggleDate(info.date) : onDayClick(info))}
               title={info.guestLabel || info.note || undefined}
               className={`flex h-24 flex-col overflow-hidden rounded-lg border text-left transition-colors ${
                 isPast ? 'border-neutral-100 bg-neutral-50' : `border-neutral-200 bg-white ${clickable ? 'hover:border-brand-400' : ''}`
-              } ${info.date === todayYMD ? 'ring-2 ring-brand-500' : ''}`}
+              } ${isSelected ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-500' : info.date === todayYMD ? 'ring-2 ring-brand-500' : ''}`}
             >
               <span className={`px-2 pt-1.5 text-xs font-semibold ${isPast ? 'text-neutral-300' : 'text-neutral-700'}`}>
                 {dayNum}
@@ -180,7 +181,17 @@ function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges, t, 
 // (khop UI tham khao cua Jason) thay vi lap lai nhan trong tung o. Moi tuan
 // la 1 cap grid doc lap (o ngay + overlay thanh) de tranh loi can vi khi
 // tron item auto-place voi item dat vi tri tuyet doi trong CUNG 1 grid.
-export default function HostMonthGrid({ year, month, days, todayYMD, onDayClick, onBookingClick }) {
+export default function HostMonthGrid({
+  year,
+  month,
+  days,
+  todayYMD,
+  onDayClick,
+  onBookingClick,
+  multiSelectMode = false,
+  selectedDates,
+  onToggleDate,
+}) {
   const { t, i18n } = useTranslation();
   const weekdays = t('dateRangePicker.weekdays', { returnObjects: true });
   const weeks = buildWeeks(year, month);
@@ -205,6 +216,9 @@ export default function HostMonthGrid({ year, month, days, todayYMD, onDayClick,
             ranges={ranges}
             t={t}
             language={i18n.language}
+            multiSelectMode={multiSelectMode}
+            selectedDates={selectedDates}
+            onToggleDate={onToggleDate}
           />
         ))}
       </div>

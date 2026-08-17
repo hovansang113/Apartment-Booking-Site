@@ -7,6 +7,7 @@ import { vi, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import HostMonthGrid from '../../components/calendar/HostMonthGrid';
 import DayEditModal from '../../components/calendar/DayEditModal';
+import BulkDayEditModal from '../../components/calendar/BulkDayEditModal';
 import BookingDetailModal from '../../components/calendar/BookingDetailModal';
 import { ChevronLeftIcon, ChevronRightIcon } from '../../components/common/icons';
 import { getHostListings } from '../../services/listingService';
@@ -251,6 +252,9 @@ export default function HostCalendarPage() {
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [editingDay, setEditingDay] = useState(null);
   const [viewingBooking, setViewingBooking] = useState(null);
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [selectedDates, setSelectedDates] = useState([]);
+  const [editingBulk, setEditingBulk] = useState(false);
   const todayYMD = toYMD(today);
   const year = cursor.getFullYear();
   const month = cursor.getMonth() + 1; // API la 1-indexed
@@ -300,6 +304,33 @@ export default function HostCalendarPage() {
       previousMaxNights: editingDay.maxNights,
     });
   }
+
+  function toggleDate(ymd) {
+    setSelectedDates((prev) => (prev.includes(ymd) ? prev.filter((d) => d !== ymd) : [...prev, ymd].sort()));
+  }
+
+  function resetSelection() {
+    setMultiSelectMode(false);
+    setSelectedDates([]);
+    setEditingBulk(false);
+  }
+
+  // Chi chan/mo khoa + ghi chu chung cho ca khoang - KHONG dong gia rieng
+  // tung ngay (phan biet gia ngay thuong/cuoi tuan van giu nguyen, chinh tung
+  // ngay nhu binh thuong). Tai dung dung API block/unblock da co san
+  // (calendarService da nhan mang ngay tu truoc, khong can sua backend).
+  const bulkSaveMutation = useMutation({
+    mutationFn: async ({ dates, status, note }) => {
+      if (status === 'blocked') await calendarService.blockDates(activeListingId, dates, note);
+      else await calendarService.unblockDates(activeListingId, dates);
+    },
+    onSuccess: (_, { dates }) => {
+      toast.success(t('hostCalendar.page.bulkSaveSuccess', { count: dates.length }));
+      queryClient.invalidateQueries({ queryKey: ['calendar', activeListingId, year, month] });
+      resetSelection();
+    },
+    onError: (err) => toast.error(errorMessage(err, t('hostCalendar.page.saveErrorFallback'))),
+  });
 
   const monthData = monthQuery.data;
 
@@ -393,6 +424,43 @@ export default function HostCalendarPage() {
                   </span>
                 </div>
 
+                <div className="mb-4 flex items-center justify-between">
+                  {multiSelectMode ? (
+                    <>
+                      <p className="text-sm font-medium text-neutral-700">
+                        {selectedDates.length > 0
+                          ? t('hostCalendar.page.selectedCount', { count: selectedDates.length })
+                          : t('hostCalendar.page.selectMultipleHint')}
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setEditingBulk(true)}
+                          disabled={selectedDates.length === 0}
+                          className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-40"
+                        >
+                          {t('hostCalendar.page.edit')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={resetSelection}
+                          className="text-xs font-semibold text-neutral-500 hover:underline"
+                        >
+                          {t('hostCalendar.page.cancelSelection')}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setMultiSelectMode(true)}
+                      className="ml-auto rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-semibold text-neutral-700 transition-colors hover:bg-neutral-100"
+                    >
+                      {t('hostCalendar.page.selectMultiple')}
+                    </button>
+                  )}
+                </div>
+
                 {monthQuery.isLoading ? (
                   <p className="py-10 text-center text-sm text-neutral-500">{t('hostCalendar.page.loadingCalendar')}</p>
                 ) : monthQuery.isError ? (
@@ -407,6 +475,9 @@ export default function HostCalendarPage() {
                     todayYMD={todayYMD}
                     onDayClick={setEditingDay}
                     onBookingClick={setViewingBooking}
+                    multiSelectMode={multiSelectMode}
+                    selectedDates={selectedDates}
+                    onToggleDate={toggleDate}
                   />
                 )}
               </div>
@@ -423,6 +494,14 @@ export default function HostCalendarPage() {
           basePrice={editingDay.basePrice}
           onClose={() => setEditingDay(null)}
           onSave={handleSaveDay}
+        />
+      )}
+
+      {editingBulk && (
+        <BulkDayEditModal
+          dates={selectedDates}
+          onClose={() => setEditingBulk(false)}
+          onSave={({ dates, status, note }) => bulkSaveMutation.mutateAsync({ dates, status, note })}
         />
       )}
 

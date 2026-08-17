@@ -438,7 +438,13 @@
       "loadCalendarErrorFallback": "Không tải được lịch, thử lại sau",
       "saveBlocked": "Đã chặn ngày này",
       "saveUpdated": "Đã cập nhật ngày này",
-      "saveErrorFallback": "Có lỗi xảy ra, thử lại sau"
+      "saveErrorFallback": "Có lỗi xảy ra, thử lại sau",
+      "selectMultiple": "Chọn nhiều ngày",
+      "selectMultipleHint": "Bấm chọn các ngày muốn chặn/mở khoá cùng lúc",
+      "selectedCount": "Đã chọn {{count}} ngày",
+      "edit": "Chỉnh sửa",
+      "cancelSelection": "Huỷ",
+      "bulkSaveSuccess": "Đã cập nhật {{count}} ngày"
     },
     "legend": {
       "available": "Còn trống",
@@ -493,7 +499,12 @@
       "minNights": "Tối thiểu (đêm)",
       "maxNights": "Tối đa (đêm)",
       "noLimit": "Không giới hạn",
-      "save": "Lưu thay đổi"
+      "save": "Lưu thay đổi",
+      "saving": "Đang lưu..."
+    },
+    "bulkModal": {
+      "daysCount": "Đã chọn {{count}} ngày",
+      "priceHint": "Giá riêng từng ngày vẫn chỉnh được sau, bằng cách bấm vào từng ngày như bình thường."
     },
     "bookingModal": {
       "heading": "Thông tin đặt phòng",
