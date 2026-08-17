@@ -102,13 +102,13 @@ docker compose exec backend npx prisma studio
 
 Script này: `git pull` → `docker compose build` (chỉ build lại phần đổi) → `docker compose up -d`. Migration DB tự chạy mỗi lần `backend` khởi động (`prisma migrate deploy` — an toàn, chỉ áp các migration chưa từng chạy).
 
-## 6. Bật HTTPS (17/8, đã làm — dùng domain `nip.io` tạm, không cần đợi domain thật)
+## 6. Bật HTTPS (17/8, đã làm — dùng domain thật `reservesmith.com` do Jason trỏ DNS sẵn)
 
 **Lý do bắt buộc phải làm, không phải "nice to have"**: `backend/src/config/cookie.js` set cookie xác thực với `secure: true` khi `NODE_ENV=production` — trình duyệt **chỉ gửi lại cookie này qua HTTPS**. Chạy HTTP thuần thì mọi request cần xác thực sau lúc đăng nhập (F5 lại trang, gọi API admin...) đều bị trình duyệt âm thầm không gửi cookie lên, backend báo "Thiếu token xác thực" — phát hiện lúc test khu admin thật, tưởng là bug map sai data nhưng thực ra là hệ quả tất yếu của việc thiếu HTTPS. **Không sửa bằng cách tắt `secure: true`** (giảm bảo mật, sai hướng) — phải bật HTTPS thật.
 
-Let's Encrypt **cấp chứng chỉ được cho domain `nip.io`** (nó là domain thật, chỉ là tự động trỏ DNS về đúng IP) — nên không cần đợi domain riêng của công ty, làm ngay được. Khi nào có domain thật, lặp lại đúng quy trình này với domain mới rồi đổi `SITE_URL`/`CLIENT_URL`.
+Jason đã trỏ DNS `reservesmith.com`/`www.reservesmith.com` → `154.91.1.216` qua Cloudflare (chế độ "DNS only", không proxy qua Cloudflare — request vào thẳng server, không phải lo thêm về xác thực ACME challenge qua Cloudflare).
 
-**Bước 1 — lấy chứng chỉ lần đầu** (dùng chế độ `--standalone`, cần dừng tạm `frontend` để nhường port 80 cho certbot):
+**Bước 1 — lấy chứng chỉ lần đầu** (dùng chế độ `--standalone`, cần dừng tạm `frontend` để nhường port 80 cho certbot; đợi DNS lan truyền xong mới chạy được, kiểm tra bằng `nslookup reservesmith.com`):
 
 ```bash
 cd ~/booking-platform
@@ -117,10 +117,10 @@ docker compose stop frontend
 docker run --rm -p 80:80 \
   -v ~/booking-platform/certbot/conf:/etc/letsencrypt \
   certbot/certbot certonly --standalone \
-  -d 154.91.1.216.nip.io \
+  -d reservesmith.com -d www.reservesmith.com \
   --email sang.hv@hodfords.com --agree-tos --no-eff-email
 docker compose start frontend
-ls certbot/conf/live/154.91.1.216.nip.io/   # phai thay fullchain.pem + privkey.pem
+ls certbot/conf/live/reservesmith.com/   # phai thay fullchain.pem + privkey.pem
 ```
 
 **Bước 2 — deploy bản có sẵn cấu hình SSL** (nginx.conf đã có sẵn block `listen 443 ssl` trỏ đúng đường dẫn chứng chỉ trên, `docker-compose.yml` đã mount `./certbot/conf`/`./certbot/www` + mở port 443):
@@ -129,10 +129,10 @@ ls certbot/conf/live/154.91.1.216.nip.io/   # phai thay fullchain.pem + privkey.
 ./deploy.sh
 ```
 
-**Bước 3 — đổi `SITE_URL`/`CLIENT_URL` sang `https://`** (2 file `.env`), rồi deploy lại 1 lần nữa để bake lại `index.html`:
+**Bước 3 — đổi `SITE_URL`/`CLIENT_URL` sang domain thật + `https://`** (2 file `.env`), rồi deploy lại 1 lần nữa để bake lại `index.html`:
 
 ```bash
-sed -i 's#http://154.91.1.216.nip.io#https://154.91.1.216.nip.io#' .env backend/.env
+sed -i 's#http://154.91.1.216.nip.io#https://reservesmith.com#; s#http://154.91.1.216#https://reservesmith.com#' .env backend/.env
 ./deploy.sh
 ```
 
