@@ -7,6 +7,11 @@ import LanguageSwitcher from './LanguageSwitcher';
 import { MenuIcon, UserCircleIcon } from './icons';
 import { useAuth } from '../../context/AuthContext';
 
+// An tam nut/link "List your place" theo yeu cau Jason (17/8) - it listing
+// that nen chua can dan nguoi dung vao luong dang ky host. Doi lai true khi
+// can bat lai, khong xoa code.
+const SHOW_BECOME_HOST_LINK = false;
+
 export default function Header() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -169,17 +174,19 @@ export default function Header() {
         </div>
 
         <nav aria-label={t('header.myTrips')} className="ml-auto flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              if (!user) navigate('/auth/register');
-              else if (user.role === 'host' || user.role === 'admin') navigate('/host/today');
-              else navigate('/host');
-            }}
-            className="hidden rounded-full px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 lg:inline-block transition-colors"
-          >
-            {t('header.becomeHost')}
-          </button>
+          {SHOW_BECOME_HOST_LINK && (
+            <button
+              type="button"
+              onClick={() => {
+                if (!user) navigate('/auth/register');
+                else if (user.role === 'host' || user.role === 'admin') navigate('/host/today');
+                else navigate('/host');
+              }}
+              className="hidden rounded-full px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 lg:inline-block transition-colors"
+            >
+              {t('header.becomeHost')}
+            </button>
+          )}
           <LanguageSwitcher className="hidden sm:flex" />
 
           {/* User Profile / Auth Dropdown */}
@@ -272,14 +279,18 @@ export default function Header() {
                     >
                       {t('header.registerHost')}
                     </Link>
-                    <div className="my-1 border-t border-neutral-100" />
-                    <Link
-                      to="/host"
-                      onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-2.5 text-neutral-700 hover:bg-neutral-50 transition-colors"
-                    >
-                      {t('header.becomeHost')}
-                    </Link>
+                    {SHOW_BECOME_HOST_LINK && (
+                      <>
+                        <div className="my-1 border-t border-neutral-100" />
+                        <Link
+                          to="/host"
+                          onClick={() => setMenuOpen(false)}
+                          className="block px-4 py-2.5 text-neutral-700 hover:bg-neutral-50 transition-colors"
+                        >
+                          {t('header.becomeHost')}
+                        </Link>
+                      </>
+                    )}
                   </>
                 )}
               </div>

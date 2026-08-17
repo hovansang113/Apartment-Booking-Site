@@ -7,6 +7,11 @@ import DateRangePicker from './DateRangePicker';
 import GuestsDropdown from './GuestsDropdown';
 import { formatDateRange } from '../../utils/formatDateRange';
 
+// An tam dropdown goi y dia diem theo yeu cau Jason (17/8) - moi co 2
+// listing that (Hoi An, Da Nang), 8 dia danh goi y gia (mockListings) de gay
+// hieu lam. Doi lai true khi can bat lai, khong xoa code.
+const SHOW_LOCATION_SUGGESTIONS = false;
+
 // Dia diem/khach loc them o client (utils/filterListings.js) tren ket qua me tu GET /api/listings.
 export default function SearchBar() {
   const { t, i18n } = useTranslation();
@@ -140,7 +145,7 @@ export default function SearchBar() {
         </div>
       </form>
 
-      {active === 'location' && (
+      {active === 'location' && SHOW_LOCATION_SUGGESTIONS && (
         <div className="absolute left-0 top-full z-40 mt-3 w-full max-w-sm">
           <LocationDropdown
             query={location}
