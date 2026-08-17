@@ -1,12 +1,7 @@
 import { useTranslation } from 'react-i18next';
+import { formatPrice } from '../../utils/currency';
 
 const COLS = 7;
-
-const currencyFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-});
 
 // Tra ve mang cac TUAN, moi tuan la 1 mang 7 o (null = truoc ngay 1 / sau
 // ngay cuoi thang). Xu ly theo tung tuan rieng bao gio cung don gian va chac
@@ -92,7 +87,7 @@ function barColorClasses(range) {
   return 'bg-neutral-500'; // blocked + manual
 }
 
-function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges, t }) {
+function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges, t, language }) {
   const segmentsWithRange = ranges
     .map((range) => ({ range, seg: segmentForWeek(range, week) }))
     .filter((r) => r.seg);
@@ -126,7 +121,7 @@ function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges, t }
               {info.status === 'available' && !isPast && (
                 <span className="mt-auto flex flex-col gap-0.5 px-2 pb-1.5">
                   <span className={`text-[11px] font-medium ${info.hasOverride ? 'text-brand-700' : 'text-neutral-600'}`}>
-                    {currencyFormatter.format(info.price)}
+                    {formatPrice(info.price, language)}
                   </span>
                   {(info.minNights || info.maxNights) && (
                     <span className="text-[9px] text-neutral-400">
@@ -186,7 +181,7 @@ function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges, t }
 // la 1 cap grid doc lap (o ngay + overlay thanh) de tranh loi can vi khi
 // tron item auto-place voi item dat vi tri tuyet doi trong CUNG 1 grid.
 export default function HostMonthGrid({ year, month, days, todayYMD, onDayClick, onBookingClick }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const weekdays = t('dateRangePicker.weekdays', { returnObjects: true });
   const weeks = buildWeeks(year, month);
   const ranges = groupOccupiedRanges(days);
@@ -209,6 +204,7 @@ export default function HostMonthGrid({ year, month, days, todayYMD, onDayClick,
             onBookingClick={onBookingClick}
             ranges={ranges}
             t={t}
+            language={i18n.language}
           />
         ))}
       </div>

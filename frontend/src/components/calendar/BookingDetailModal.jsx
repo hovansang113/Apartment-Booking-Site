@@ -1,11 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { CloseIcon } from '../common/icons';
-
-const currencyFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-});
+import { formatPrice } from '../../utils/currency';
 
 function formatDate(ymd) {
   const [y, m, d] = ymd.split('-');
@@ -15,7 +10,7 @@ function formatDate(ymd) {
 // Chi xem, khong sua - danh cho ngay da co booking that (click vao thanh
 // "Chủ nhà Demo"/ten khach tren luoi lich). Khac voi DayEditModal (block/gia).
 export default function BookingDetailModal({ booking, guestName, onClose }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
       <div
@@ -75,7 +70,7 @@ export default function BookingDetailModal({ booking, guestName, onClose }) {
 
           <div className="border-t border-neutral-200 pt-3 flex items-center justify-between">
             <span className="text-neutral-500">{t('hostCalendar.bookingModal.total')}</span>
-            <span className="text-base font-bold text-neutral-900">{currencyFormatter.format(booking.totalPrice)}</span>
+            <span className="text-base font-bold text-neutral-900">{formatPrice(booking.totalPrice, i18n.language)}</span>
           </div>
         </div>
       </div>

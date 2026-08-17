@@ -10,14 +10,9 @@ import BookingStepper from '../../components/booking/BookingStepper';
 import { getListingById } from '../../services/listingService';
 import { createBooking } from '../../services/bookingService';
 import { nightlyBreakdown } from '../../utils/bookingPricing';
+import { formatPrice } from '../../utils/currency';
 
 const DATE_FNS_LOCALES = { vi, en: enUS };
-
-const currencyFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-});
 
 function Field({ label, required, error, children }) {
   return (
@@ -277,26 +272,26 @@ export default function CheckoutPage() {
                   <p className="font-medium text-neutral-900">{listing.title}</p>
                   <p className="text-xs text-neutral-500">{guestLabel}</p>
                 </div>
-                <span className="whitespace-nowrap font-semibold text-neutral-900">{currencyFormatter.format(subtotal)}</span>
+                <span className="whitespace-nowrap font-semibold text-neutral-900">{formatPrice(subtotal, i18n.language)}</span>
               </div>
             </div>
 
             {nights > 0 && weekdayNights > 0 && weekendNights > 0 && (
               <div className="mt-3 space-y-1 border-t border-neutral-100 pt-3 text-xs text-neutral-500">
                 <div className="flex justify-between">
-                  <span>{t('listing.booking.subtotal', { price: currencyFormatter.format(listing.weekdayPrice), nights: weekdayNights })}</span>
-                  <span>{currencyFormatter.format(weekdayNights * listing.weekdayPrice)}</span>
+                  <span>{t('listing.booking.subtotal', { price: formatPrice(listing.weekdayPrice, i18n.language), nights: weekdayNights })}</span>
+                  <span>{formatPrice(weekdayNights * listing.weekdayPrice, i18n.language)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>{t('listing.booking.subtotal', { price: currencyFormatter.format(listing.weekendPrice), nights: weekendNights })}</span>
-                  <span>{currencyFormatter.format(weekendNights * listing.weekendPrice)}</span>
+                  <span>{t('listing.booking.subtotal', { price: formatPrice(listing.weekendPrice, i18n.language), nights: weekendNights })}</span>
+                  <span>{formatPrice(weekendNights * listing.weekendPrice, i18n.language)}</span>
                 </div>
               </div>
             )}
 
             <div className="mt-4 flex justify-between border-t border-neutral-200 pt-3 text-base font-semibold text-neutral-900">
               <span>{t('listing.booking.total')}</span>
-              <span>{currencyFormatter.format(subtotal)}</span>
+              <span>{formatPrice(subtotal, i18n.language)}</span>
             </div>
 
             <button

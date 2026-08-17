@@ -11,19 +11,14 @@ import {
   CloseIcon,
 } from '../../components/common/icons';
 import { createListing as createListingApi } from '../../services/listingService';
+import { formatPrice } from '../../utils/currency';
 
 const CATEGORY_IDS = ['apartment', 'house', 'villa', 'homestay', 'hotel_room'];
 const MAIN_AMENITY_IDS = ['wifi', 'tv', 'kitchen', 'washer', 'free_parking', 'air_conditioning', 'workspace'];
 const FEATURED_AMENITY_IDS = ['pool'];
 
-const currencyFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-});
-
 export default function CreateListingPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const draftStepParam = parseInt(searchParams.get('step') || '1', 10);
@@ -559,8 +554,8 @@ export default function CreateListingPage() {
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryCategory')}</span> {t(`createListing.categoryLabel.${category}`)}</p>
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryAddress')}</span> {address || t('createListing.step6.notEntered')}</p>
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryCapacity')}</span> {t('createListing.step6.summaryCapacityValue', { guests: guestCapacity, bedrooms, beds, bathrooms })}</p>
-                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryWeekdayPrice')}</span> {currencyFormatter.format(weekdayPrice)}</p>
-                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryWeekendPrice')}</span> {currencyFormatter.format(weekendPrice)}</p>
+                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryWeekdayPrice')}</span> {formatPrice(weekdayPrice, i18n.language)}</p>
+                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryWeekendPrice')}</span> {formatPrice(weekendPrice, i18n.language)}</p>
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryAmenities')}</span> {t('createListing.step6.summaryAmenitiesValue', { count: selectedAmenities.length })}</p>
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryPhotos')}</span> {t('createListing.step6.summaryPhotosValue', { count: photos.length })}</p>
                 </div>

@@ -9,14 +9,9 @@ import Seo from '../../components/common/Seo';
 import BookingStepper from '../../components/booking/BookingStepper';
 import { getBookingById } from '../../services/bookingService';
 import { createPaymentUrl } from '../../services/paymentService';
+import { formatPrice } from '../../utils/currency';
 
 const DATE_FNS_LOCALES = { vi, en: enUS };
-
-const currencyFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-});
 
 // Dem nguoc toi paymentExpiresAt - chi de hien UI, KHONG tu huy booking o FE
 // (Phase 5 - job tu huy qua han van chua lam, xem TODO.md). Het gio o day chi
@@ -151,7 +146,7 @@ export default function PaymentPage() {
 
         <div className="mt-4 flex justify-between border-t border-neutral-100 pt-3 text-sm font-semibold text-neutral-900">
           <span>{t('listing.booking.total')}</span>
-          <span>{currencyFormatter.format(Number(booking.totalPrice))}</span>
+          <span>{formatPrice(Number(booking.totalPrice), i18n.language)}</span>
         </div>
       </div>
 

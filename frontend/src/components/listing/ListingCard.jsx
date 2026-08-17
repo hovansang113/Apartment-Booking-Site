@@ -2,15 +2,10 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { HeartIcon, StarIcon } from '../common/icons';
-
-const currencyFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-});
+import { formatPrice } from '../../utils/currency';
 
 export default function ListingCard({ listing }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [saved, setSaved] = useState(false);
 
   return (
@@ -53,7 +48,7 @@ export default function ListingCard({ listing }) {
           {listing.weekdayPrice !== listing.weekendPrice && (
             <span className="text-neutral-500">{t('listing.priceFrom')} </span>
           )}
-          <span className="font-semibold">{currencyFormatter.format(listing.pricePerNight)}</span>{' '}
+          <span className="font-semibold">{formatPrice(listing.pricePerNight, i18n.language)}</span>{' '}
           {t('listing.perNight')}
         </p>
       </Link>
