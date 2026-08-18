@@ -15,3 +15,20 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Thanh noi giua cac buoc (BookingStepper) "chay" tu trai sang phai khi 1
+   buoc vua hoan tat, thay vi doi mau tuc thi - transform-origin: left de
+   scaleX(0->1) lon dan tu diem bat dau, dung animation (khong phai
+   transition) de luon phat lai moi lan component mount voi buoc da xong. */
+@keyframes stepper-line-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.animate-stepper-line {
+  transform-origin: left;
+  animation: stepper-line-fill 0.6s ease-out forwards;
+}

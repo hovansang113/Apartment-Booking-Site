@@ -20,7 +20,7 @@ export default function BookingStepper({ current }) {
           <div key={key} className="flex items-center gap-2">
             <div className="flex items-center gap-1.5">
               <span
-                className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold ${
+                className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold transition-colors duration-300 ${
                   isDone
                     ? 'bg-brand-600 text-white'
                     : isCurrent
@@ -35,7 +35,9 @@ export default function BookingStepper({ current }) {
               </span>
             </div>
             {i < STEP_KEYS.length - 1 && (
-              <span className={`h-px w-8 sm:w-16 ${isDone ? 'bg-brand-600' : 'bg-neutral-200'}`} />
+              <span className="relative h-px w-8 overflow-hidden bg-neutral-200 sm:w-16">
+                {isDone && <span key={key} className="animate-stepper-line absolute inset-0 bg-brand-600" />}
+              </span>
             )}
           </div>
         );
