@@ -62,7 +62,7 @@ async function createBooking({
 }) {
   const dates = datesBetween(checkIn, checkOut);
   if (dates.length === 0) {
-    throw new AppError(422, 'checkOut phải sau checkIn ít nhất 1 đêm');
+    throw new AppError(422, 'checkOut must be at least 1 night after checkIn');
   }
 
   return prisma.$transaction(async (tx) => {
@@ -73,7 +73,7 @@ async function createBooking({
 
     const totalGuests = adults + (children || 0);
     if (totalGuests > listing.guestCapacity) {
-      throw new AppError(422, `Chỗ ở này chỉ cho tối đa ${listing.guestCapacity} khách`);
+      throw new AppError(422, `This place allows a maximum of ${listing.guestCapacity} guests`);
     }
 
     const targets = dates.map((d) => new Date(d));
@@ -81,7 +81,7 @@ async function createBooking({
       where: { listingId, date: { in: targets } },
     });
     if (conflicts.length > 0) {
-      throw new AppError(409, `Ngày ${toYMD(conflicts[0].date)} đã có người đặt hoặc đang bị chặn`);
+      throw new AppError(409, `${toYMD(conflicts[0].date)} is already booked or blocked`);
     }
 
     // "Custom settings" (REQ_12) - so dem toi thieu/toi da NEU check-in dung
@@ -90,10 +90,10 @@ async function createBooking({
       where: { listingId_date: { listingId, date: new Date(checkIn) } },
     });
     if (stayRule?.minNights && dates.length < stayRule.minNights) {
-      throw new AppError(422, `Ngày ${checkIn} yêu cầu ở tối thiểu ${stayRule.minNights} đêm`);
+      throw new AppError(422, `Check-in on ${checkIn} requires a minimum stay of ${stayRule.minNights} nights`);
     }
     if (stayRule?.maxNights && dates.length > stayRule.maxNights) {
-      throw new AppError(422, `Ngày ${checkIn} chỉ cho ở tối đa ${stayRule.maxNights} đêm`);
+      throw new AppError(422, `Check-in on ${checkIn} allows a maximum stay of ${stayRule.maxNights} nights`);
     }
 
     const guest = await findOrCreateGuestUser(tx, {

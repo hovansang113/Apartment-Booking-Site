@@ -1,14 +1,16 @@
 // REQ_05/06 da noi API that (xem listingService.js) - file nay gio chi con 2
 // vai tro: (1) fallback hien thi cho Home.jsx khi API loi that (khong phai
 // khi API tra ve rong), (2) du lieu ten dia diem mau cho LocationDropdown.js.
+// Noi dung UK (18/8, thay ban VN cu) - khop yeu cau Jason "listings we need
+// to show are for the UK only", tranh hien dia danh Viet Nam khi API loi.
 
 export const mockListings = [
   {
     id: 'mock-1',
-    title: 'Căn hộ view sông Hàn',
-    address: 'Hải Châu, Đà Nẵng',
+    title: 'Riverside apartment with city views',
+    address: 'South Bank, London',
     category: 'apartment',
-    pricePerNight: 850000,
+    pricePerNight: 145,
     rating: 4.92,
     guestCapacity: 4,
     bedrooms: 2,
@@ -16,17 +18,17 @@ export const mockListings = [
     bathrooms: 1,
     amenities: ['wifi', 'kitchen', 'air_conditioning', 'washer'],
     description:
-      'Căn hộ nằm ngay mặt sông Hàn, ban công riêng nhìn toàn cảnh cầu Rồng về đêm. Cách bãi biển Mỹ Khê 10 phút đi xe, gần khu ẩm thực và trung tâm thành phố.',
-    host: { name: 'Anh Minh', isSuperhost: true },
+      'A bright riverside flat with a private balcony looking out over the Thames. Ten minutes on foot to the Southbank Centre, close to restaurants and the Tube.',
+    host: { name: 'James', isSuperhost: true },
     image:
       'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=60',
   },
   {
     id: 'mock-2',
-    title: 'Nhà nguyên căn gần biển',
-    address: 'Mỹ Khê, Đà Nẵng',
+    title: 'Whole house near the seafront',
+    address: 'Brighton, East Sussex',
     category: 'house',
-    pricePerNight: 1450000,
+    pricePerNight: 210,
     rating: 4.85,
     guestCapacity: 6,
     bedrooms: 3,
@@ -34,17 +36,17 @@ export const mockListings = [
     bathrooms: 2,
     amenities: ['wifi', 'kitchen', 'free_parking', 'tv'],
     description:
-      'Nhà nguyên căn 2 tầng cách bãi biển Mỹ Khê 3 phút đi bộ, sân trước rộng rãi, phù hợp cho nhóm bạn hoặc gia đình đông người.',
-    host: { name: 'Chị Lan', isSuperhost: false },
+      'A two-storey house three minutes\' walk from Brighton beach, with a generous front garden — ideal for groups of friends or larger families.',
+    host: { name: 'Sophie', isSuperhost: false },
     image:
       'https://images.unsplash.com/photo-1501183638710-841dd1904471?auto=format&fit=crop&w=800&q=60',
   },
   {
     id: 'mock-3',
-    title: 'Biệt thự hồ bơi riêng',
-    address: 'Đà Lạt, Lâm Đồng',
+    title: 'Country villa with private pool',
+    address: 'Cotswolds, Gloucestershire',
     category: 'villa',
-    pricePerNight: 3200000,
+    pricePerNight: 460,
     rating: 4.98,
     guestCapacity: 10,
     bedrooms: 5,
@@ -52,17 +54,17 @@ export const mockListings = [
     bathrooms: 4,
     amenities: ['wifi', 'kitchen', 'pool', 'free_parking', 'tv', 'workspace'],
     description:
-      'Biệt thự phong cách hiện đại giữa đồi thông, hồ bơi nước ấm riêng biệt, sân vườn BBQ. Không gian lý tưởng cho retreat công ty hoặc họp mặt gia đình.',
-    host: { name: 'Anh Khoa', isSuperhost: true },
+      'A modern villa set among rolling countryside, with a heated private pool and a garden built for barbecues. Ideal for a company retreat or a family gathering.',
+    host: { name: 'Oliver', isSuperhost: true },
     image:
       'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=800&q=60',
   },
   {
     id: 'mock-4',
-    title: 'Homestay phong cách Nhật',
-    address: 'Hội An, Quảng Nam',
+    title: 'Minimalist studio in the old town',
+    address: 'Edinburgh, Scotland',
     category: 'homestay',
-    pricePerNight: 620000,
+    pricePerNight: 88,
     rating: 4.9,
     guestCapacity: 2,
     bedrooms: 1,
@@ -70,17 +72,17 @@ export const mockListings = [
     bathrooms: 1,
     amenities: ['wifi', 'air_conditioning', 'workspace'],
     description:
-      'Homestay tối giản kiểu Nhật ngay gần phố cổ Hội An, đi bộ 5 phút ra sông Hoài. Không gian yên tĩnh, phù hợp cho cặp đôi hoặc khách du lịch một mình.',
-    host: { name: 'Chị Yến', isSuperhost: false },
+      'A calm, minimalist studio just off the Royal Mile, a five-minute walk from the castle. Quiet and well suited to couples or solo travellers.',
+    host: { name: 'Isla', isSuperhost: false },
     image:
       'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=60',
   },
   {
     id: 'mock-5',
-    title: 'Phòng khách sạn trung tâm',
-    address: 'Quận 1, TP. Hồ Chí Minh',
+    title: 'Central hotel room',
+    address: 'City Centre, Manchester',
     category: 'hotel_room',
-    pricePerNight: 980000,
+    pricePerNight: 95,
     rating: 4.7,
     guestCapacity: 2,
     bedrooms: 1,
@@ -88,17 +90,17 @@ export const mockListings = [
     bathrooms: 1,
     amenities: ['wifi', 'air_conditioning', 'tv'],
     description:
-      'Phòng khách sạn ngay trung tâm Quận 1, đi bộ tới phố đi bộ Nguyễn Huệ và chợ Bến Thành. Dọn phòng hàng ngày, lễ tân 24/7.',
-    host: { name: 'Khách sạn Riverside', isSuperhost: false },
+      'A hotel room right in the city centre, walking distance to the main shopping streets and transport links. Daily housekeeping, 24-hour reception.',
+    host: { name: 'The Riverside Hotel', isSuperhost: false },
     image:
       'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=800&q=60',
   },
   {
     id: 'mock-6',
-    title: 'Căn hộ studio hiện đại',
-    address: 'Ba Đình, Hà Nội',
+    title: 'Modern studio flat',
+    address: 'Camden, London',
     category: 'apartment',
-    pricePerNight: 720000,
+    pricePerNight: 78,
     rating: 4.8,
     guestCapacity: 2,
     bedrooms: 1,
@@ -106,17 +108,17 @@ export const mockListings = [
     bathrooms: 1,
     amenities: ['wifi', 'kitchen', 'washer', 'workspace'],
     description:
-      'Studio nhỏ gọn, đầy đủ nội thất, gần Hồ Tây và Lăng Bác. Phù hợp cho khách công tác ngắn ngày.',
-    host: { name: 'Anh Tuấn', isSuperhost: false },
+      'A compact, fully furnished studio close to Regent\'s Canal and Camden Market. Well suited to a short business trip.',
+    host: { name: 'Daniel', isSuperhost: false },
     image:
       'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=60',
   },
   {
     id: 'mock-7',
-    title: 'Nhà gỗ giữa rừng thông',
-    address: 'Sa Pa, Lào Cai',
+    title: 'Cosy cabin in the woods',
+    address: 'Lake District, Cumbria',
     category: 'house',
-    pricePerNight: 1100000,
+    pricePerNight: 120,
     rating: 4.95,
     guestCapacity: 5,
     bedrooms: 2,
@@ -124,17 +126,17 @@ export const mockListings = [
     bathrooms: 1,
     amenities: ['wifi', 'kitchen', 'free_parking'],
     description:
-      'Nhà gỗ ấm cúng giữa rừng thông, view thung lũng Mường Hoa. Có lò sưởi, phù hợp nghỉ dưỡng mùa đông.',
-    host: { name: 'Anh Sùng', isSuperhost: true },
+      'A warm timber cabin among the pines with valley views. Wood-burning stove included — perfect for a winter break.',
+    host: { name: 'Harry', isSuperhost: true },
     image:
       'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=60',
   },
   {
     id: 'mock-8',
-    title: 'Villa sát bãi biển',
-    address: 'Phú Quốc, Kiên Giang',
+    title: 'Villa steps from the beach',
+    address: 'St Ives, Cornwall',
     category: 'villa',
-    pricePerNight: 4500000,
+    pricePerNight: 520,
     rating: 5,
     guestCapacity: 12,
     bedrooms: 6,
@@ -142,8 +144,8 @@ export const mockListings = [
     bathrooms: 5,
     amenities: ['wifi', 'kitchen', 'pool', 'free_parking', 'tv', 'washer'],
     description:
-      'Villa 6 phòng ngủ ngay sát bãi biển, hồ bơi vô cực nhìn ra biển, bếp đầy đủ tiện nghi. Lý tưởng cho tiệc cưới nhỏ hoặc nghỉ dưỡng nhóm lớn.',
-    host: { name: 'Chị Hương', isSuperhost: true },
+      'A six-bedroom villa right by the beach, with an infinity pool overlooking the sea and a fully equipped kitchen. Ideal for a small wedding party or a large group getaway.',
+    host: { name: 'Charlotte', isSuperhost: true },
     image:
       'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=60',
   },

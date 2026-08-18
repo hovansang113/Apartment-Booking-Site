@@ -32,10 +32,10 @@ async function checkout({ bookingId, paymentMethodNonce, deviceData }) {
     throw new AppError(404, 'Booking not found');
   }
   if (booking.status !== 'pending_payment') {
-    throw new AppError(409, 'Booking này không còn ở trạng thái chờ thanh toán');
+    throw new AppError(409, 'This booking is no longer awaiting payment');
   }
   if (booking.paymentExpiresAt && booking.paymentExpiresAt < new Date()) {
-    throw new AppError(410, 'Đã hết thời gian giữ chỗ, vui lòng đặt lại');
+    throw new AppError(410, 'Your reservation hold has expired, please book again');
   }
   // Idempotent - tranh submit 2 lan (double-click, F5 sau khi da thanh cong)
   // vo tinh tru tien 2 lan.
@@ -87,7 +87,7 @@ async function checkout({ bookingId, paymentMethodNonce, deviceData }) {
   const bookingStatus = isSuccess ? BookingStatus.confirmed : booking.status;
   return {
     code: isSuccess ? 'ok' : 'declined',
-    message: isSuccess ? null : transaction?.processorResponseText || result.message || 'Thanh toán bị từ chối',
+    message: isSuccess ? null : transaction?.processorResponseText || result.message || 'Payment was declined',
     paymentStatus: updatedPayment.status,
     bookingStatus,
     booking: { ...booking, status: bookingStatus },

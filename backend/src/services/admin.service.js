@@ -62,7 +62,7 @@ async function lockUser(userId, reason) {
     throw new AppError(404, 'User not found');
   }
   if (user.role === UserRole.admin) {
-    throw new AppError(403, 'Không thể khoá tài khoản admin khác');
+    throw new AppError(403, 'Cannot lock another admin account');
   }
   const updated = await prisma.user.update({
     where: { id: userId },

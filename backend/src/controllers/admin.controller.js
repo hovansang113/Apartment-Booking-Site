@@ -9,12 +9,12 @@ async function listListings(req, res) {
 
 async function approveListing(req, res) {
   const listing = await adminService.approveListing(req.params.id);
-  return ok(res, listing, 'Đã duyệt tin đăng');
+  return ok(res, listing, 'Listing approved');
 }
 
 async function suspendListing(req, res) {
   const listing = await adminService.suspendListing(req.params.id, req.body.reason);
-  return ok(res, listing, 'Đã đình chỉ tin đăng');
+  return ok(res, listing, 'Listing suspended');
 }
 
 // REQ_04 - quan ly user (khoa/mo khoa)
@@ -25,12 +25,12 @@ async function listUsers(req, res) {
 
 async function lockUser(req, res) {
   const user = await adminService.lockUser(req.params.id, req.body.reason);
-  return ok(res, user, 'Đã khoá tài khoản');
+  return ok(res, user, 'Account locked');
 }
 
 async function unlockUser(req, res) {
   const user = await adminService.unlockUser(req.params.id);
-  return ok(res, user, 'Đã mở khoá tài khoản');
+  return ok(res, user, 'Account unlocked');
 }
 
 // Duyet ho so thue/giay to host
@@ -42,7 +42,7 @@ async function listTaxVerifications(req, res) {
 async function reviewTaxInfo(req, res) {
   const { status, note } = req.body;
   const user = await adminService.reviewTaxInfo(req.params.id, { status, note });
-  return ok(res, user, status === 'verified' ? 'Đã xác minh hồ sơ' : 'Đã từ chối hồ sơ');
+  return ok(res, user, status === 'verified' ? 'Profile verified' : 'Profile rejected');
 }
 
 module.exports = {

@@ -33,7 +33,7 @@ export default function CreateListingPage() {
   const [beds, setBeds] = useState(1);
   const [bathrooms, setBathrooms] = useState(1);
 
-  const [address, setAddress] = useState(searchParams.get('draftId') ? 'Ngũ Hành Sơn, Đà Nẵng, Việt Nam' : '');
+  const [address, setAddress] = useState('');
   const [selectedAmenities, setSelectedAmenities] = useState(['wifi', 'air_conditioning', 'kitchen']);
 
   useEffect(() => {

@@ -10,14 +10,14 @@ function authenticate(req, res, next) {
   const token = req.cookies?.[COOKIE_NAME] || (header?.startsWith('Bearer ') ? header.split(' ')[1] : null);
 
   if (!token) {
-    return fail(res, 401, 'Thieu token xac thuc');
+    return fail(res, 401, 'Missing authentication token');
   }
   try {
     const payload = verifyToken(token);
     req.user = payload;
     next();
   } catch (err) {
-    return fail(res, 401, 'Token khong hop le hoac het han');
+    return fail(res, 401, 'Invalid or expired token');
   }
 }
 

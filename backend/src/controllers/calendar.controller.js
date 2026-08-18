@@ -17,14 +17,14 @@ async function getMonthView(req, res) {
 async function blockDates(req, res) {
   const { dates, note } = req.body;
   await calendarService.blockDates({ listingId: req.params.listingId, hostId: req.user.id, dates, note });
-  return ok(res, null, 'Đã chặn ngày đã chọn');
+  return ok(res, null, 'Selected dates blocked');
 }
 
 // REQ_12 - mo lai ngay da chan thu cong
 async function unblockDates(req, res) {
   const { dates } = req.body;
   await calendarService.unblockDates({ listingId: req.params.listingId, hostId: req.user.id, dates });
-  return ok(res, null, 'Đã mở lại ngày đã chọn');
+  return ok(res, null, 'Selected dates unblocked');
 }
 
 // Gia rieng theo ngay, dung chung man hinh lich REQ_12
@@ -36,7 +36,7 @@ async function setPriceOverride(req, res) {
     date,
     price,
   });
-  return ok(res, result, 'Đã cập nhật giá cho ngày này');
+  return ok(res, result, 'Price updated for this date');
 }
 
 // "Custom settings" - so dem toi thieu/toi da neu check-in dung ngay nay
@@ -49,7 +49,7 @@ async function setStayRule(req, res) {
     minNights: minNights ?? null,
     maxNights: maxNights ?? null,
   });
-  return ok(res, result, 'Đã cập nhật số đêm tối thiểu/tối đa cho ngày này');
+  return ok(res, result, 'Minimum/maximum nights updated for this date');
 }
 
 async function listSyncSources(req, res) {
@@ -68,7 +68,7 @@ async function connectSyncSource(req, res) {
     icalUrl,
     label,
   });
-  return created(res, sync, 'Đã kết nối và đồng bộ lịch ngoài');
+  return created(res, sync, 'External calendar connected and synced');
 }
 
 async function refreshSyncSource(req, res) {
@@ -77,7 +77,7 @@ async function refreshSyncSource(req, res) {
     hostId: req.user.id,
     syncId: req.params.syncId,
   });
-  return ok(res, sync, 'Đã làm mới đồng bộ lịch');
+  return ok(res, sync, 'Calendar sync refreshed');
 }
 
 async function updateSyncSource(req, res) {
@@ -89,7 +89,7 @@ async function updateSyncSource(req, res) {
     icalUrl,
     label,
   });
-  return ok(res, sync, 'Đã cập nhật lịch ngoài');
+  return ok(res, sync, 'External calendar updated');
 }
 
 async function removeSyncSource(req, res) {
@@ -98,7 +98,7 @@ async function removeSyncSource(req, res) {
     hostId: req.user.id,
     syncId: req.params.syncId,
   });
-  return ok(res, null, 'Đã ngắt kết nối lịch ngoài');
+  return ok(res, null, 'External calendar disconnected');
 }
 
 // Cong khai, khong can dang nhap - Airbnb/VRBO tu fetch link nay dinh ky.

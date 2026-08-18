@@ -89,7 +89,7 @@ async function getMonthView({ listingId, hostId, year, month }) {
         contactPhone: row.booking.contactPhone,
       };
     } else if (row?.source === CalendarDaySource.ical_sync) {
-      guestLabel = row.calendarSync ? `Đã đặt qua ${row.calendarSync.label}` : 'Đã đặt (đồng bộ ngoài)';
+      guestLabel = row.calendarSync ? `Booked via ${row.calendarSync.label}` : 'Booked (external sync)';
     }
 
     days.push({
@@ -146,7 +146,7 @@ async function blockDates({ listingId, hostId, dates, note }) {
     });
     const bookedConflict = existing.find((r) => r.source === CalendarDaySource.booking);
     if (bookedConflict) {
-      throw new AppError(409, `Ngày ${toYMD(bookedConflict.date)} đã có khách đặt, không thể chặn`);
+      throw new AppError(409, `${toYMD(bookedConflict.date)} already has a guest booking, it cannot be blocked`);
     }
 
     await Promise.all(
@@ -229,7 +229,7 @@ async function syncIcalSource({ listingId, hostId, syncId }) {
   try {
     parsed = await ical.async.fromURL(sync.icalUrl);
   } catch (err) {
-    throw new AppError(502, 'Không thể tải lịch từ URL này');
+    throw new AppError(502, 'Could not load a calendar from this URL');
   }
 
   const blockedDates = new Set();
@@ -262,7 +262,7 @@ async function syncIcalSource({ listingId, hostId, syncId }) {
           status: CalendarDayStatus.blocked,
           source: CalendarDaySource.ical_sync,
           calendarSyncId: syncId,
-          note: `Đồng bộ từ ${sync.label}`,
+          note: `Synced from ${sync.label}`,
         }));
 
       if (toCreate.length > 0) {
@@ -351,7 +351,7 @@ function buildIcs({ listingId, listingTitle, ranges }) {
 async function exportIcal({ listingId, token }) {
   const listing = await prisma.listing.findUnique({ where: { id: listingId } });
   if (!listing || listing.icalToken !== token) {
-    throw new AppError(404, 'Không tìm thấy lịch này');
+    throw new AppError(404, 'Calendar not found');
   }
 
   const rows = await prisma.listingCalendar.findMany({

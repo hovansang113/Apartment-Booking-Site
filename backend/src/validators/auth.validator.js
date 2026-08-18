@@ -52,12 +52,12 @@ const loginRules = [
 const guestLoginRules = [emailRule, fullNameRule, phoneRule];
 
 const taxInfoRules = [
-  body('legalName').trim().notEmpty().withMessage('Vui lòng nhập họ tên đầy đủ theo giấy tờ').isLength({ max: NAME_MAX }),
-  body('taxId').trim().notEmpty().withMessage('Vui lòng nhập mã số thuế').isLength({ max: 50 }),
+  body('legalName').trim().notEmpty().withMessage('Please enter your full legal name').isLength({ max: NAME_MAX }),
+  body('taxId').trim().notEmpty().withMessage('Please enter your tax ID').isLength({ max: 50 }),
   body('taxpayerType')
     .isIn(Object.values(TaxpayerType))
-    .withMessage('Loại hình nộp thuế không hợp lệ'),
-  body('idNumber').optional({ checkFalsy: true }).trim().isLength({ max: 20 }).withMessage('Số CCCD/CMND không hợp lệ'),
+    .withMessage('Invalid taxpayer type'),
+  body('idNumber').optional({ checkFalsy: true }).trim().isLength({ max: 20 }).withMessage('Invalid ID number'),
 ];
 
 // Host "Thong tin nhan tien" - tai khoan ngan hang de nhan tien host sau khi
@@ -67,23 +67,23 @@ const bankInfoRules = [
   body('bankCode')
     .trim()
     .notEmpty()
-    .withMessage('Vui lòng chọn ngân hàng')
+    .withMessage('Please select a bank')
     .isIn(VIETNAM_BANK_CODES)
-    .withMessage('Ngân hàng không hợp lệ'),
+    .withMessage('Invalid bank'),
   body('bankAccountNumber')
     .trim()
     .notEmpty()
-    .withMessage('Vui lòng nhập số tài khoản')
+    .withMessage('Please enter an account number')
     .isNumeric()
-    .withMessage('Số tài khoản chỉ được chứa chữ số')
+    .withMessage('Account number must contain digits only')
     .isLength({ min: 6, max: 19 })
-    .withMessage('Số tài khoản phải từ 6 đến 19 chữ số'),
+    .withMessage('Account number must be 6 to 19 digits'),
   body('bankAccountHolder')
     .trim()
     .notEmpty()
-    .withMessage('Vui lòng nhập tên chủ tài khoản')
+    .withMessage('Please enter the account holder name')
     .isLength({ max: NAME_MAX })
-    .withMessage(`Tên chủ tài khoản phải tối đa ${NAME_MAX} ký tự`),
+    .withMessage(`Account holder name must be at most ${NAME_MAX} characters`),
 ];
 
 module.exports = { registerRules, loginRules, guestLoginRules, taxInfoRules, bankInfoRules };

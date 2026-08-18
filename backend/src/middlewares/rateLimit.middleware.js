@@ -8,7 +8,7 @@ const loginRateLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Quá nhiều lần thử đăng nhập, vui lòng thử lại sau ít phút' },
+  message: { success: false, message: 'Too many login attempts, please try again in a few minutes' },
 });
 
 module.exports = { loginRateLimiter };

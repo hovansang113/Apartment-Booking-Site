@@ -106,80 +106,88 @@ export default function BookingWidget({ listing, checkIn, checkOut }) {
       </div>
 
       <form onSubmit={handleReserve} className="mt-4">
-        <div className="overflow-hidden rounded-lg border border-neutral-300">
-          {/* Dates - bam vao se cuon xuong AvailabilityCalendar (id="availability-calendar")
-              phia duoi trang, dung 1 nguon chon ngay duy nhat thay vi input[type=date]
-              cua trinh duyet (khong theo style trang, luon hien tieng Anh). */}
-          <div className="grid grid-cols-2">
-            <button
-              type="button"
-              onClick={scrollToCalendar}
-              className="border-r border-neutral-300 px-3 py-2 text-left hover:bg-neutral-50 transition-colors"
-            >
-              <span className="block text-[10px] font-semibold uppercase text-neutral-700">{t('listing.booking.checkIn')}</span>
-              <span className={`block text-sm ${checkIn ? 'text-neutral-900' : 'text-neutral-400'}`}>
-                {checkIn ? format(parseISO(checkIn), 'd MMM yyyy', { locale: dateFnsLocale }) : t('search.addDates')}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={scrollToCalendar}
-              className="px-3 py-2 text-left hover:bg-neutral-50 transition-colors"
-            >
-              <span className="block text-[10px] font-semibold uppercase text-neutral-700">{t('listing.booking.checkOut')}</span>
-              <span className={`block text-sm ${checkOut ? 'text-neutral-900' : 'text-neutral-400'}`}>
-                {checkOut ? format(parseISO(checkOut), 'd MMM yyyy', { locale: dateFnsLocale }) : t('search.addDates')}
-              </span>
-            </button>
+        {/* relative (khong overflow-hidden) boc ngoai ca khoi lan dropdown, de
+            dropdown "Guests" (position: absolute) khong bi khung bo goc tron
+            ben trong (overflow-hidden) cat mat - loi that phat hien luc test
+            (nut van hoat dong ngam vi state React van doi dung, nhung nguoi
+            dung khong nhin thay dropdown do bi clip). */}
+        <div className="relative" ref={dropdownRef}>
+          <div className="overflow-hidden rounded-lg border border-neutral-300">
+            {/* Dates - bam vao se cuon xuong AvailabilityCalendar (id="availability-calendar")
+                phia duoi trang, dung 1 nguon chon ngay duy nhat thay vi input[type=date]
+                cua trinh duyet (khong theo style trang, luon hien tieng Anh). */}
+            <div className="grid grid-cols-2">
+              <button
+                type="button"
+                onClick={scrollToCalendar}
+                className="border-r border-neutral-300 px-3 py-2 text-left hover:bg-neutral-50 transition-colors"
+              >
+                <span className="block text-[10px] font-semibold uppercase text-neutral-700">{t('listing.booking.checkIn')}</span>
+                <span className={`block text-sm ${checkIn ? 'text-neutral-900' : 'text-neutral-400'}`}>
+                  {checkIn ? format(parseISO(checkIn), 'd MMM yyyy', { locale: dateFnsLocale }) : t('search.addDates')}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={scrollToCalendar}
+                className="px-3 py-2 text-left hover:bg-neutral-50 transition-colors"
+              >
+                <span className="block text-[10px] font-semibold uppercase text-neutral-700">{t('listing.booking.checkOut')}</span>
+                <span className={`block text-sm ${checkOut ? 'text-neutral-900' : 'text-neutral-400'}`}>
+                  {checkOut ? format(parseISO(checkOut), 'd MMM yyyy', { locale: dateFnsLocale }) : t('search.addDates')}
+                </span>
+              </button>
+            </div>
+
+            {/* Guest trigger */}
+            <div className="border-t border-neutral-300">
+              <button
+                type="button"
+                onClick={() => setGuestOpen((o) => !o)}
+                className="w-full text-left px-3 py-2 hover:bg-neutral-50 transition-colors"
+              >
+                <span className="block text-[10px] font-semibold uppercase text-neutral-700">{t('listing.booking.guests')}</span>
+                <span className="text-sm text-neutral-800">{guestLabel}</span>
+              </button>
+            </div>
           </div>
 
-          {/* Guest trigger */}
-          <div className="border-t border-neutral-300 relative" ref={dropdownRef}>
-            <button
-              type="button"
-              onClick={() => setGuestOpen((o) => !o)}
-              className="w-full text-left px-3 py-2 hover:bg-neutral-50 transition-colors"
-            >
-              <span className="block text-[10px] font-semibold uppercase text-neutral-700">{t('listing.booking.guests')}</span>
-              <span className="text-sm text-neutral-800">{guestLabel}</span>
-            </button>
-
-            {/* Dropdown */}
-            {guestOpen && (
-              <div className="absolute left-0 right-0 top-full z-20 bg-white border border-neutral-200 rounded-b-lg shadow-lg px-4 divide-y divide-neutral-100">
-                <Counter
-                  label={t('listing.booking.adults')}
-                  sub={t('listing.booking.adultsHint')}
-                  value={adults}
-                  onInc={() => setAdults((v) => v + 1)}
-                  onDec={() => setAdults((v) => v - 1)}
-                  disableInc={totalGuests >= maxGuests}
-                  disableDec={adults <= 1}
-                />
-                <Counter
-                  label={t('listing.booking.children')}
-                  sub={t('listing.booking.childrenHint')}
-                  value={children}
-                  onInc={() => setChildren((v) => v + 1)}
-                  onDec={() => setChildren((v) => v - 1)}
-                  disableInc={totalGuests >= maxGuests}
-                  disableDec={children <= 0}
-                />
-                <div className="py-2 text-xs text-neutral-400">
-                  {t('listing.booking.maxGuests', { count: maxGuests })}
-                </div>
-                <div className="py-3">
-                  <button
-                    type="button"
-                    onClick={() => setGuestOpen(false)}
-                    className="text-sm font-semibold text-neutral-800 underline"
-                  >
-                    {t('listing.booking.done')}
-                  </button>
-                </div>
+          {/* Dropdown - nam ngoai khung overflow-hidden o tren, van dinh vi
+              dung ngay duoi khoi Dates/Guests vi "relative" cha bao ca khoi. */}
+          {guestOpen && (
+            <div className="absolute left-0 right-0 top-full z-20 bg-white border border-neutral-200 rounded-lg shadow-lg px-4 divide-y divide-neutral-100">
+              <Counter
+                label={t('listing.booking.adults')}
+                sub={t('listing.booking.adultsHint')}
+                value={adults}
+                onInc={() => setAdults((v) => v + 1)}
+                onDec={() => setAdults((v) => v - 1)}
+                disableInc={totalGuests >= maxGuests}
+                disableDec={adults <= 1}
+              />
+              <Counter
+                label={t('listing.booking.children')}
+                sub={t('listing.booking.childrenHint')}
+                value={children}
+                onInc={() => setChildren((v) => v + 1)}
+                onDec={() => setChildren((v) => v - 1)}
+                disableInc={totalGuests >= maxGuests}
+                disableDec={children <= 0}
+              />
+              <div className="py-2 text-xs text-neutral-400">
+                {t('listing.booking.maxGuests', { count: maxGuests })}
               </div>
-            )}
-          </div>
+              <div className="py-3">
+                <button
+                  type="button"
+                  onClick={() => setGuestOpen(false)}
+                  className="text-sm font-semibold text-neutral-800 underline"
+                >
+                  {t('listing.booking.done')}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <button

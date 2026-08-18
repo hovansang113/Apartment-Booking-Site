@@ -30,7 +30,7 @@ async function create(req, res) {
     adults,
     children,
   });
-  return created(res, booking, 'Đã giữ chỗ, vui lòng hoàn tất thanh toán trong 15 phút');
+  return created(res, booking, 'Reservation held, please complete payment within 15 minutes');
 }
 
 // Cho trang thanh toan rieng - xem comment trong booking.service.js

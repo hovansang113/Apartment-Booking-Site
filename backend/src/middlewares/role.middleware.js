@@ -4,7 +4,7 @@ const { fail } = require('../utils/response.util');
 function authorize(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user || !allowedRoles.includes(req.user.role)) {
-      return fail(res, 403, 'Ban khong co quyen thuc hien hanh dong nay');
+      return fail(res, 403, 'You do not have permission to perform this action');
     }
     next();
   };

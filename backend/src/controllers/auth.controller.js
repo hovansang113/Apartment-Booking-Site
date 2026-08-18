@@ -44,14 +44,14 @@ async function me(req, res) {
 async function updateTaxInfo(req, res) {
   const { legalName, taxId, taxpayerType, idNumber } = req.body;
   const user = await authService.updateTaxInfo(req.user.id, { legalName, taxId, taxpayerType, idNumber });
-  return ok(res, { user }, 'Đã gửi thông tin, đang chờ xác minh');
+  return ok(res, { user }, 'Submitted, awaiting verification');
 }
 
 // Host "Thong tin nhan tien" - tai khoan ngan hang de nhan payout
 async function updateBankInfo(req, res) {
   const { bankCode, bankAccountNumber, bankAccountHolder } = req.body;
   const user = await authService.updateBankInfo(req.user.id, { bankCode, bankAccountNumber, bankAccountHolder });
-  return ok(res, { user }, 'Đã lưu thông tin nhận tiền');
+  return ok(res, { user }, 'Payout details saved');
 }
 
 module.exports = { register, login, guestLogin, logout, me, updateTaxInfo, updateBankInfo };

@@ -7,57 +7,57 @@ const CITY_MAX = 100;
 const POSTCODE_MAX = 20;
 
 const createBookingRules = [
-  body('listingId').isUUID().withMessage('listingId không hợp lệ'),
+  body('listingId').isUUID().withMessage('Invalid listingId'),
   body('checkIn')
     .matches(/^\d{4}-\d{2}-\d{2}$/)
-    .withMessage('checkIn phải theo định dạng YYYY-MM-DD'),
+    .withMessage('checkIn must be in YYYY-MM-DD format'),
   body('checkOut')
     .matches(/^\d{4}-\d{2}-\d{2}$/)
-    .withMessage('checkOut phải theo định dạng YYYY-MM-DD'),
+    .withMessage('checkOut must be in YYYY-MM-DD format'),
   body('contactName')
     .trim()
     .notEmpty()
-    .withMessage('Vui lòng nhập họ tên')
+    .withMessage('Please enter your full name')
     .isLength({ max: NAME_MAX })
-    .withMessage(`Họ tên phải tối đa ${NAME_MAX} ký tự`),
+    .withMessage(`Full name must be at most ${NAME_MAX} characters`),
   body('contactEmail')
     .trim()
     .notEmpty()
-    .withMessage('Vui lòng nhập email')
+    .withMessage('Please enter your email')
     .isEmail()
-    .withMessage('Email không hợp lệ')
+    .withMessage('Invalid email')
     .isLength({ max: EMAIL_MAX })
     .normalizeEmail(),
   body('contactPhone')
     .optional({ checkFalsy: true })
     .trim()
     .isMobilePhone('any')
-    .withMessage('Số điện thoại không hợp lệ'),
+    .withMessage('Invalid phone number'),
   body('contactAddress')
     .trim()
     .notEmpty()
-    .withMessage('Vui lòng nhập địa chỉ')
+    .withMessage('Please enter your address')
     .isLength({ max: ADDRESS_MAX })
-    .withMessage(`Địa chỉ phải tối đa ${ADDRESS_MAX} ký tự`),
+    .withMessage(`Address must be at most ${ADDRESS_MAX} characters`),
   body('contactCity')
     .trim()
     .notEmpty()
-    .withMessage('Vui lòng nhập thành phố/tỉnh')
+    .withMessage('Please enter your city')
     .isLength({ max: CITY_MAX })
-    .withMessage(`Thành phố/tỉnh phải tối đa ${CITY_MAX} ký tự`),
+    .withMessage(`City must be at most ${CITY_MAX} characters`),
   body('contactPostcode')
     .optional({ checkFalsy: true })
     .trim()
     .isLength({ max: POSTCODE_MAX })
-    .withMessage(`Mã bưu chính phải tối đa ${POSTCODE_MAX} ký tự`),
+    .withMessage(`Postcode must be at most ${POSTCODE_MAX} characters`),
   body('adults')
     .isInt({ min: 1 })
-    .withMessage('Số người lớn phải tối thiểu 1')
+    .withMessage('Number of adults must be at least 1')
     .toInt(),
   body('children')
     .optional()
     .isInt({ min: 0 })
-    .withMessage('Số trẻ em không hợp lệ')
+    .withMessage('Invalid number of children')
     .toInt(),
 ];
 
