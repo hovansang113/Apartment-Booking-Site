@@ -6,9 +6,17 @@ const prisma = require('../config/prisma');
 // phai sua 2 noi moi lan doi domain. sitemap lay thang tu DB nen luon khop
 // dung danh sach listing da duyet hien tai, khong bi cu nhu file tinh truoc day.
 
-async function robots(req, res) {
+// SEO_ALLOW_INDEXING: cong tac an toan-mac-dinh - PHAI dat rieng "true" moi
+// cho Google index that (yeu cau Jason 18/8: chua muon index luc con dang
+// demo/dev). Thieu bien nay (vd quen dat luc deploy) se TU DONG chan index,
+// khong vo tinh lo site dev/demo len Google.
+function robots(req, res) {
   const siteUrl = process.env.CLIENT_URL || '';
-  res.type('text/plain').send(`User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml\n`);
+  const allowIndexing = process.env.SEO_ALLOW_INDEXING === 'true';
+  const body = allowIndexing
+    ? `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml\n`
+    : `User-agent: *\nDisallow: /\n`;
+  res.type('text/plain').send(body);
 }
 
 async function sitemap(req, res) {
