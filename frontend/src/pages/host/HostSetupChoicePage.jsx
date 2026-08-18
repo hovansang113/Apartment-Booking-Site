@@ -3,12 +3,7 @@ import Seo from '../../components/common/Seo';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import {
-  ChevronRightIcon,
-  HomeOutlineIcon,
-  HomePlusIcon,
-  DuplicateIcon,
-} from '../../components/common/icons';
+import { ChevronRightIcon, HomePlusIcon } from '../../components/common/icons';
 
 export default function HostSetupChoicePage() {
   const { t } = useTranslation();
@@ -56,29 +51,8 @@ export default function HostSetupChoicePage() {
               </h1>
             </div>
 
-            {/* Section 1: Hoàn thiện bài đăng của bạn */}
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-neutral-900">
-                {t('host.setupChoice.finishHeading')}
-              </h2>
-
-              <div
-                onClick={() => navigate('/host/listings/new?draftId=draft-1&step=3')}
-                className="group flex items-center gap-4 rounded-2xl border border-neutral-200 bg-white p-5 hover:border-neutral-900 hover:shadow-lg cursor-pointer transition-all"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-neutral-800 shrink-0 group-hover:bg-neutral-200 transition-colors">
-                  <HomeOutlineIcon className="h-6 w-6" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-neutral-900 text-sm leading-snug group-hover:text-brand-600 transition-colors">
-                    {t('host.setupChoice.draftLabel')}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Section 2: Bắt đầu tạo bài đăng mới */}
-            <div className="space-y-4 pt-4">
+            {/* Bắt đầu tạo bài đăng mới */}
+            <div className="space-y-4">
               <h2 className="text-lg font-bold text-neutral-900">
                 {t('host.setupChoice.startNewHeading')}
               </h2>
@@ -92,21 +66,6 @@ export default function HostSetupChoicePage() {
                   <div className="flex items-center gap-4">
                     <HomePlusIcon className="h-6 w-6 text-neutral-700 group-hover:text-neutral-900 transition-colors" />
                     <span className="font-semibold text-neutral-900 text-base">{t('host.setupChoice.createNew')}</span>
-                  </div>
-                  <ChevronRightIcon className="h-5 w-5 text-neutral-400 group-hover:text-neutral-900 transition-colors" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    toast.success(t('host.setupChoice.duplicateSuccess'));
-                    navigate('/host/listings/new');
-                  }}
-                  className="w-full flex items-center justify-between p-5 hover:bg-neutral-50 transition-colors text-left group"
-                >
-                  <div className="flex items-center gap-4">
-                    <DuplicateIcon className="h-6 w-6 text-neutral-700 group-hover:text-neutral-900 transition-colors" />
-                    <span className="font-semibold text-neutral-900 text-base">{t('host.setupChoice.duplicate')}</span>
                   </div>
                   <ChevronRightIcon className="h-5 w-5 text-neutral-400 group-hover:text-neutral-900 transition-colors" />
                 </button>

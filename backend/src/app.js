@@ -19,6 +19,9 @@ const app = express();
 
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express.json());
+// Braintree goi webhook duoi dang application/x-www-form-urlencoded
+// (bt_signature/bt_payload), khong phai JSON - can middleware nay rieng.
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan('dev'));
 

@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import SearchBar from './SearchBar';
-import LanguageSwitcher from './LanguageSwitcher';
 import { MenuIcon, UserCircleIcon } from './icons';
 import { useAuth } from '../../context/AuthContext';
 
@@ -83,7 +82,6 @@ export default function Header() {
 
           {/* Right Action & Profile Menu */}
           <div className="flex items-center gap-3">
-            <LanguageSwitcher />
             <Link
               to="/"
               className="hidden rounded-full px-4 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 sm:inline-block transition-colors"
@@ -187,7 +185,6 @@ export default function Header() {
               {t('header.becomeHost')}
             </button>
           )}
-          <LanguageSwitcher className="hidden sm:flex" />
 
           {/* User Profile / Auth Dropdown */}
           <div className="relative" ref={menuRef}>

@@ -3,7 +3,7 @@ import Seo from '../../components/common/Seo';
 import toast from 'react-hot-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { vi, enUS } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import HostMonthGrid from '../../components/calendar/HostMonthGrid';
 import DayEditModal from '../../components/calendar/DayEditModal';
@@ -12,8 +12,6 @@ import BookingDetailModal from '../../components/calendar/BookingDetailModal';
 import { ChevronLeftIcon, ChevronRightIcon } from '../../components/common/icons';
 import { getHostListings } from '../../services/listingService';
 import * as calendarService from '../../services/calendarService';
-
-const DATE_FNS_LOCALES = { vi, en: enUS };
 
 function toYMD(date) {
   return date.toISOString().slice(0, 10);
@@ -26,8 +24,7 @@ function errorMessage(err, fallback) {
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 function ConnectCalendarSection({ listing }) {
-  const { t, i18n } = useTranslation();
-  const dateFnsLocale = DATE_FNS_LOCALES[i18n.language] || vi;
+  const { t } = useTranslation();
   const listingId = listing.id;
   const exportUrl = `${API_BASE}/calendar/${listing.id}/export.ics?t=${listing.icalToken}`;
   const queryClient = useQueryClient();
@@ -159,7 +156,7 @@ function ConnectCalendarSection({ listing }) {
               <p className="text-sm font-semibold text-neutral-900 truncate">{src.label}</p>
               <p className="text-xs text-neutral-400">
                 {src.lastSyncedAt
-                  ? t('hostCalendar.connect.lastSynced', { date: new Date(src.lastSyncedAt).toLocaleString(i18n.language === 'en' ? 'en-US' : 'vi-VN') })
+                  ? t('hostCalendar.connect.lastSynced', { date: new Date(src.lastSyncedAt).toLocaleString('en-US') })
                   : t('hostCalendar.connect.neverSynced')}
               </p>
             </div>
@@ -244,8 +241,8 @@ function ConnectCalendarSection({ listing }) {
 }
 
 export default function HostCalendarPage() {
-  const { t, i18n } = useTranslation();
-  const dateFnsLocale = DATE_FNS_LOCALES[i18n.language] || vi;
+  const { t } = useTranslation();
+  const dateFnsLocale = enUS;
   const queryClient = useQueryClient();
   const today = new Date();
   const [listingId, setListingId] = useState('');

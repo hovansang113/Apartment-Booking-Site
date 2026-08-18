@@ -9,9 +9,6 @@ export default function HostTodayPage() {
   const [activeTab, setActiveTab] = useState('today'); // 'today' | 'upcoming'
   const [showTaxNotice, setShowTaxNotice] = useState(true);
 
-  // Flag checking if host has any unfinished draft listing
-  const [hasDraftListing, setHasDraftListing] = useState(true);
-
   return (
     <>
       <Seo title={t('host.today.pageTitle')} noindex />
@@ -78,27 +75,15 @@ export default function HostTodayPage() {
             </h1>
 
             <p className="mt-3 text-sm text-neutral-500 sm:text-base max-w-md">
-              {hasDraftListing
-                ? t('host.today.emptyBodyDraft')
-                : t('host.today.emptyBodyNoDraft')}
+              {t('host.today.emptyBodyNoDraft')}
             </p>
 
-            {/* Render "Hoàn tất bài đăng của bạn" ONLY IF hasDraftListing is true, else render "Tạo bài đăng mới" */}
-            {hasDraftListing ? (
-              <Link
-                to="/host/listings/setup"
-                className="mt-8 rounded-2xl bg-neutral-100 px-6 py-3.5 text-sm font-semibold text-neutral-900 border border-neutral-300 hover:bg-neutral-200 hover:border-neutral-400 transition-colors shadow-sm"
-              >
-                {t('host.today.finishListing')}
-              </Link>
-            ) : (
-              <Link
-                to="/host/listings/setup"
-                className="mt-8 rounded-2xl bg-neutral-900 px-6 py-3.5 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors shadow-sm"
-              >
-                {t('host.today.createListing')}
-              </Link>
-            )}
+            <Link
+              to="/host/listings/setup"
+              className="mt-8 rounded-2xl bg-neutral-900 px-6 py-3.5 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors shadow-sm"
+            >
+              {t('host.today.createListing')}
+            </Link>
           </div>
         </div>
       </main>

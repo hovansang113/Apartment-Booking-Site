@@ -2,9 +2,9 @@ const prisma = require('../config/prisma');
 
 // robots.txt/sitemap.xml phuc vu DONG tu backend (khong phai file tinh trong
 // frontend/public nua) - dung lai CHINH XAC CLIENT_URL da co san (backend can
-// gia tri nay dung cho VNPay return URL roi), nen domain luon dong bo, khong
-// phai sua 2 noi moi lan doi domain. sitemap lay thang tu DB nen luon khop
-// dung danh sach listing da duyet hien tai, khong bi cu nhu file tinh truoc day.
+// gia tri nay dung cho CORS roi), nen domain luon dong bo, khong phai sua 2
+// noi moi lan doi domain. sitemap lay thang tu DB nen luon khop dung danh
+// sach listing da duyet hien tai, khong bi cu nhu file tinh truoc day.
 
 // SEO_ALLOW_INDEXING: cong tac an toan-mac-dinh - PHAI dat rieng "true" moi
 // cho Google index that (yeu cau Jason 18/8: chua muon index luc con dang

@@ -2,7 +2,6 @@ import { Link, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import LanguageSwitcher from '../common/LanguageSwitcher';
 
 // Layout rieng cho khu vuc admin - KHONG dung chung Header/Footer cong khai
 // (khong search bar, khong "Chuyen sang che do du lich"...), giong dung
@@ -53,7 +52,6 @@ export default function AdminLayout({ children }) {
           </div>
 
           <div className="flex items-center gap-4">
-            <LanguageSwitcher />
             <span className="hidden sm:inline text-xs text-neutral-500 truncate max-w-[160px]">{user?.email}</span>
             <button
               type="button"

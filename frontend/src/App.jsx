@@ -20,7 +20,6 @@ import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminTaxVerificationPage from './pages/admin/AdminTaxVerificationPage';
 import CheckoutPage from './pages/booking/CheckoutPage';
 import PaymentPage from './pages/booking/PaymentPage';
-import VnpayReturnPage from './pages/booking/VnpayReturnPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 
@@ -51,9 +50,8 @@ export default function App() {
           <Route path="/listings/:id" element={<ListingDetail />} />
           <Route path="/listings/:id/checkout" element={<CheckoutPage />} />
 
-          {/* Booking / Payment Routes (Phase 4) */}
+          {/* Booking / Payment Routes */}
           <Route path="/booking/:bookingId/payment" element={<PaymentPage />} />
-          <Route path="/booking/vnpay-return" element={<VnpayReturnPage />} />
 
           {/* Auth Routes */}
           <Route path="/auth/login" element={<LoginPage />} />

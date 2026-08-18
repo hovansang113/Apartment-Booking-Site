@@ -1,16 +1,17 @@
 import api from './api';
 
-// REQ_07 Phase 3 - tao URL redirect sang VNPay Sandbox cho 1 booking dang
-// cho thanh toan. Khong can dang nhap (giong bookingService.createBooking).
-export async function createPaymentUrl(bookingId, locale) {
-  const { data } = await api.post(`/payments/${bookingId}/create-url`, { locale });
-  return data.data.paymentUrl;
+// FE goi luc mount PaymentPage de khoi tao Braintree Drop-in UI. Khong can
+// dang nhap (giong bookingService.createBooking).
+export async function getClientToken() {
+  const { data } = await api.get('/payments/client-token');
+  return data.data.clientToken;
 }
 
-// Phase 4 - goi khi khach duoc VNPay redirect ve /booking/vnpay-return.
-// `queryString` la nguyen query nhan duoc tu URL (vnp_*), forward thang cho
-// backend verify chu ky + cap nhat trang thai (xem payment.service.js).
-export async function verifyReturn(queryString) {
-  const { data } = await api.get(`/payments/verify-return${queryString}`);
+// Goi sau khi khach nhap the + hoan tat challenge 3D Secure qua Drop-in
+// (dropinInstance.requestPaymentMethod()), nhan duoc paymentMethodNonce.
+// Tra ket qua ngay trong response nay (Braintree la luong dong bo, khac VNPay
+// truoc day can redirect + trang return rieng).
+export async function checkout(bookingId, { paymentMethodNonce, deviceData }) {
+  const { data } = await api.post(`/payments/${bookingId}/checkout`, { paymentMethodNonce, deviceData });
   return data.data;
 }

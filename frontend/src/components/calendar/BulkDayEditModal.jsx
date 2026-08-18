@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { vi, enUS } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { CloseIcon } from '../common/icons';
-
-const DATE_FNS_LOCALES = { vi, en: enUS };
 
 function formatDayLabel(ymd, locale) {
   return format(parseISO(ymd), 'MMM d', { locale });
@@ -15,8 +13,8 @@ function formatDayLabel(ymd, locale) {
 // gia con phan biet ngay thuong/cuoi tuan, ap 1 gia cho ca khoang se lam mat
 // phan biet do). dates: mang YMD da sap xep tang dan.
 export default function BulkDayEditModal({ dates, onClose, onSave }) {
-  const { t, i18n } = useTranslation();
-  const dateFnsLocale = DATE_FNS_LOCALES[i18n.language] || vi;
+  const { t } = useTranslation();
+  const dateFnsLocale = enUS;
   const [blocked, setBlocked] = useState(true); // vi dung "chon nhieu ngay" thuong de chan (di vang, bao tri)
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);

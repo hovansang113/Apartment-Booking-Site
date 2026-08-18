@@ -9,11 +9,10 @@ import {
   startOfDay,
   startOfMonth,
 } from 'date-fns';
-import { vi, enUS } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeftIcon, ChevronRightIcon } from './icons';
 
-const DATE_FNS_LOCALES = { vi, en: enUS };
 const FLEX_KEYS = [1, 2, 3, 7, 14];
 
 // Luoi thang, bat dau tu Thu Hai. Cell rong (null) cho cac o truoc ngay 1.
@@ -88,9 +87,9 @@ function Month({ monthStart, range, hoverDay, onHover, onPick, minDate, weekdays
 }
 
 export default function DateRangePicker({ value, onChange, onClose }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const weekdays = t('dateRangePicker.weekdays', { returnObjects: true });
-  const dateFnsLocale = DATE_FNS_LOCALES[i18n.language] || vi;
+  const dateFnsLocale = enUS;
   const flexOptions = [
     { key: 'exact', label: t('dateRangePicker.exactDay') },
     ...FLEX_KEYS.map((n) => ({ key: n, label: t('dateRangePicker.flexDays', { count: n }) })),

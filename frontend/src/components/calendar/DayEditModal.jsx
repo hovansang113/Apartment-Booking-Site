@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { vi, enUS } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { CloseIcon } from '../common/icons';
-
-const DATE_FNS_LOCALES = { vi, en: enUS };
+import { formatPrice } from '../../utils/currency';
 
 function formatDayLabel(ymd, locale) {
   return format(parseISO(ymd), 'MMM d', { locale });
@@ -23,8 +22,8 @@ function isWeekendDate(ymd) {
 // basePrice: gia goc (ngay thuong/cuoi tuan, REQ_13) CUA DUNG NGAY dang sua -
 // dung de so sanh/hien strikethrough khi host ghi de gia rieng ngay nay.
 export default function DayEditModal({ day, basePrice, onClose, onSave }) {
-  const { t, i18n } = useTranslation();
-  const dateFnsLocale = DATE_FNS_LOCALES[i18n.language] || vi;
+  const { t } = useTranslation();
+  const dateFnsLocale = enUS;
   const [blocked, setBlocked] = useState(day.status === 'blocked');
   const [price, setPrice] = useState(day.price);
   const [note, setNote] = useState(day.note || '');
@@ -93,14 +92,14 @@ export default function DayEditModal({ day, basePrice, onClose, onSave }) {
             <input
               type="number"
               min={0}
-              step={10000}
+              step={1}
               value={price}
               onChange={(e) => setPrice(Number(e.target.value))}
               className="w-28 border-b border-white/30 bg-transparent text-2xl font-bold outline-none focus:border-white"
             />
             {price !== basePrice && (
               <span className="text-sm text-neutral-400 line-through">
-                {new Intl.NumberFormat('vi-VN').format(basePrice)}
+                {formatPrice(basePrice)}
               </span>
             )}
           </div>

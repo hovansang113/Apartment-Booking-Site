@@ -5,7 +5,7 @@ import { HeartIcon, StarIcon } from '../common/icons';
 import { formatPrice } from '../../utils/currency';
 
 export default function ListingCard({ listing }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [saved, setSaved] = useState(false);
 
   return (
@@ -48,7 +48,7 @@ export default function ListingCard({ listing }) {
           {listing.weekdayPrice !== listing.weekendPrice && (
             <span className="text-neutral-500">{t('listing.priceFrom')} </span>
           )}
-          <span className="font-semibold">{formatPrice(listing.pricePerNight, i18n.language)}</span>{' '}
+          <span className="font-semibold">{formatPrice(listing.pricePerNight)}</span>{' '}
           {t('listing.perNight')}
         </p>
       </Link>

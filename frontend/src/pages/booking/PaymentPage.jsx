@@ -1,21 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { format, parseISO } from 'date-fns';
-import { vi, enUS } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
+import dropin from 'braintree-web-drop-in';
 import Seo from '../../components/common/Seo';
 import BookingStepper from '../../components/booking/BookingStepper';
 import { getBookingById } from '../../services/bookingService';
-import { createPaymentUrl } from '../../services/paymentService';
+import { getClientToken, checkout } from '../../services/paymentService';
 import { formatPrice } from '../../utils/currency';
-
-const DATE_FNS_LOCALES = { vi, en: enUS };
 
 // Dem nguoc toi paymentExpiresAt - chi de hien UI, KHONG tu huy booking o FE
 // (Phase 5 - job tu huy qua han van chua lam, xem TODO.md). Het gio o day chi
-// tat nut thanh toan, booking o backend van con o pending_payment cho toi khi
+// tat form thanh toan, booking o backend van con o pending_payment cho toi khi
 // co Phase 5.
 function useCountdown(targetIso) {
   const [remainingMs, setRemainingMs] = useState(() => (targetIso ? new Date(targetIso).getTime() - Date.now() : 0));
@@ -39,15 +38,22 @@ function formatCountdown(ms) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-// Phase 4 - trang thanh toan rieng, co URL that (/booking/:bookingId/payment)
-// thay vi 1 buoc cuc bo trong BookingWidget - song sot duoc F5 vi luon tai
-// lai booking tu backend (GET /api/bookings/:id da co san tu Phase 2).
+// Trang thanh toan rieng, co URL that (/booking/:bookingId/payment) - song sot
+// duoc F5 vi luon tai lai booking tu backend. Nhung tien Braintree (thay VNPay,
+// 18/8): Drop-in UI nhung the ngay tai trang nay, kem challenge 3D Secure bat
+// buoc ("extra step of confirming payment through app" theo yeu cau Jason) -
+// khong con redirect sang trang ngoai + trang "return" rieng nua, ket qua
+// tra ve dong bo ngay trong 1 lan goi API.
 export default function PaymentPage() {
   const { bookingId } = useParams();
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
-  const dateFnsLocale = DATE_FNS_LOCALES[i18n.language] || vi;
-  const [redirecting, setRedirecting] = useState(false);
+  const { t } = useTranslation();
+  const dateFnsLocale = enUS;
+  const dropinContainerRef = useRef(null);
+  const dropinInstanceRef = useRef(null);
+  const [dropinReady, setDropinReady] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState(null); // null | { status: 'success' | 'declined', message, bookingCode }
 
   const {
     data: booking,
@@ -61,15 +67,87 @@ export default function PaymentPage() {
 
   const remainingMs = useCountdown(booking?.status === 'pending_payment' ? booking.paymentExpiresAt : null);
   const isExpired = booking?.status === 'pending_payment' && remainingMs <= 0;
+  const canPay = booking?.status === 'pending_payment' && !isExpired && !result;
+
+  const {
+    data: clientToken,
+    isError: isClientTokenError,
+    isLoading: isClientTokenLoading,
+  } = useQuery({
+    queryKey: ['braintree-client-token'],
+    queryFn: getClientToken,
+    enabled: canPay,
+    staleTime: Infinity,
+    retry: 1,
+  });
+
+  // Khoi tao Braintree Drop-in UI ngay khi co client token + booking con thanh
+  // toan duoc. Teardown luc unmount de tranh giu ket noi/form the con song sau
+  // khi roi trang.
+  useEffect(() => {
+    if (!clientToken || !canPay || !dropinContainerRef.current) return undefined;
+
+    let cancelled = false;
+    dropin
+      .create({ authorization: clientToken, container: dropinContainerRef.current, threeDSecure: true })
+      .then((instance) => {
+        if (cancelled) {
+          instance.teardown();
+          return;
+        }
+        dropinInstanceRef.current = instance;
+        setDropinReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) toast.error(t('payment.dropinErrorFallback'));
+      });
+
+    return () => {
+      cancelled = true;
+      if (dropinInstanceRef.current) {
+        dropinInstanceRef.current.teardown().catch(() => {});
+        dropinInstanceRef.current = null;
+      }
+      setDropinReady(false);
+    };
+  }, [clientToken, canPay, t]);
 
   async function handlePayNow() {
+    if (!dropinInstanceRef.current) return;
     try {
-      setRedirecting(true);
-      const url = await createPaymentUrl(booking.id, i18n.language);
-      window.location.href = url;
+      setSubmitting(true);
+      const payload = await dropinInstanceRef.current.requestPaymentMethod({
+        threeDSecure: {
+          amount: Number(booking.totalPrice).toFixed(2),
+          email: booking.contactEmail,
+        },
+      });
+
+      const res = await checkout(booking.id, { paymentMethodNonce: payload.nonce, deviceData: payload.deviceData });
+
+      if (res.paymentStatus === 'success') {
+        setResult({ status: 'success' });
+      } else {
+        // Nhap the sai/bi tu choi - can form moi de thu lai (nonce da dung 1
+        // lan la het han), teardown + tao lai dropin ngay duoi day.
+        toast.error(res.message || t('payment.declinedFallback'));
+        if (dropinInstanceRef.current) {
+          await dropinInstanceRef.current.teardown().catch(() => {});
+          dropinInstanceRef.current = null;
+          setDropinReady(false);
+          const instance = await dropin.create({
+            authorization: clientToken,
+            container: dropinContainerRef.current,
+            threeDSecure: true,
+          });
+          dropinInstanceRef.current = instance;
+          setDropinReady(true);
+        }
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || t('payment.urlErrorFallback'));
-      setRedirecting(false);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -146,30 +224,51 @@ export default function PaymentPage() {
 
         <div className="mt-4 flex justify-between border-t border-neutral-100 pt-3 text-sm font-semibold text-neutral-900">
           <span>{t('listing.booking.total')}</span>
-          <span>{formatPrice(Number(booking.totalPrice), i18n.language)}</span>
+          <span>{formatPrice(Number(booking.totalPrice))}</span>
         </div>
       </div>
 
-      {booking.status === 'confirmed' && (
-        <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-4 text-center text-sm text-green-800">
-          {t('payment.alreadyConfirmed')}
+      {result?.status === 'success' ? (
+        <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-4 text-center">
+          <p className="text-3xl">✅</p>
+          <p className="mt-2 text-sm font-semibold text-green-800">{t('payment.successHeading')}</p>
+          <p className="mt-1 text-sm text-green-700">{t('payment.successBody')}</p>
         </div>
+      ) : (
+        booking.status === 'confirmed' && (
+          <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-4 text-center text-sm text-green-800">
+            {t('payment.alreadyConfirmed')}
+          </div>
+        )
       )}
 
-      {booking.status === 'pending_payment' && !isExpired && (
+      {canPay && (
         <>
           <p className="mt-6 text-center text-sm text-neutral-500">
             {t('payment.holdNotice', { time: formatCountdown(remainingMs) })}
           </p>
-          <button
-            type="button"
-            onClick={handlePayNow}
-            disabled={redirecting}
-            className="mt-3 w-full rounded-lg bg-brand-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
-          >
-            {redirecting ? t('listing.booking.redirecting') : t('listing.booking.payNow')}
-          </button>
-          <p className="mt-3 text-center text-xs text-neutral-400">{t('listing.booking.sandboxNote')}</p>
+
+          {isClientTokenError ? (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700">
+              {t('payment.dropinErrorFallback')}
+            </div>
+          ) : isClientTokenLoading ? (
+            <p className="mt-4 text-center text-sm text-neutral-400">{t('common.loading')}</p>
+          ) : (
+            <>
+              <div ref={dropinContainerRef} className="mt-4" />
+
+              <button
+                type="button"
+                onClick={handlePayNow}
+                disabled={!dropinReady || submitting}
+                className="mt-3 w-full rounded-lg bg-brand-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
+              >
+                {submitting ? t('listing.booking.redirecting') : t('listing.booking.payNow')}
+              </button>
+              <p className="mt-3 text-center text-xs text-neutral-400">{t('payment.threeDSecureNote')}</p>
+            </>
+          )}
         </>
       )}
 

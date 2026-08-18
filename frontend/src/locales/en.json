@@ -161,8 +161,7 @@
       "paymentComingSoon": "The payment step is coming soon.",
       "payNow": "Pay now",
       "redirecting": "Redirecting to the payment page...",
-      "paymentUrlErrorFallback": "Couldn't create a payment link, please try again later",
-      "sandboxNote": "Using the VNPay Sandbox test environment - no real money is charged."
+      "paymentUrlErrorFallback": "Couldn't create a payment link, please try again later"
     }
   },
   "checkout": {
@@ -202,14 +201,11 @@
     "notPayable": "This booking is no longer awaiting payment.",
     "alreadyConfirmed": "This booking has already been paid and confirmed.",
     "urlErrorFallback": "Couldn't create a payment link, please try again later",
-    "returnPageTitle": "Payment result",
-    "verifying": "Confirming your payment result with VNPay...",
-    "returnSuccessHeading": "Payment successful!",
-    "returnSuccessBody": "Your booking has been confirmed.",
-    "returnFailedHeading": "Payment unsuccessful",
-    "returnFailedBody": "The transaction wasn't completed. You can go back to the booking page to try again.",
-    "returnErrorHeading": "Couldn't confirm the result",
-    "returnErrorBody": "Something went wrong while confirming your payment. If you were charged, please contact support with your booking code."
+    "dropinErrorFallback": "Couldn't load the payment form, please refresh and try again",
+    "declinedFallback": "Payment was declined. Please check your card details and try again.",
+    "threeDSecureNote": "You may be asked to confirm this payment through your bank's app.",
+    "successHeading": "Payment successful!",
+    "successBody": "Your booking has been confirmed."
   },
   "auth": {
     "googleComingSoon": "Google sign-in is coming in a future release!",
@@ -304,7 +300,15 @@
       "listView": "List view",
       "createNew": "Create new listing",
       "addNew": "Add a new listing",
-      "createdAt": "Created: {{date}}"
+      "createdAt": "Created: {{date}}",
+      "loading": "Loading your listings...",
+      "loadErrorFallback": "Couldn't load your listings",
+      "empty": "You don't have any listings yet",
+      "emptyHint": "Create your first listing to start taking bookings.",
+      "delete": "Delete",
+      "deleteConfirm": "Delete \"{{title}}\"? This can't be undone.",
+      "deleteSuccess": "Listing deleted",
+      "deleteErrorFallback": "Couldn't delete this listing"
     },
     "setupChoice": {
       "pageTitle": "Create a new listing — Stayhub Host",
@@ -408,7 +412,7 @@
       "weekdayPriceHint": "Sunday – Thursday",
       "weekendPriceLabel": "Weekend price",
       "weekendPriceHint": "Friday – Saturday",
-      "priceExample": "e.g. 1,200,000 ₫ / night",
+      "priceExample": "e.g. £45 / night",
       "summaryHeading": "Listing summary",
       "summaryWeekdayPrice": "Weekday price:",
       "summaryWeekendPrice": "Weekend price:",

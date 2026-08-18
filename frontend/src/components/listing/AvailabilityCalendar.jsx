@@ -1,9 +1,7 @@
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
-import { vi, enUS } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
-
-const DATE_FNS_LOCALES = { vi, en: enUS };
 
 function toYMD(date) {
   return date.toISOString().slice(0, 10);
@@ -104,9 +102,9 @@ function MonthCalendar({ year, month, bookedSet, todayYMD, checkIn, checkOut, on
 }
 
 export default function AvailabilityCalendar({ bookedRanges = [], checkIn, checkOut, onSelectDate }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const weekdays = t('dateRangePicker.weekdays', { returnObjects: true });
-  const dateFnsLocale = DATE_FNS_LOCALES[i18n.language] || vi;
+  const dateFnsLocale = enUS;
 
   const today = new Date();
   const todayYMD = toYMD(today);

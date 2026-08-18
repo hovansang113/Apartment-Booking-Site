@@ -38,20 +38,15 @@ function generateBookingCode() {
   return crypto.randomBytes(4).toString('hex').toUpperCase();
 }
 
-// Ma giao dich gui cho VNPay (vnp_TxnRef) - sinh san tu luc tao booking de
-// Phase 3 (tao payment URL) dung lai, khong phai tao lai booking.
-function generateVnpTxnRef() {
-  return crypto.randomBytes(8).toString('hex');
-}
-
 // REQ_07 (luong "chuan production" da duyet 14/8): khach dat phong KHONG can
 // dang nhap - tu tim/tao tai khoan isGuest (dung chung logic voi REQ_14
 // guestLogin qua findOrCreateGuestUser). Booking tao ra o trang thai
 // pending_payment (KHONG con auto-approved nhu ban cu) va CHAN LICH NGAY -
 // giong REQ_09 dang lam - de tranh 2 khach cung giu 1 ngay trong luc cho
-// thanh toan. Payment.service.js (Phase 3) se tao URL VNPay dua tren
-// vnpTxnRef da sinh san o day; job rieng (Phase 5) se tu huy booking qua han
-// paymentExpiresAt chua thanh toan.
+// thanh toan. Payment tao san o trang thai pending (chua co
+// braintreeTransactionId - chi co sau khi khach nhap the that qua Braintree
+// Drop-in tren PaymentPage, xem payment.service.js#checkout); job rieng
+// (Phase 5, chua lam) se tu huy booking qua han paymentExpiresAt chua thanh toan.
 async function createBooking({
   listingId,
   checkIn,
@@ -136,7 +131,6 @@ async function createBooking({
           create: {
             amount: totalPrice,
             status: PaymentStatus.pending,
-            vnpTxnRef: generateVnpTxnRef(),
           },
         },
       },

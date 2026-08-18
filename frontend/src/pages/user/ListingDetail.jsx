@@ -65,7 +65,7 @@ export default function ListingDetail() {
     image: listing.images,
     offers: {
       '@type': 'Offer',
-      priceCurrency: 'VND',
+      priceCurrency: 'GBP',
       price: listing.pricePerNight,
       availability: 'https://schema.org/InStock',
     },

@@ -18,7 +18,7 @@ const MAIN_AMENITY_IDS = ['wifi', 'tv', 'kitchen', 'washer', 'free_parking', 'ai
 const FEATURED_AMENITY_IDS = ['pool'];
 
 export default function CreateListingPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const draftStepParam = parseInt(searchParams.get('step') || '1', 10);
@@ -45,8 +45,8 @@ export default function CreateListingPage() {
   const [photos, setPhotos] = useState([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [weekdayPrice, setWeekdayPrice] = useState(1200000);
-  const [weekendPrice, setWeekendPrice] = useState(1200000);
+  const [weekdayPrice, setWeekdayPrice] = useState(45);
+  const [weekendPrice, setWeekendPrice] = useState(45);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function toggleAmenity(id) {
@@ -129,17 +129,12 @@ export default function CreateListingPage() {
         }
       });
 
-      // Call API service with FormData matching DB schema
-      try {
-        await createListingApi(formData);
-      } catch (e) {
-        console.warn('API call skipped or backend offline during demo:', e);
-      }
+      await createListingApi(formData);
 
       toast.success(t('createListing.submitSuccess'));
       navigate('/host/listings');
     } catch (err) {
-      toast.error(t('createListing.errors.submitError'));
+      toast.error(err.response?.data?.message || t('createListing.errors.submitError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -511,11 +506,11 @@ export default function CreateListingPage() {
                   </p>
                   <p className="text-xs text-neutral-400 mb-2">{t('createListing.step6.weekdayPriceHint')}</p>
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-2xl font-bold text-neutral-900">₫</span>
+                    <span className="text-2xl font-bold text-neutral-900">£</span>
                     <input
                       type="number"
-                      step={50000}
-                      min={100000}
+                      step={5}
+                      min={10}
                       value={weekdayPrice}
                       onChange={(e) => setWeekdayPrice(Number(e.target.value))}
                       className="w-32 text-center text-3xl font-extrabold text-neutral-900 border-b-2 border-neutral-300 focus:border-neutral-900 outline-none pb-1"
@@ -529,11 +524,11 @@ export default function CreateListingPage() {
                   </p>
                   <p className="text-xs text-neutral-400 mb-2">{t('createListing.step6.weekendPriceHint')}</p>
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-2xl font-bold text-neutral-900">₫</span>
+                    <span className="text-2xl font-bold text-neutral-900">£</span>
                     <input
                       type="number"
-                      step={50000}
-                      min={100000}
+                      step={5}
+                      min={10}
                       value={weekendPrice}
                       onChange={(e) => setWeekendPrice(Number(e.target.value))}
                       className="w-32 text-center text-3xl font-extrabold text-neutral-900 border-b-2 border-neutral-300 focus:border-neutral-900 outline-none pb-1"
@@ -554,8 +549,8 @@ export default function CreateListingPage() {
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryCategory')}</span> {t(`createListing.categoryLabel.${category}`)}</p>
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryAddress')}</span> {address || t('createListing.step6.notEntered')}</p>
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryCapacity')}</span> {t('createListing.step6.summaryCapacityValue', { guests: guestCapacity, bedrooms, beds, bathrooms })}</p>
-                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryWeekdayPrice')}</span> {formatPrice(weekdayPrice, i18n.language)}</p>
-                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryWeekendPrice')}</span> {formatPrice(weekendPrice, i18n.language)}</p>
+                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryWeekdayPrice')}</span> {formatPrice(weekdayPrice)}</p>
+                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryWeekendPrice')}</span> {formatPrice(weekendPrice)}</p>
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryAmenities')}</span> {t('createListing.step6.summaryAmenitiesValue', { count: selectedAmenities.length })}</p>
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryPhotos')}</span> {t('createListing.step6.summaryPhotosValue', { count: photos.length })}</p>
                 </div>

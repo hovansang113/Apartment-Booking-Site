@@ -87,7 +87,7 @@ function barColorClasses(range) {
   return 'bg-neutral-500'; // blocked + manual
 }
 
-function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges, t, language, multiSelectMode, selectedDates, onToggleDate }) {
+function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges, t, multiSelectMode, selectedDates, onToggleDate }) {
   const segmentsWithRange = ranges
     .map((range) => ({ range, seg: segmentForWeek(range, week) }))
     .filter((r) => r.seg);
@@ -122,7 +122,7 @@ function WeekRow({ week, days, todayYMD, onDayClick, onBookingClick, ranges, t, 
               {info.status === 'available' && !isPast && (
                 <span className="mt-auto flex flex-col gap-0.5 px-2 pb-1.5">
                   <span className={`text-[11px] font-medium ${info.hasOverride ? 'text-brand-700' : 'text-neutral-600'}`}>
-                    {formatPrice(info.price, language)}
+                    {formatPrice(info.price)}
                   </span>
                   {(info.minNights || info.maxNights) && (
                     <span className="text-[9px] text-neutral-400">
@@ -192,7 +192,7 @@ export default function HostMonthGrid({
   selectedDates,
   onToggleDate,
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const weekdays = t('dateRangePicker.weekdays', { returnObjects: true });
   const weeks = buildWeeks(year, month);
   const ranges = groupOccupiedRanges(days);
@@ -215,7 +215,6 @@ export default function HostMonthGrid({
             onBookingClick={onBookingClick}
             ranges={ranges}
             t={t}
-            language={i18n.language}
             multiSelectMode={multiSelectMode}
             selectedDates={selectedDates}
             onToggleDate={onToggleDate}

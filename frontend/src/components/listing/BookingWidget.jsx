@@ -3,12 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { format, parseISO } from 'date-fns';
-import { vi, enUS } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { StarIcon } from '../common/icons';
 import { nightlyBreakdown } from '../../utils/bookingPricing';
 import { formatPrice } from '../../utils/currency';
-
-const DATE_FNS_LOCALES = { vi, en: enUS };
 
 function scrollToCalendar() {
   document.getElementById('availability-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -49,9 +47,9 @@ function Counter({ label, sub, value, onInc, onDec, disableInc, disableDec }) {
 // khong con nhet form lien he vao cai card nho nay nua) - noi thu that nhap
 // thong tin lien he + tao booking, roi moi sang PaymentPage (Phase 4).
 export default function BookingWidget({ listing, checkIn, checkOut }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const dateFnsLocale = DATE_FNS_LOCALES[i18n.language] || vi;
+  const dateFnsLocale = enUS;
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
   const [guestOpen, setGuestOpen] = useState(false);
@@ -96,7 +94,7 @@ export default function BookingWidget({ listing, checkIn, checkOut }) {
           {listing.weekdayPrice !== listing.weekendPrice && (
             <span className="text-neutral-500">{t('listing.priceFrom')} </span>
           )}
-          <span className="text-lg font-semibold">{formatPrice(listing.pricePerNight, i18n.language)}</span>{' '}
+          <span className="text-lg font-semibold">{formatPrice(listing.pricePerNight)}</span>{' '}
           <span className="text-neutral-500">{t('listing.booking.night')}</span>
         </p>
         {listing.rating != null && (
@@ -196,23 +194,23 @@ export default function BookingWidget({ listing, checkIn, checkOut }) {
             {weekdayNights > 0 && weekendNights > 0 ? (
               <>
                 <div className="flex justify-between">
-                  <span>{t('listing.booking.subtotal', { price: formatPrice(listing.weekdayPrice, i18n.language), nights: weekdayNights })}</span>
-                  <span>{formatPrice(weekdayNights * listing.weekdayPrice, i18n.language)}</span>
+                  <span>{t('listing.booking.subtotal', { price: formatPrice(listing.weekdayPrice), nights: weekdayNights })}</span>
+                  <span>{formatPrice(weekdayNights * listing.weekdayPrice)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>{t('listing.booking.subtotal', { price: formatPrice(listing.weekendPrice, i18n.language), nights: weekendNights })}</span>
-                  <span>{formatPrice(weekendNights * listing.weekendPrice, i18n.language)}</span>
+                  <span>{t('listing.booking.subtotal', { price: formatPrice(listing.weekendPrice), nights: weekendNights })}</span>
+                  <span>{formatPrice(weekendNights * listing.weekendPrice)}</span>
                 </div>
               </>
             ) : (
               <div className="flex justify-between">
-                <span>{t('listing.booking.subtotal', { price: formatPrice(weekendNights > 0 ? listing.weekendPrice : listing.weekdayPrice, i18n.language), nights })}</span>
-                <span>{formatPrice(subtotal, i18n.language)}</span>
+                <span>{t('listing.booking.subtotal', { price: formatPrice(weekendNights > 0 ? listing.weekendPrice : listing.weekdayPrice), nights })}</span>
+                <span>{formatPrice(subtotal)}</span>
               </div>
             )}
             <div className="flex justify-between border-t border-neutral-200 pt-2 font-semibold text-neutral-900">
               <span>{t('listing.booking.total')}</span>
-              <span>{formatPrice(subtotal, i18n.language)}</span>
+              <span>{formatPrice(subtotal)}</span>
             </div>
           </div>
         )}

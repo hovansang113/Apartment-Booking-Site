@@ -1,25 +1,28 @@
 const { PaymentStatus, BookingStatus } = require('@prisma/client');
 const prisma = require('../config/prisma');
+const gateway = require('../config/braintree');
 const AppError = require('../utils/appError');
-const {
-  signVnpayParams,
-  sortAndEncodeParams,
-  toQueryString,
-  formatVnpayDate,
-  verifySignature,
-} = require('../utils/vnpay.util');
-const { stripVietnameseDiacritics } = require('../utils/text.util');
 
-const VNPAY_VERSION = '2.1.0';
-const VNPAY_COMMAND = 'pay';
-const VNPAY_CURR_CODE = 'VND';
-const VNPAY_ORDER_TYPE = 'other'; // ma loai hang hoa chung, VNPay khong bat buoc phai khop danh muc that
+// Trang thai giao dich Braintree coi la "thanh cong" (thang duoc uy quyen -
+// authorized - hoac da gui di settlement/da settle). "processor_declined"/
+// "gateway_rejected"/... deu KHONG nam trong danh sach nay -> coi la that bai.
+const SUCCESS_STATUSES = ['authorized', 'submitted_for_settlement', 'settling', 'settled'];
 
-// REQ_07 Phase 3: tao URL redirect sang trang thanh toan VNPay Sandbox cho 1
-// booking dang cho thanh toan. Dung lai dung `vnpTxnRef` da sinh san luc tao
-// booking (Phase 2) - khong tao moi o day, vi 1 Payment chi duoc phep co 1
-// txn ref co dinh (VNPay yeu cau khong trung vnp_TxnRef trong ngay).
-async function createPaymentUrl({ bookingId, ipAddr, locale }) {
+// Client token de FE khoi tao Braintree Drop-in UI (hien form nhap the +
+// challenge 3D Secure). Khong gan customerId - khach dat phong khong can tai
+// khoan (giong luon POST /bookings), moi lan thanh toan la 1 giao dich doc lap.
+async function generateClientToken() {
+  const result = await gateway.clientToken.generate({});
+  return result.clientToken;
+}
+
+// Nhan payment method nonce tu Braintree Drop-in (FE da cho khach nhap the +
+// hoan tat challenge 3D Secure truoc khi goi ham nay - xem PaymentPage.jsx) -
+// goi thang gateway.transaction.sale() de tru tien that. Khac VNPay (tao URL
+// roi cho khach redirect + IPN callback rieng), Braintree la 1 luot goi API
+// dong bo: co ket qua thanh cong/that bai ngay trong response nay, khong can
+// trang "return" rieng nua.
+async function checkout({ bookingId, paymentMethodNonce, deviceData }) {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: { payment: true, listing: { select: { title: true } } },
@@ -34,107 +37,108 @@ async function createPaymentUrl({ bookingId, ipAddr, locale }) {
   if (booking.paymentExpiresAt && booking.paymentExpiresAt < new Date()) {
     throw new AppError(410, 'Đã hết thời gian giữ chỗ, vui lòng đặt lại');
   }
-
-  const tmnCode = process.env.VNPAY_TMN_CODE;
-  const hashSecret = process.env.VNPAY_HASH_SECRET;
-  const paymentUrl = process.env.VNPAY_PAYMENT_URL;
-  if (!tmnCode || !hashSecret || !paymentUrl) {
-    throw new AppError(500, 'Chưa cấu hình VNPAY_TMN_CODE/VNPAY_HASH_SECRET/VNPAY_PAYMENT_URL trong .env');
-  }
-
-  const now = new Date();
-  // vnp_OrderInfo bat buoc tieng Viet KHONG DAU, khong ky tu dac biet (spec
-  // VNPay) - tai dung ham bo dau da co san cho ten chu tai khoan ngan hang.
-  const orderInfo = stripVietnameseDiacritics(`Thanh toan booking ${booking.bookingCode} - ${booking.listing.title}`);
-
-  const params = {
-    vnp_Version: VNPAY_VERSION,
-    vnp_Command: VNPAY_COMMAND,
-    vnp_TmnCode: tmnCode,
-    vnp_Amount: Math.round(Number(booking.payment.amount) * 100),
-    vnp_CreateDate: formatVnpayDate(now),
-    vnp_CurrCode: VNPAY_CURR_CODE,
-    vnp_IpAddr: ipAddr,
-    vnp_Locale: locale === 'en' ? 'en' : 'vn',
-    vnp_OrderInfo: orderInfo,
-    vnp_OrderType: VNPAY_ORDER_TYPE,
-    vnp_ReturnUrl: `${process.env.CLIENT_URL}/booking/vnpay-return`,
-    vnp_TxnRef: booking.payment.vnpTxnRef,
-    vnp_ExpireDate: formatVnpayDate(booking.paymentExpiresAt || new Date(now.getTime() + 15 * 60 * 1000)),
-  };
-
-  const secureHash = signVnpayParams(params, hashSecret);
-  const query = toQueryString(sortAndEncodeParams(params));
-
-  return `${paymentUrl}?${query}&vnp_SecureHash=${secureHash}`;
-}
-
-// Phase 4 - xu ly ket qua thanh toan tu VNPay. Dung CHUNG cho ca 2 duong:
-// IPN that (VNPay goi server-to-server, la nguon xac nhan chinh thuc khi len
-// production co domain/ngrok that) VA "verify-return" (trinh duyet khach goi
-// khi quay ve /booking/vnpay-return). Ly do can ca 2 duong cung xu ly duoc:
-// VNPay Sandbox KHONG goi IPN vao duoc `localhost` luc dev, nen thieu duong
-// return-confirm thi khong test dc tron ven tren may local. Verify chu ky
-// that (khong tin mu query string) + idempotent (payment da xu ly roi thi
-// tra lai ket qua cu, khong xu ly lai) nen du ca IPN lan return cung goi vao
-// cung khong bi xu ly trung.
-async function confirmPayment(vnpParams) {
-  const hashSecret = process.env.VNPAY_HASH_SECRET;
-  if (!hashSecret) {
-    throw new AppError(500, 'Chưa cấu hình VNPAY_HASH_SECRET trong .env');
-  }
-
-  if (!verifySignature(vnpParams, hashSecret)) {
-    return { code: 'invalid_signature', message: 'Sai chữ ký, có thể URL đã bị sửa' };
-  }
-
-  const payment = await prisma.payment.findUnique({
-    where: { vnpTxnRef: vnpParams.vnp_TxnRef },
-    include: { booking: { include: { listing: { select: { title: true } } } } },
-  });
-  if (!payment) {
-    return { code: 'not_found', message: 'Không tìm thấy giao dịch' };
-  }
-
-  if (payment.status !== PaymentStatus.pending) {
+  // Idempotent - tranh submit 2 lan (double-click, F5 sau khi da thanh cong)
+  // vo tinh tru tien 2 lan.
+  if (booking.payment.status !== PaymentStatus.pending) {
     return {
       code: 'already_processed',
-      paymentStatus: payment.status,
-      bookingStatus: payment.booking.status,
-      booking: payment.booking,
+      paymentStatus: booking.payment.status,
+      bookingStatus: booking.status,
+      booking,
     };
   }
 
-  const expectedAmount = Math.round(Number(payment.amount) * 100);
-  if (Number(vnpParams.vnp_Amount) !== expectedAmount) {
-    return { code: 'invalid_amount', message: 'Số tiền không khớp' };
-  }
+  const result = await gateway.transaction.sale({
+    amount: Number(booking.payment.amount).toFixed(2),
+    paymentMethodNonce,
+    deviceData,
+    orderId: booking.bookingCode,
+    options: {
+      submitForSettlement: true,
+      // Bat buoc nonce phai da qua xac thuc 3D Secure that (khop yeu cau
+      // Jason "extra step of confirming the payment through app") - Braintree
+      // se tu choi giao dich neu FE goi requestPaymentMethod() ma bo qua
+      // challenge 3DS.
+      three_d_secure: { required: true },
+    },
+  });
 
-  const isSuccess = vnpParams.vnp_ResponseCode === '00' && vnpParams.vnp_TransactionStatus === '00';
+  const transaction = result.transaction;
+  const isSuccess = result.success && SUCCESS_STATUSES.includes(transaction?.status);
+  const liabilityShifted = transaction?.threeDSecureInfo?.liabilityShifted || false;
 
   const updatedPayment = await prisma.$transaction(async (tx) => {
     const p = await tx.payment.update({
-      where: { id: payment.id },
+      where: { id: booking.payment.id },
       data: {
         status: isSuccess ? PaymentStatus.success : PaymentStatus.failed,
-        vnpTransactionNo: vnpParams.vnp_TransactionNo || null,
-        vnpResponseCode: vnpParams.vnp_ResponseCode,
+        braintreeTransactionId: transaction?.id || null,
+        braintreeStatus: transaction?.status || result.message || 'failed',
+        threeDSecureVerified: liabilityShifted,
         confirmedAt: isSuccess ? new Date() : null,
       },
     });
     if (isSuccess) {
-      await tx.booking.update({ where: { id: payment.bookingId }, data: { status: BookingStatus.confirmed } });
+      await tx.booking.update({ where: { id: bookingId }, data: { status: BookingStatus.confirmed } });
     }
     return p;
   });
 
-  const bookingStatus = isSuccess ? BookingStatus.confirmed : payment.booking.status;
+  const bookingStatus = isSuccess ? BookingStatus.confirmed : booking.status;
   return {
-    code: 'ok',
+    code: isSuccess ? 'ok' : 'declined',
+    message: isSuccess ? null : transaction?.processorResponseText || result.message || 'Thanh toán bị từ chối',
     paymentStatus: updatedPayment.status,
     bookingStatus,
-    booking: { ...payment.booking, status: bookingStatus },
+    booking: { ...booking, status: bookingStatus },
   };
 }
 
-module.exports = { createPaymentUrl, confirmPayment };
+// GET /payments/braintree-webhook?bt_challenge=... - Braintree goi 1 lan luc
+// dang ky URL webhook trong Control Panel de xac minh quyen so huu endpoint.
+function verifyWebhook(challenge) {
+  return gateway.webhookNotification.verify(challenge);
+}
+
+// POST /payments/braintree-webhook - Braintree goi server-to-server khi co
+// cap nhat trang thai giao dich SAU luc sale() da tra ve (vd settlement that
+// bai sau khi da bao "authorized", tranh chap/dispute...). Khac voi luc tao
+// giao dich (dong bo, biet ket qua ngay), day la duong callback bat dong bo -
+// idempotent tuong tu confirmPayment cua VNPay truoc day: chi cap nhat neu
+// trang thai thuc su thay doi, khong xu ly lai giao dich da o trang thai cuoi.
+async function handleWebhook({ btSignature, btPayload }) {
+  const notification = await gateway.webhookNotification.parse(btSignature, btPayload);
+  const transactionId = notification.transaction?.id;
+  if (!transactionId) {
+    // Cac loai notification khac (disbursement, merchant account...) khong
+    // gan voi 1 giao dich booking cu the - bo qua, khong phai loi.
+    return { handled: false, kind: notification.kind };
+  }
+
+  const payment = await prisma.payment.findUnique({ where: { braintreeTransactionId: transactionId } });
+  if (!payment) {
+    return { handled: false, kind: notification.kind };
+  }
+
+  if (notification.kind === 'transaction_settlement_declined' && payment.status === PaymentStatus.success) {
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { status: PaymentStatus.failed, braintreeStatus: notification.transaction.status },
+    });
+    // Khong tu huy booking o day - can REQ_11/quy trinh huy+hoan tien that
+    // (chua lam, xem TODO.md), ghi nhan that bai o Payment truoc de admin/host
+    // biet ma xu ly tay.
+  } else if (notification.kind === 'transaction_settled' && payment.status !== PaymentStatus.success) {
+    await prisma.$transaction([
+      prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: PaymentStatus.success, braintreeStatus: notification.transaction.status, confirmedAt: new Date() },
+      }),
+      prisma.booking.update({ where: { id: payment.bookingId }, data: { status: BookingStatus.confirmed } }),
+    ]);
+  }
+
+  return { handled: true, kind: notification.kind };
+}
+
+module.exports = { generateClientToken, checkout, verifyWebhook, handleWebhook };

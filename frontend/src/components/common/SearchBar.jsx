@@ -14,7 +14,7 @@ const SHOW_LOCATION_SUGGESTIONS = false;
 
 // Dia diem/khach loc them o client (utils/filterListings.js) tren ket qua me tu GET /api/listings.
 export default function SearchBar() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [active, setActive] = useState(null);
@@ -42,7 +42,7 @@ export default function SearchBar() {
     };
   }, []);
 
-  const dateLabel = formatDateRange(dateRange, i18n.language);
+  const dateLabel = formatDateRange(dateRange);
 
   function handleSubmit(e) {
     e.preventDefault();

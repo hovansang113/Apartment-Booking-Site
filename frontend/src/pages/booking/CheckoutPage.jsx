@@ -4,15 +4,13 @@ import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { format, parseISO } from 'date-fns';
-import { vi, enUS } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import Seo from '../../components/common/Seo';
 import BookingStepper from '../../components/booking/BookingStepper';
 import { getListingById } from '../../services/listingService';
 import { createBooking } from '../../services/bookingService';
 import { nightlyBreakdown } from '../../utils/bookingPricing';
 import { formatPrice } from '../../utils/currency';
-
-const DATE_FNS_LOCALES = { vi, en: enUS };
 
 function Field({ label, required, error, children }) {
   return (
@@ -45,8 +43,8 @@ export default function CheckoutPage() {
   const { id: listingId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
-  const dateFnsLocale = DATE_FNS_LOCALES[i18n.language] || vi;
+  const { t } = useTranslation();
+  const dateFnsLocale = enUS;
 
   const checkIn = searchParams.get('checkIn') || '';
   const checkOut = searchParams.get('checkOut') || '';
@@ -272,26 +270,26 @@ export default function CheckoutPage() {
                   <p className="font-medium text-neutral-900">{listing.title}</p>
                   <p className="text-xs text-neutral-500">{guestLabel}</p>
                 </div>
-                <span className="whitespace-nowrap font-semibold text-neutral-900">{formatPrice(subtotal, i18n.language)}</span>
+                <span className="whitespace-nowrap font-semibold text-neutral-900">{formatPrice(subtotal)}</span>
               </div>
             </div>
 
             {nights > 0 && weekdayNights > 0 && weekendNights > 0 && (
               <div className="mt-3 space-y-1 border-t border-neutral-100 pt-3 text-xs text-neutral-500">
                 <div className="flex justify-between">
-                  <span>{t('listing.booking.subtotal', { price: formatPrice(listing.weekdayPrice, i18n.language), nights: weekdayNights })}</span>
-                  <span>{formatPrice(weekdayNights * listing.weekdayPrice, i18n.language)}</span>
+                  <span>{t('listing.booking.subtotal', { price: formatPrice(listing.weekdayPrice), nights: weekdayNights })}</span>
+                  <span>{formatPrice(weekdayNights * listing.weekdayPrice)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>{t('listing.booking.subtotal', { price: formatPrice(listing.weekendPrice, i18n.language), nights: weekendNights })}</span>
-                  <span>{formatPrice(weekendNights * listing.weekendPrice, i18n.language)}</span>
+                  <span>{t('listing.booking.subtotal', { price: formatPrice(listing.weekendPrice), nights: weekendNights })}</span>
+                  <span>{formatPrice(weekendNights * listing.weekendPrice)}</span>
                 </div>
               </div>
             )}
 
             <div className="mt-4 flex justify-between border-t border-neutral-200 pt-3 text-base font-semibold text-neutral-900">
               <span>{t('listing.booking.total')}</span>
-              <span>{formatPrice(subtotal, i18n.language)}</span>
+              <span>{formatPrice(subtotal)}</span>
             </div>
 
             <button

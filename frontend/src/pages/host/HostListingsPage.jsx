@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Seo from '../../components/common/Seo';
+import toast from 'react-hot-toast';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   PlusIcon,
@@ -8,53 +10,55 @@ import {
   ListViewIcon,
   CalculatorIcon,
 } from '../../components/common/icons';
+import { getHostListings, deleteListing } from '../../services/listingService';
+import { formatPrice } from '../../utils/currency';
 
-const INITIAL_LISTINGS = [
-  {
-    id: 'draft-1',
-    title: 'Nhà/phòng cho thuê thuộc loại hình Căn hộ của bạn đã được tạo vào 5 tháng 8, 2026',
-    address: 'Nơi lưu trú tại Ngũ Hành Sơn, Việt Nam',
-    status: 'in_progress',
-    statusLabel: 'Đang thực hiện',
-    statusColor: 'bg-amber-500 text-white',
-    badgeDot: 'bg-amber-500',
-    createdAt: '5 tháng 8, 2026',
-    isDraft: true,
-    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&auto=format&fit=crop',
-  },
-  {
-    id: 'listing-1',
-    title: 'Căn hộ Studio view biển Mỹ Khê sang trọng',
-    address: 'Quận Sơn Trà, Đà Nẵng, Việt Nam',
-    status: 'approved',
-    statusLabel: 'Đã xuất bản',
-    statusColor: 'bg-emerald-600 text-white',
-    badgeDot: 'bg-emerald-500',
-    createdAt: '1 tháng 8, 2026',
-    price: '1.200.000 ₫ / đêm',
-    isDraft: false,
-    image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&auto=format&fit=crop',
-  },
-  {
-    id: 'listing-2',
-    title: 'Villa biệt thự sân vườn phong cách Indochine',
-    address: 'Hội An, Quảng Nam, Việt Nam',
-    status: 'pending',
-    statusLabel: 'Đang chờ duyệt',
-    statusColor: 'bg-blue-600 text-white',
-    badgeDot: 'bg-blue-500',
-    createdAt: '7 tháng 8, 2026',
-    price: '3.500.000 ₫ / đêm',
-    isDraft: false,
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop',
-  },
-];
+const STATUS_BADGE_DOT = {
+  pending: 'bg-blue-500',
+  approved: 'bg-emerald-500',
+  suspended: 'bg-red-500',
+};
+
+function errorMessage(err, fallback) {
+  return err?.response?.data?.message || fallback;
+}
+
+function priceLabel(listing, t) {
+  const weekday = Number(listing.weekdayPrice);
+  const weekend = Number(listing.weekendPrice);
+  const from = Math.min(weekday, weekend);
+  return weekday !== weekend ? `${t('listing.priceFrom')} ${formatPrice(from)}` : formatPrice(from);
+}
 
 export default function HostListingsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [showTaxNotice, setShowTaxNotice] = useState(true);
+
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['host-listings'],
+    queryFn: getHostListings,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteListing,
+    onSuccess: () => {
+      toast.success(t('host.listings.deleteSuccess'));
+      queryClient.invalidateQueries({ queryKey: ['host-listings'] });
+    },
+    onError: (err) => toast.error(errorMessage(err, t('host.listings.deleteErrorFallback'))),
+  });
+
+  function handleDelete(e, listing) {
+    e.stopPropagation();
+    if (window.confirm(t('host.listings.deleteConfirm', { title: listing.title }))) {
+      deleteMutation.mutate(listing.id);
+    }
+  }
+
+  const listings = data || [];
 
   return (
     <>
@@ -125,7 +129,6 @@ export default function HostListingsPage() {
                 </button>
               </div>
 
-              {/* Plus (+) Button -> Navigates to full page /host/listings/setup (Matching Screenshot 2026-08-10 145303.png) */}
               <button
                 type="button"
                 onClick={() => navigate('/host/listings/setup')}
@@ -138,44 +141,71 @@ export default function HostListingsPage() {
             </div>
           </div>
 
-          {/* Listings Grid / List Display */}
-          {viewMode === 'grid' ? (
+          {isLoading ? (
+            <p className="py-16 text-center text-sm text-neutral-500">{t('host.listings.loading')}</p>
+          ) : isError ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
+              <p className="text-sm font-medium text-red-700">{errorMessage(error, t('host.listings.loadErrorFallback'))}</p>
+            </div>
+          ) : listings.length === 0 ? (
+            <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-10 text-center">
+              <p className="text-sm font-medium text-neutral-700">{t('host.listings.empty')}</p>
+              <p className="mt-1 text-sm text-neutral-500">{t('host.listings.emptyHint')}</p>
+              <button
+                type="button"
+                onClick={() => navigate('/host/listings/setup')}
+                className="mt-4 rounded-xl bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 transition-colors"
+              >
+                {t('host.listings.createNew')}
+              </button>
+            </div>
+          ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {INITIAL_LISTINGS.map((item) => (
+              {listings.map((listing) => (
                 <div
-                  key={item.id}
-                  onClick={() => {
-                    if (item.isDraft) navigate(`/host/listings/new?draftId=${item.id}&step=3`);
-                  }}
-                  className="group relative rounded-3xl border border-neutral-200 bg-white overflow-hidden shadow-sm hover:shadow-xl hover:border-neutral-400 transition-all cursor-pointer flex flex-col"
+                  key={listing.id}
+                  className="group relative rounded-3xl border border-neutral-200 bg-white overflow-hidden shadow-sm hover:shadow-xl hover:border-neutral-400 transition-all flex flex-col"
                 >
-                  {/* Image & Badge */}
                   <div className="relative aspect-4/3 overflow-hidden bg-neutral-100">
                     <img
-                      src={item.image}
-                      alt={item.title}
+                      src={listing.images?.[0]?.imageUrl || 'https://placehold.co/800x600?text=No+image'}
+                      alt={listing.title}
                       className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
 
-                    {/* Status Pill Badge */}
                     <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-white/95 backdrop-blur-md px-3 py-1 text-xs font-semibold text-neutral-900 shadow-md">
-                      <span className={`h-2 w-2 rounded-full ${item.badgeDot}`} />
-                      <span>{item.statusLabel}</span>
+                      <span className={`h-2 w-2 rounded-full ${STATUS_BADGE_DOT[listing.status]}`} />
+                      <span>{t(`admin.listings.tabs.${listing.status}`, { defaultValue: listing.status })}</span>
                     </div>
+
+                    <button
+                      type="button"
+                      disabled={deleteMutation.isPending}
+                      onClick={(e) => handleDelete(e, listing)}
+                      className="absolute top-3 right-3 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-red-600 shadow-md hover:bg-red-50 disabled:opacity-50"
+                    >
+                      {t('host.listings.delete')}
+                    </button>
                   </div>
 
-                  {/* Card Content */}
                   <div className="p-5 flex-1 flex flex-col justify-between">
                     <div>
-                      <h3 className="font-bold text-neutral-900 text-base line-clamp-2 leading-snug group-hover:text-brand-600 transition-colors">
-                        {item.title}
+                      <h3 className="font-bold text-neutral-900 text-base line-clamp-2 leading-snug">
+                        {listing.title}
                       </h3>
-                      <p className="mt-2 text-xs text-neutral-500">{item.address}</p>
+                      <p className="mt-2 text-xs text-neutral-500">{listing.address}</p>
+                      {listing.status === 'suspended' && listing.suspendReason && (
+                        <p className="mt-2 text-xs text-red-600">
+                          {t('admin.listings.suspendReasonLabel', { reason: listing.suspendReason })}
+                        </p>
+                      )}
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
-                      <span>{t('host.listings.createdAt', { date: item.createdAt })}</span>
-                      {item.price && <span className="font-bold text-neutral-900">{item.price}</span>}
+                      <span>{t('host.listings.createdAt', { date: new Date(listing.createdAt).toLocaleDateString() })}</span>
+                      <span className="font-bold text-neutral-900">
+                        {priceLabel(listing, t)} {t('listing.perNight')}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -183,32 +213,39 @@ export default function HostListingsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {INITIAL_LISTINGS.map((item) => (
+              {listings.map((listing) => (
                 <div
-                  key={item.id}
-                  onClick={() => {
-                    if (item.isDraft) navigate(`/host/listings/new?draftId=${item.id}&step=3`);
-                  }}
-                  className="flex items-center gap-4 rounded-2xl border border-neutral-200 bg-white p-4 hover:border-neutral-900 hover:shadow-md transition-all cursor-pointer"
+                  key={listing.id}
+                  className="flex items-center gap-4 rounded-2xl border border-neutral-200 bg-white p-4 hover:border-neutral-900 hover:shadow-md transition-all"
                 >
                   <img
-                    src={item.image}
-                    alt={item.title}
+                    src={listing.images?.[0]?.imageUrl || 'https://placehold.co/200x140?text=No+image'}
+                    alt={listing.title}
                     className="h-20 w-28 rounded-xl object-cover shrink-0"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`h-2 w-2 rounded-full ${item.badgeDot}`} />
-                      <span className="text-xs font-semibold text-neutral-500">{item.statusLabel}</span>
+                      <span className={`h-2 w-2 rounded-full ${STATUS_BADGE_DOT[listing.status]}`} />
+                      <span className="text-xs font-semibold text-neutral-500">
+                        {t(`admin.listings.tabs.${listing.status}`, { defaultValue: listing.status })}
+                      </span>
                     </div>
-                    <h3 className="font-bold text-neutral-900 text-sm truncate">{item.title}</h3>
-                    <p className="text-xs text-neutral-500 truncate">{item.address}</p>
+                    <h3 className="font-bold text-neutral-900 text-sm truncate">{listing.title}</h3>
+                    <p className="text-xs text-neutral-500 truncate">{listing.address}</p>
                   </div>
-                  {item.price && (
-                    <div className="text-right shrink-0">
-                      <span className="font-bold text-neutral-900 text-sm">{item.price}</span>
-                    </div>
-                  )}
+                  <div className="text-right shrink-0">
+                    <span className="font-bold text-neutral-900 text-sm">
+                      {priceLabel(listing, t)} {t('listing.perNight')}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={deleteMutation.isPending}
+                    onClick={(e) => handleDelete(e, listing)}
+                    className="shrink-0 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    {t('host.listings.delete')}
+                  </button>
                 </div>
               ))}
             </div>

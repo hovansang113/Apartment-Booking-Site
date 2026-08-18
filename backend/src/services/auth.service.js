@@ -133,8 +133,8 @@ async function updateTaxInfo(userId, { legalName, taxId, taxpayerType, idNumber 
 }
 
 // Host "Thong tin nhan tien" - tai khoan ngan hang de platform tra tien host
-// sau khi tru hoa hong (thanh toan qua VNPay vao tai khoan platform, chua co
-// he thong tra tien tu dong cho host - xem TODO.md). Ten chu tai khoan LUON
+// sau khi tru hoa hong (thanh toan qua Braintree vao tai khoan platform, chua
+// co he thong tra tien tu dong cho host - xem TODO.md). Ten chu tai khoan LUON
 // duoc chuan hoa KHONG DAU + VIET HOA truoc khi luu (chuan lien ngan hang
 // that, xem utils/text.util.js) - khong luu nguyen van host go vao vi rat de
 // bi tu choi luc chuyen khoan that neu con dau.

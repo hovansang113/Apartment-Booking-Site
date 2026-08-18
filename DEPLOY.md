@@ -73,8 +73,9 @@ nano backend/.env
 Trong `backend/.env`, các giá trị **bắt buộc phải đổi** trước khi chạy thật:
 - `DATABASE_URL` — host phải là `mysql` (tên service trong `docker-compose.yml`), khớp mật khẩu vừa đặt ở `.env` gốc: `mysql://root:<MYSQL_ROOT_PASSWORD>@mysql:3306/booking_platform`
 - `JWT_SECRET` — đổi thành chuỗi bí mật thật, không giữ giá trị mẫu
-- `CLIENT_URL` — domain/IP public thật (vd `http://154.91.1.216`), **không để `localhost`** — VNPay dùng giá trị này để redirect khách về sau khi thanh toán, và cũng dùng để sinh `robots.txt`/`sitemap.xml` (`seo.controller.js`). **Phải khớp `SITE_URL` đặt ở `.env` gốc** (dùng để bake vào `index.html` lúc build frontend) — 2 giá trị lệch nhau thì canonical URL trong `index.html` sẽ sai
-- `CLOUDINARY_*` / `VNPAY_TMN_CODE` / `VNPAY_HASH_SECRET` — vẫn còn placeholder tính tới 14/8 (xem TODO.md), điền khi có thật; thiếu thì app vẫn chạy được, chỉ riêng upload ảnh và luồng thanh toán VNPay thật sẽ báo lỗi
+- `CLIENT_URL` — domain/IP public thật (vd `http://154.91.1.216`), **không để `localhost`** — dùng cho CORS và để sinh `robots.txt`/`sitemap.xml` (`seo.controller.js`). **Phải khớp `SITE_URL` đặt ở `.env` gốc** (dùng để bake vào `index.html` lúc build frontend) — 2 giá trị lệch nhau thì canonical URL trong `index.html` sẽ sai
+- `CLOUDINARY_*` — vẫn còn placeholder tính tới 14/8 (xem TODO.md), điền khi có thật; thiếu thì app vẫn chạy được, chỉ riêng upload ảnh sẽ báo lỗi
+- `BRAINTREE_MERCHANT_ID` / `BRAINTREE_PUBLIC_KEY` / `BRAINTREE_PRIVATE_KEY` / `BRAINTREE_ENVIRONMENT` (18/8, thay VNPay) — key **production** thật do Jason cung cấp qua Slack, CHỈ điền trên server thật lúc deploy, không bao giờ commit vào repo hay dùng lúc dev local (dev dùng Sandbox key riêng, xem `backend/.env.example`). Sau khi deploy, phải vào **Braintree Control Panel → Webhooks** đăng ký URL `https://reservesmith.com/api/payments/braintree-webhook` (Braintree sẽ gọi GET xác minh trước, route đã có sẵn xử lý cả GET verify lẫn POST notification thật, xem `payment.controller.js`)
 
 Chạy:
 

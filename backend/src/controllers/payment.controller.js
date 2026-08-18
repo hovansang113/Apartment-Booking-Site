@@ -1,48 +1,35 @@
 const paymentService = require('../services/payment.service');
 const { ok } = require('../utils/response.util');
 
-// vnp_IpAddr yeu cau 7-45 ky tu (spec VNPay) - "::1" (IPv6 loopback luc dev
-// local) chi co 3 ky tu nen se bi VNPay tu choi, phai quy ve dang IPv4.
-function normalizeIp(ip) {
-  if (ip === '::1' || ip === '::ffff:127.0.0.1') return '127.0.0.1';
-  return ip.replace('::ffff:', '');
+// Cong khai - FE goi luc mount PaymentPage de khoi tao Braintree Drop-in UI.
+async function getClientToken(req, res) {
+  const clientToken = await paymentService.generateClientToken();
+  return ok(res, { clientToken });
 }
 
-// REQ_07 Phase 3 - tao URL redirect sang VNPay Sandbox cho 1 booking dang
-// cho thanh toan. Cong khai, khong can dang nhap (giong luon POST /bookings).
-async function createUrl(req, res) {
+// Cong khai (giong POST /bookings) - FE goi sau khi khach nhap the + hoan
+// tat challenge 3D Secure qua Drop-in, nhan duoc paymentMethodNonce.
+async function checkout(req, res) {
   const { bookingId } = req.params;
-  const { locale } = req.body;
-  const paymentUrl = await paymentService.createPaymentUrl({
-    bookingId,
-    ipAddr: normalizeIp(req.ip),
-    locale,
-  });
-  return ok(res, { paymentUrl });
-}
-
-// VNPay goi thang server-to-server (khong qua trinh duyet khach) - PHAI tra
-// dung dinh dang {RspCode, Message} theo spec, khong dung response.util
-// (khac format voi API thuong cua du an).
-const IPN_RESPONSE_MAP = {
-  invalid_signature: { RspCode: '97', Message: 'Invalid signature' },
-  not_found: { RspCode: '01', Message: 'Order not found' },
-  invalid_amount: { RspCode: '04', Message: 'Invalid amount' },
-  already_processed: { RspCode: '02', Message: 'Order already confirmed' },
-  ok: { RspCode: '00', Message: 'Confirm Success' },
-};
-
-async function handleIpn(req, res) {
-  const result = await paymentService.confirmPayment(req.query);
-  return res.status(200).json(IPN_RESPONSE_MAP[result.code] || { RspCode: '99', Message: 'Unknown error' });
-}
-
-// Trinh duyet khach goi khi VNPay redirect ve /booking/vnpay-return (FE goi
-// API nay voi dung query string nhan duoc). Dung CHUNG logic voi handleIpn o
-// tren - xem comment day du trong payment.service.js (confirmPayment).
-async function verifyReturn(req, res) {
-  const result = await paymentService.confirmPayment(req.query);
+  const { paymentMethodNonce, deviceData } = req.body;
+  const result = await paymentService.checkout({ bookingId, paymentMethodNonce, deviceData });
   return ok(res, result);
 }
 
-module.exports = { createUrl, handleIpn, verifyReturn };
+// Braintree goi GET 1 lan luc dang ky webhook URL trong Control Panel de xac
+// minh quyen so huu endpoint - phai tra ve dung chuoi text (khong phai JSON).
+async function verifyWebhook(req, res) {
+  const response = paymentService.verifyWebhook(req.query.bt_challenge);
+  return res.status(200).type('text/plain').send(response);
+}
+
+// Braintree goi POST server-to-server khi trang thai giao dich thay doi sau
+// luc tao (settlement, dispute...). Luon tra 200 nhanh de Braintree khong
+// retry lai lien tuc, ke ca khi notification khong khop giao dich nao trong
+// he thong (xem comment trong payment.service.js#handleWebhook).
+async function handleWebhook(req, res) {
+  await paymentService.handleWebhook({ btSignature: req.body.bt_signature, btPayload: req.body.bt_payload });
+  return res.status(200).send();
+}
+
+module.exports = { getClientToken, checkout, verifyWebhook, handleWebhook };

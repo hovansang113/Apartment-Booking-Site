@@ -1,14 +1,12 @@
 const router = require('express').Router();
 const paymentController = require('../controllers/payment.controller');
 
-// REQ_07 Phase 3 - cong khai, khong can dang nhap
-router.post('/:bookingId/create-url', paymentController.createUrl);
+// Cong khai, khong can dang nhap - giong luon POST /bookings
+router.get('/client-token', paymentController.getClientToken);
+router.post('/:bookingId/checkout', paymentController.checkout);
 
-// Phase 4 - VNPay goi server-to-server (khong hoat dong tren localhost luc
-// dev, can domain/ngrok that - xem comment trong payment.service.js)
-router.get('/vnpay-ipn', paymentController.handleIpn);
-
-// Phase 4 - trinh duyet khach goi khi quay ve trang VnpayReturnPage.jsx
-router.get('/verify-return', paymentController.verifyReturn);
+// Braintree goi truc tiep (GET de xac minh URL luc dang ky, POST cho notification that)
+router.get('/braintree-webhook', paymentController.verifyWebhook);
+router.post('/braintree-webhook', paymentController.handleWebhook);
 
 module.exports = router;
