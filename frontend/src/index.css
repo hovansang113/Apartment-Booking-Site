@@ -16,19 +16,22 @@
   scrollbar-width: none;
 }
 
-/* Thanh noi giua cac buoc (BookingStepper) "chay" tu trai sang phai khi 1
-   buoc vua hoan tat, thay vi doi mau tuc thi - transform-origin: left de
-   scaleX(0->1) lon dan tu diem bat dau, dung animation (khong phai
-   transition) de luon phat lai moi lan component mount voi buoc da xong. */
+/* Thanh noi giua cac buoc (BookingStepper) "chay" lien tuc tu trai sang phai
+   khi 1 buoc da hoan tat - transform-origin: left de scaleX lon dan tu diem
+   bat dau roi thu lai, lap vo han (infinite) theo dung yeu cau "chay lap lai
+   lien tuc", khong dung lai sau 1 lan nhu ban dau. */
 @keyframes stepper-line-fill {
-  from {
+  0% {
     transform: scaleX(0);
   }
-  to {
+  50% {
     transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0);
   }
 }
 .animate-stepper-line {
   transform-origin: left;
-  animation: stepper-line-fill 0.6s ease-out forwards;
+  animation: stepper-line-fill 1.8s ease-in-out infinite;
 }
