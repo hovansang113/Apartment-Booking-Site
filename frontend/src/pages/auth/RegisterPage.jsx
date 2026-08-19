@@ -7,6 +7,10 @@ import { register as registerApi } from '../../services/authService';
 import { GoogleIcon } from '../../components/common/icons';
 import Seo from '../../components/common/Seo';
 
+// An tam nut Google login theo yeu cau (19/8) - chua noi OAuth that, chi hien
+// toast "coming soon". Doi lai true khi da co OAuth that, khong xoa code.
+const SHOW_GOOGLE_LOGIN = false;
+
 export default function RegisterPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -184,22 +188,26 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        {/* Divider */}
-        <div className="my-6 flex items-center gap-4">
-          <div className="h-px flex-1 bg-neutral-200" />
-          <span className="text-xs font-semibold text-neutral-400 uppercase">{t('auth.or')}</span>
-          <div className="h-px flex-1 bg-neutral-200" />
-        </div>
+        {SHOW_GOOGLE_LOGIN && (
+          <>
+            {/* Divider */}
+            <div className="my-6 flex items-center gap-4">
+              <div className="h-px flex-1 bg-neutral-200" />
+              <span className="text-xs font-semibold text-neutral-400 uppercase">{t('auth.or')}</span>
+              <div className="h-px flex-1 bg-neutral-200" />
+            </div>
 
-        {/* Google OAuth Option Below */}
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          className="flex w-full items-center justify-center gap-3 rounded-xl border border-neutral-300 bg-white py-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors shadow-sm"
-        >
-          <GoogleIcon className="h-5 w-5" />
-          <span>{t('auth.continueWithGoogle')}</span>
-        </button>
+            {/* Google OAuth Option Below */}
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="flex w-full items-center justify-center gap-3 rounded-xl border border-neutral-300 bg-white py-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors shadow-sm"
+            >
+              <GoogleIcon className="h-5 w-5" />
+              <span>{t('auth.continueWithGoogle')}</span>
+            </button>
+          </>
+        )}
 
         <p className="mt-6 text-center text-sm text-neutral-600">
           {t('auth.register.hasAccount')}{' '}
