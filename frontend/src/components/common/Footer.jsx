@@ -25,7 +25,7 @@ export default function Footer() {
           </a>
         </nav>
         <p className="mt-4">
-          © {new Date().getFullYear()} Stayhub. {t('footer.disclaimer')}
+          © {new Date().getFullYear()} Reservesmith.
         </p>
       </div>
     </footer>

@@ -31,7 +31,7 @@ export default function AdminLayout({ children }) {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-8">
             <Link to="/admin/listings" className="text-xl font-bold text-neutral-900 tracking-tight">
-              stayhub <span className="text-brand-600">admin</span>
+              reservesmith <span className="text-brand-600">admin</span>
             </Link>
             <nav className="hidden sm:flex items-center gap-6 text-sm font-semibold">
               {TABS.map((tab) => {

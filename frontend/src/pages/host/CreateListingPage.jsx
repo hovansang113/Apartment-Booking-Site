@@ -149,7 +149,7 @@ export default function CreateListingPage() {
         <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
           <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
             <Link to="/host/today" className="shrink-0 text-2xl font-bold text-brand-600 tracking-tight">
-              stayhub
+              reservesmith
             </Link>
 
             <div className="flex items-center gap-3">

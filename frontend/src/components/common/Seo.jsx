@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-const SITE_NAME = 'Stayhub';
+const SITE_NAME = 'Reservesmith';
 
 export default function Seo({ title, description, path = '/', jsonLd, noindex = false }) {
   const fullTitle = title ? `${title} — ${SITE_NAME}` : `${SITE_NAME} — Book stays across the UK`;

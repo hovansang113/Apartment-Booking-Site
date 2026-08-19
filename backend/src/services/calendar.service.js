@@ -321,7 +321,7 @@ function buildIcs({ listingId, listingTitle, ranges }) {
   const dtstamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
   const lines = [
     'BEGIN:VCALENDAR',
-    'PRODID:-//Stayhub//Booking Platform//EN',
+    'PRODID:-//Reservesmith//Booking Platform//EN',
     'VERSION:2.0',
     'CALSCALE:GREGORIAN',
     `X-WR-CALNAME:${listingTitle}`,
@@ -330,7 +330,7 @@ function buildIcs({ listingId, listingTitle, ranges }) {
   ranges.forEach(({ start, end }, i) => {
     lines.push(
       'BEGIN:VEVENT',
-      `UID:stayhub-${listingId}-${i}@stayhub.local`,
+      `UID:reservesmith-${listingId}-${i}@reservesmith.local`,
       `DTSTAMP:${dtstamp}`,
       `DTSTART;VALUE=DATE:${start.replace(/-/g, '')}`,
       `DTEND;VALUE=DATE:${end.replace(/-/g, '')}`,

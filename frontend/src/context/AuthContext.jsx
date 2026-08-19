@@ -5,8 +5,8 @@ const AuthContext = createContext(null);
 
 const MOCK_HOST_USER = {
   id: 'demo-host-id',
-  fullName: 'Stayhub Host',
-  email: 'host@stayhub.co.uk',
+  fullName: 'Reservesmith Host',
+  email: 'host@reservesmith.com',
   role: 'host',
 };
 

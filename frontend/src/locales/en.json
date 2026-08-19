@@ -1,6 +1,6 @@
 {
   "common": {
-    "brand": "stayhub",
+    "brand": "reservesmith",
     "loggedOut": "Logged out successfully",
     "language": "Language",
     "close": "Close",
@@ -35,8 +35,7 @@
     "ariaLabel": "Footer",
     "help": "Help Center",
     "becomeHost": "List your place",
-    "about": "About Stayhub",
-    "disclaimer": "This is a learning project, not a real service."
+    "about": "About Reservesmith"
   },
   "search": {
     "ariaLabel": "Search stays",
@@ -78,8 +77,8 @@
   },
   "home": {
     "seoTitle": "Home",
-    "seoDescription": "Find and book apartments, houses, villas, and homestays across Vietnam.",
-    "srHeading": "Places to stay in Vietnam",
+    "seoDescription": "Find and book apartments, houses, villas, and homestays across the UK.",
+    "srHeading": "Places to stay in the UK",
     "noResults": "No stays match your search",
     "clearFilters": "Clear filters",
     "resultsAriaLabel": "Search results"
@@ -215,7 +214,7 @@
       "fillRequired": "Please enter your Email and Password",
       "welcomeBack": "Welcome back, {{name}}!",
       "genericError": "Login failed. Please check your Email/Password!",
-      "pageTitle": "Log in — Stayhub",
+      "pageTitle": "Log in — Reservesmith",
       "title": "Log in to your account",
       "subtitle": "Manage your rentals and bookings",
       "email": "Email address",
@@ -235,9 +234,9 @@
       "mustAgree": "You must agree to the Terms of Service to continue",
       "success": "Host account created successfully!",
       "genericError": "Registration failed, please try again!",
-      "pageTitle": "Sign up as a Host — Stayhub",
+      "pageTitle": "Sign up as a Host — Reservesmith",
       "title": "Sign up as a Host",
-      "subtitle": "Start hosting and earn extra income with Stayhub",
+      "subtitle": "Start hosting and earn extra income with Reservesmith",
       "fullName": "Full name",
       "fullNamePlaceholder": "John Smith",
       "email": "Email address",
@@ -251,7 +250,7 @@
       "terms": "Terms of Service",
       "and": "and",
       "privacy": "Privacy Policy",
-      "agreeSuffix": "of Stayhub.",
+      "agreeSuffix": "of Reservesmith.",
       "submitting": "Creating account...",
       "submit": "Sign up as a Host",
       "hasAccount": "Already have a host account?",
@@ -265,10 +264,10 @@
       "close": "Dismiss notice"
     },
     "becomeHost": {
-      "pageTitle": "Host your place on Stayhub",
-      "pageDescription": "List for free, control your own availability and pricing. Stayhub confirms bookings automatically whenever your calendar is open.",
+      "pageTitle": "Host your place on Reservesmith",
+      "pageDescription": "List for free, control your own availability and pricing. Reservesmith confirms bookings automatically whenever your calendar is open.",
       "heroTitle": "Host your place, earn extra income",
-      "heroBody": "List for free, control your availability and pricing. Stayhub auto-confirms bookings whenever your calendar is open — no need to approve every request.",
+      "heroBody": "List for free, control your availability and pricing. Reservesmith auto-confirms bookings whenever your calendar is open — no need to approve every request.",
       "heroImgAlt": "A host preparing to welcome guests",
       "start": "Get started",
       "notHostNotice": "Your current account isn't a host account yet — you can register a separate host account to create listings.",
@@ -283,7 +282,7 @@
       "loginNow": "Log in"
     },
     "today": {
-      "pageTitle": "Today — Stayhub Host",
+      "pageTitle": "Today — Reservesmith Host",
       "tabToday": "Today",
       "tabUpcoming": "Upcoming",
       "emptyTitle": "You don't have any bookings",
@@ -293,7 +292,7 @@
       "createListing": "Create new listing"
     },
     "listings": {
-      "pageTitle": "Your listings — Stayhub Host",
+      "pageTitle": "Your listings — Reservesmith Host",
       "heading": "Your listings",
       "subheading": "Manage, edit, and track the status of your rentals",
       "gridView": "Grid view",
@@ -311,7 +310,7 @@
       "deleteErrorFallback": "Couldn't delete this listing"
     },
     "setupChoice": {
-      "pageTitle": "Create a new listing — Stayhub Host",
+      "pageTitle": "Create a new listing — Reservesmith Host",
       "support": "Have a question?",
       "supportToast": "Our support team is available 24/7!",
       "exit": "Exit",
@@ -325,7 +324,7 @@
     }
   },
   "createListing": {
-    "pageTitle": "Create a new listing — Stayhub Host",
+    "pageTitle": "Create a new listing — Reservesmith Host",
     "support": "Have a question?",
     "supportToast": "Our support team will reach out to you shortly!",
     "saveExit": "Save and exit",
@@ -431,7 +430,7 @@
   },
   "hostCalendar": {
     "page": {
-      "pageTitle": "Calendar — Stayhub Host",
+      "pageTitle": "Calendar — Reservesmith Host",
       "heading": "Calendar",
       "subheading": "View bookings, set per-day pricing, manually block dates, and sync with external calendars.",
       "loadingListings": "Loading your listings...",
@@ -463,7 +462,7 @@
       "heading": "Connect an external calendar",
       "description": "Two-way sync with Airbnb/VRBO via an iCal (.ics) link — dates already booked on the external system will be automatically blocked here.",
       "step1Label": "Step 1 — Paste this link into the other system",
-      "step1Desc": "Copy the link below and paste it into Airbnb's or VRBO's \"Connect calendar\" section — so dates booked on Stayhub are also automatically blocked there.",
+      "step1Desc": "Copy the link below and paste it into Airbnb's or VRBO's \"Connect calendar\" section — so dates booked on Reservesmith are also automatically blocked there.",
       "copy": "Copy",
       "copied": "Link copied",
       "lastSynced": "Last synced {{date}}",
@@ -529,7 +528,7 @@
     }
   },
   "hostSettings": {
-    "pageTitle": "Tax information — Stayhub Host",
+    "pageTitle": "Tax information — Reservesmith Host",
     "heading": "Tax & legal information",
     "subheading": "Provide information to verify your host account, similar to how Airbnb collects tax information before enabling payouts.",
     "verificationStatus": "Verification status:",
@@ -575,9 +574,9 @@
     "bankSubmitSuccess": "Payout information saved",
     "bankSubmitErrorFallback": "Something went wrong, please try again later",
     "bankDisclaimer": "This information is only used to receive payments from the platform and is never shared with third parties.",
-    "bankPageTitle": "Payout information — Stayhub Host",
+    "bankPageTitle": "Payout information — Reservesmith Host",
     "hub": {
-      "pageTitle": "Account settings — Stayhub Host",
+      "pageTitle": "Account settings — Reservesmith Host",
       "heading": "Account settings",
       "subheading": "Manage your tax, legal, and payout account information.",
       "taxItemTitle": "Tax & legal info",
@@ -603,7 +602,7 @@
       "submitting": "Processing..."
     },
     "listings": {
-      "pageTitle": "Review listings — Stayhub Admin",
+      "pageTitle": "Review listings — Reservesmith Admin",
       "heading": "Review listings",
       "subheading": "View and process listings by status.",
       "tabs": { "pending": "Pending", "approved": "Approved", "suspended": "Suspended" },
@@ -620,7 +619,7 @@
       "suspendModalTitle": "Suspend listing"
     },
     "users": {
-      "pageTitle": "Users — Stayhub Admin",
+      "pageTitle": "Users — Reservesmith Admin",
       "heading": "Users",
       "subheading": "Manage accounts, lock/unlock when needed.",
       "colUser": "User",
@@ -641,7 +640,7 @@
       "lockModalTitle": "Lock account"
     },
     "tax": {
-      "pageTitle": "Tax profiles — Stayhub Admin",
+      "pageTitle": "Tax profiles — Reservesmith Admin",
       "heading": "Tax & legal profiles",
       "subheading": "Host profiles submitted and pending verification.",
       "loading": "Loading...",
