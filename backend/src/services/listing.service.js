@@ -89,7 +89,7 @@ async function assertOwnedByHost(listingId, hostId) {
 async function getMyListings(hostId) {
   return prisma.listing.findMany({
     where: { hostId },
-    include: { images: true },
+    include: { images: true, amenities: true },
     orderBy: { createdAt: 'desc' },
   });
 }

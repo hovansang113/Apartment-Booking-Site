@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Seo from '../../components/common/Seo';
 import toast from 'react-hot-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -178,14 +178,23 @@ export default function HostListingsPage() {
                       <span>{t(`admin.listings.tabs.${listing.status}`, { defaultValue: listing.status })}</span>
                     </div>
 
-                    <button
-                      type="button"
-                      disabled={deleteMutation.isPending}
-                      onClick={(e) => handleDelete(e, listing)}
-                      className="absolute top-3 right-3 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-red-600 shadow-md hover:bg-red-50 disabled:opacity-50"
-                    >
-                      {t('host.listings.delete')}
-                    </button>
+                    <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                      <Link
+                        to={`/host/listings/${listing.id}/edit`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-neutral-900 shadow-md hover:bg-neutral-100"
+                      >
+                        {t('host.listings.edit')}
+                      </Link>
+                      <button
+                        type="button"
+                        disabled={deleteMutation.isPending}
+                        onClick={(e) => handleDelete(e, listing)}
+                        className="rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-red-600 shadow-md hover:bg-red-50 disabled:opacity-50"
+                      >
+                        {t('host.listings.delete')}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="p-5 flex-1 flex flex-col justify-between">
@@ -238,6 +247,12 @@ export default function HostListingsPage() {
                       {priceLabel(listing, t)} {t('listing.perNight')}
                     </span>
                   </div>
+                  <Link
+                    to={`/host/listings/${listing.id}/edit`}
+                    className="shrink-0 rounded-lg border border-neutral-300 px-3 py-1.5 text-xs font-semibold text-neutral-900 hover:bg-neutral-100"
+                  >
+                    {t('host.listings.edit')}
+                  </Link>
                   <button
                     type="button"
                     disabled={deleteMutation.isPending}

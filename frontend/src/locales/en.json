@@ -307,7 +307,16 @@
       "delete": "Delete",
       "deleteConfirm": "Delete \"{{title}}\"? This can't be undone.",
       "deleteSuccess": "Listing deleted",
-      "deleteErrorFallback": "Couldn't delete this listing"
+      "deleteErrorFallback": "Couldn't delete this listing",
+      "edit": "Edit",
+      "editPageTitle": "Edit listing — Reservesmith Host",
+      "editHeading": "Edit listing",
+      "editSubheading": "Update your listing's details",
+      "editNotFound": "This listing could not be found",
+      "saveChanges": "Save changes",
+      "saving": "Saving...",
+      "editSuccess": "Listing updated",
+      "editErrorFallback": "Couldn't save changes, please try again later"
     },
     "setupChoice": {
       "pageTitle": "Create a new listing — Reservesmith Host",
