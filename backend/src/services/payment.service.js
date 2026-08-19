@@ -2,6 +2,7 @@ const { PaymentStatus, BookingStatus } = require('@prisma/client');
 const prisma = require('../config/prisma');
 const gateway = require('../config/braintree');
 const AppError = require('../utils/appError');
+const emailService = require('./email.service');
 
 // Trang thai giao dich Braintree coi la "thanh cong" (thang duoc uy quyen -
 // authorized - hoac da gui di settlement/da settle). "processor_declined"/
@@ -84,6 +85,13 @@ async function checkout({ bookingId, paymentMethodNonce, deviceData }) {
     return p;
   });
 
+  // Fire-and-forget - loi gui email khong duoc lam fail response thanh toan
+  // (khach da tra tien thanh cong roi, khong the tra ve loi vi ly do khong
+  // lien quan). Da co log loi rieng ben trong sendBookingEmails().
+  if (isSuccess) {
+    emailService.sendBookingEmails(bookingId).catch((err) => console.error('sendBookingEmails failed:', err));
+  }
+
   const bookingStatus = isSuccess ? BookingStatus.confirmed : booking.status;
   return {
     code: isSuccess ? 'ok' : 'declined',
@@ -136,6 +144,13 @@ async function handleWebhook({ btSignature, btPayload }) {
       }),
       prisma.booking.update({ where: { id: payment.bookingId }, data: { status: BookingStatus.confirmed } }),
     ]);
+    // Duong nay chi thuc su can khi checkout() chua kip gui email (vd giao
+    // dich "authorized" luc checkout() nhung chi that su "settled" sau qua
+    // webhook rieng) - checkout() da tu gui email cho truong hop pho bien hon
+    // (thanh toan thanh cong ngay). An toan goi lai vi Resend khong tu chan
+    // trung, chi la co the khach/host nhan 2 email cho 1 so truong hop hiem -
+    // chap nhan duoc, uu tien khong bo sot con hon trung.
+    emailService.sendBookingEmails(payment.bookingId).catch((err) => console.error('sendBookingEmails failed:', err));
   }
 
   return { handled: true, kind: notification.kind };
