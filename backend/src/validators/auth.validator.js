@@ -1,6 +1,5 @@
 const { body } = require('express-validator');
 const { UserRole, TaxpayerType } = require('@prisma/client');
-const { VIETNAM_BANK_CODES } = require('../utils/vietnamBanks');
 
 const EMAIL_MAX = 191; // matches VARCHAR(191) column
 const NAME_MAX = 191; // matches VARCHAR(191) column
@@ -60,24 +59,29 @@ const taxInfoRules = [
   body('idNumber').optional({ checkFalsy: true }).trim().isLength({ max: 20 }).withMessage('Invalid ID number'),
 ];
 
-// Host "Thong tin nhan tien" - tai khoan ngan hang de nhan tien host sau khi
-// tru hoa hong. bankAccountNumber chi thuan so (dung dinh dang lien ngan
-// hang that), bankCode phai nam trong danh sach co san (khong go tu do).
+// Host "Payout information" - tai khoan ngan hang UK de nhan tien host sau
+// khi tru hoa hong (18/8, doi tu he thong Viet Nam sang UK theo yeu cau
+// Jason). UK dung sort code (6 chu so, dinh danh ca ngan hang + chi nhanh -
+// khong con khai niem "chon ngan hang tu danh sach" nhu VN) + account number
+// (chuan 8 chu so). Cho phep nguoi dung go kem dau gach ngang (vd 12-34-56),
+// tu dong bo dau truoc khi kiem tra do dai.
+const sortCodeSanitizer = (value) => (typeof value === 'string' ? value.replace(/[^0-9]/g, '') : value);
+
 const bankInfoRules = [
-  body('bankCode')
-    .trim()
+  body('bankSortCode')
+    .customSanitizer(sortCodeSanitizer)
     .notEmpty()
-    .withMessage('Please select a bank')
-    .isIn(VIETNAM_BANK_CODES)
-    .withMessage('Invalid bank'),
+    .withMessage('Please enter a sort code')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('Sort code must be 6 digits'),
   body('bankAccountNumber')
     .trim()
     .notEmpty()
     .withMessage('Please enter an account number')
     .isNumeric()
     .withMessage('Account number must contain digits only')
-    .isLength({ min: 6, max: 19 })
-    .withMessage('Account number must be 6 to 19 digits'),
+    .isLength({ min: 8, max: 8 })
+    .withMessage('Account number must be 8 digits'),
   body('bankAccountHolder')
     .trim()
     .notEmpty()

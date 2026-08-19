@@ -37,5 +37,11 @@ router.put(
 ); // REQ_02
 
 router.delete('/:id', authenticate, authorize(UserRole.host), listingController.remove); // REQ_02
+router.delete(
+  '/:id/images/:imageId',
+  authenticate,
+  authorize(UserRole.host),
+  listingController.removeImage,
+);
 
 module.exports = router;

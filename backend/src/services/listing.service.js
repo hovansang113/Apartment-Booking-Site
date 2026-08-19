@@ -15,6 +15,54 @@ function uploadImageToCloudinary(file) {
   });
 }
 
+/**
+ * Trích xuất public_id từ Cloudinary URL để xóa ảnh trên Cloudinary
+ * Ví dụ URL: https://res.cloudinary.com/demo/image/upload/v1234567/booking-platform/listings/sample.jpg
+ * => public_id: booking-platform/listings/sample
+ */
+function extractPublicId(imageUrl) {
+  if (!imageUrl || !imageUrl.includes('res.cloudinary.com')) {
+    return null;
+  }
+  try {
+    const parts = imageUrl.split('/upload/');
+    if (parts.length < 2) return null;
+    let pathAfterUpload = parts[1];
+    pathAfterUpload = pathAfterUpload.replace(/^v\d+\//, '');
+    const lastDotIndex = pathAfterUpload.lastIndexOf('.');
+    if (lastDotIndex !== -1) {
+      return pathAfterUpload.substring(0, lastDotIndex);
+    }
+    return pathAfterUpload;
+  } catch (error) {
+    console.error('Error extracting Cloudinary public_id:', error);
+    return null;
+  }
+}
+
+/**
+ * Xóa 1 ảnh trên Cloudinary
+ */
+async function deleteImageFromCloudinary(imageUrl) {
+  const publicId = extractPublicId(imageUrl);
+  if (!publicId) return;
+  try {
+    const result = await cloudinary.uploader.destroy(publicId);
+    console.log(`Cloudinary destroy [${publicId}]:`, result);
+    return result;
+  } catch (error) {
+    console.error(`Failed to delete Cloudinary image [${publicId}]:`, error);
+  }
+}
+
+/**
+ * Xóa nhiều ảnh trên Cloudinary
+ */
+async function deleteMultipleImagesFromCloudinary(imageUrls) {
+  if (!imageUrls || !imageUrls.length) return;
+  await Promise.all(imageUrls.map((url) => deleteImageFromCloudinary(url)));
+}
+
 async function uploadImages(files) {
   const urls = await Promise.all(files.map(uploadImageToCloudinary));
   return urls.map((imageUrl, index) => ({ imageUrl, sortOrder: index }));
@@ -155,7 +203,41 @@ async function deleteListing({ listingId, hostId }) {
     throw new AppError(409, 'Cannot delete a listing that already has bookings');
   }
 
+  // Lấy tất cả ảnh thuộc về listing này trước khi xóa
+  const existingImages = await prisma.listingImage.findMany({
+    where: { listingId },
+    select: { imageUrl: true },
+  });
+
+  // Xóa bài đăng trong DB
   await prisma.listing.delete({ where: { id: listingId } });
+
+  // Tự động xóa các ảnh tương ứng trên Cloudinary
+  const imageUrls = existingImages.map((img) => img.imageUrl);
+  deleteMultipleImagesFromCloudinary(imageUrls).catch((err) => {
+    console.error('Background Cloudinary cleanup error on delete listing:', err);
+  });
+}
+
+// Host xóa 1 ảnh riêng lẻ thuộc về bài đăng
+async function deleteListingImage({ listingId, imageId, hostId }) {
+  await assertOwnedByHost(listingId, hostId);
+
+  const image = await prisma.listingImage.findFirst({
+    where: { id: imageId, listingId },
+  });
+
+  if (!image) {
+    throw new AppError(404, 'Image not found');
+  }
+
+  await prisma.listingImage.delete({ where: { id: imageId } });
+
+  deleteImageFromCloudinary(image.imageUrl).catch((err) => {
+    console.error('Background Cloudinary cleanup error on delete image:', err);
+  });
+
+  return { success: true };
 }
 
 module.exports = {
@@ -165,4 +247,6 @@ module.exports = {
   createListing,
   updateListing,
   deleteListing,
+  deleteListingImage,
+  deleteImageFromCloudinary,
 };

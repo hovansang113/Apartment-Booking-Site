@@ -5,12 +5,13 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { updateBankInfo } from '../../services/authService';
-import { VIETNAM_BANKS } from '../../data/vietnamBanks';
-import { normalizeBankAccountHolder } from '../../utils/vietnameseText';
 import { ChevronLeftIcon } from '../../components/common/icons';
 
-function bankName(code) {
-  return VIETNAM_BANKS.find((b) => b.code === code)?.name || code;
+// UK sort code: 6 chu so, hien thi dang XX-XX-XX cho de doc (giong hau het
+// form ngan hang UK that) - luu/gui len backend deu la 6 chu so thuan, chi
+// format luc hien thi.
+function formatSortCode(digits) {
+  return digits.replace(/(\d{2})(?=\d)/g, '$1-');
 }
 
 function maskAccountNumber(num) {
@@ -19,13 +20,14 @@ function maskAccountNumber(num) {
   return `•••• ${last4}`;
 }
 
-// Host "Thong tin nhan tien" - tai khoan ngan hang de nhan payout sau khi
-// tru hoa hong nen tang. Xem HostTaxSettingsPage.jsx cho phan thue/giay to.
+// Host "Payout information" - tai khoan ngan hang UK de nhan payout sau khi
+// tru hoa hong nen tang (18/8, doi tu he thong VN sang UK theo yeu cau
+// Jason - site chi phuc vu UK). Xem HostTaxSettingsPage.jsx cho phan thue/giay to.
 export default function HostPayoutSettingsPage() {
   const { t } = useTranslation();
   const { user, login } = useAuth();
 
-  const [bankCode, setBankCode] = useState('');
+  const [bankSortCode, setBankSortCode] = useState('');
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [bankAccountHolder, setBankAccountHolder] = useState('');
   const [savingBank, setSavingBank] = useState(false);
@@ -33,7 +35,7 @@ export default function HostPayoutSettingsPage() {
 
   useEffect(() => {
     if (user) {
-      setBankCode(user.bankCode || '');
+      setBankSortCode(user.bankSortCode || '');
       setBankAccountNumber(user.bankAccountNumber || '');
       setBankAccountHolder(user.bankAccountHolder || '');
     }
@@ -44,7 +46,7 @@ export default function HostPayoutSettingsPage() {
 
   async function handleBankSubmit(e) {
     e.preventDefault();
-    if (!bankCode || !bankAccountNumber.trim() || !bankAccountHolder.trim()) {
+    if (bankSortCode.length !== 6 || bankAccountNumber.length !== 8 || !bankAccountHolder.trim()) {
       toast.error(t('hostSettings.bankFillRequired'));
       return;
     }
@@ -52,8 +54,8 @@ export default function HostPayoutSettingsPage() {
     try {
       setSavingBank(true);
       const res = await updateBankInfo({
-        bankCode,
-        bankAccountNumber: bankAccountNumber.trim(),
+        bankSortCode,
+        bankAccountNumber,
         bankAccountHolder: bankAccountHolder.trim(),
       });
       login(res.user);
@@ -67,7 +69,7 @@ export default function HostPayoutSettingsPage() {
   }
 
   function handleBankCancel() {
-    setBankCode(user?.bankCode || '');
+    setBankSortCode(user?.bankSortCode || '');
     setBankAccountNumber(user?.bankAccountNumber || '');
     setBankAccountHolder(user?.bankAccountHolder || '');
     setEditingBank(false);
@@ -92,7 +94,7 @@ export default function HostPayoutSettingsPage() {
           {!showBankForm ? (
             <div className="flex items-center justify-between rounded-2xl border border-neutral-200 p-5">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-neutral-900">{bankName(user.bankCode)}</p>
+                <p className="text-sm font-semibold text-neutral-900">{formatSortCode(user.bankSortCode)}</p>
                 <p className="mt-0.5 text-sm text-neutral-500">
                   {t('hostSettings.bankSummaryAccount', {
                     masked: maskAccountNumber(user.bankAccountNumber),
@@ -110,26 +112,21 @@ export default function HostPayoutSettingsPage() {
             </div>
           ) : (
             <form onSubmit={handleBankSubmit} className="space-y-4">
-              <div className="rounded-2xl border border-neutral-200 p-5">
-                <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1.5">
-                  {t('hostSettings.bankLabel')} <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={bankCode}
-                  onChange={(e) => setBankCode(e.target.value)}
-                  className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm outline-none focus:border-neutral-900"
-                >
-                  <option value="">{t('hostSettings.bankPlaceholder')}</option>
-                  {VIETNAM_BANKS.map((b) => (
-                    <option key={b.code} value={b.code}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <div className="overflow-hidden rounded-2xl border border-neutral-200">
                 <div className="p-5">
+                  <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1.5">
+                    {t('hostSettings.bankSortCodeLabel')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={formatSortCode(bankSortCode)}
+                    onChange={(e) => setBankSortCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder={t('hostSettings.bankSortCodePlaceholder')}
+                    className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none focus:border-neutral-900"
+                  />
+                </div>
+                <div className="border-t border-neutral-200 p-5">
                   <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1.5">
                     {t('hostSettings.bankAccountNumberLabel')} <span className="text-red-500">*</span>
                   </label>
@@ -137,7 +134,7 @@ export default function HostPayoutSettingsPage() {
                     type="text"
                     inputMode="numeric"
                     value={bankAccountNumber}
-                    onChange={(e) => setBankAccountNumber(e.target.value.replace(/\D/g, ''))}
+                    onChange={(e) => setBankAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 8))}
                     placeholder={t('hostSettings.bankAccountNumberPlaceholder')}
                     className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none focus:border-neutral-900"
                   />
@@ -153,12 +150,6 @@ export default function HostPayoutSettingsPage() {
                     placeholder={t('hostSettings.bankAccountHolderPlaceholder')}
                     className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none focus:border-neutral-900"
                   />
-                  <p className="mt-1.5 text-xs text-neutral-400">{t('hostSettings.bankAccountHolderHint')}</p>
-                  {bankAccountHolder.trim() && (
-                    <p className="mt-1 text-xs font-semibold text-neutral-600">
-                      {t('hostSettings.bankAccountHolderPreview', { name: normalizeBankAccountHolder(bankAccountHolder) })}
-                    </p>
-                  )}
                 </div>
               </div>
 

@@ -4,7 +4,6 @@ const { UserRole, UserStatus } = require('@prisma/client');
 const prisma = require('../config/prisma');
 const { signToken } = require('../utils/jwt.util');
 const AppError = require('../utils/appError');
-const { normalizeBankAccountHolder } = require('../utils/text.util');
 
 const SALT_ROUNDS = 10;
 
@@ -132,19 +131,19 @@ async function updateTaxInfo(userId, { legalName, taxId, taxpayerType, idNumber 
   return sanitizeUser(user);
 }
 
-// Host "Thong tin nhan tien" - tai khoan ngan hang de platform tra tien host
-// sau khi tru hoa hong (thanh toan qua Braintree vao tai khoan platform, chua
-// co he thong tra tien tu dong cho host - xem TODO.md). Ten chu tai khoan LUON
-// duoc chuan hoa KHONG DAU + VIET HOA truoc khi luu (chuan lien ngan hang
-// that, xem utils/text.util.js) - khong luu nguyen van host go vao vi rat de
-// bi tu choi luc chuyen khoan that neu con dau.
-async function updateBankInfo(userId, { bankCode, bankAccountNumber, bankAccountHolder }) {
+// Host "Payout information" - tai khoan ngan hang UK de platform tra tien
+// host sau khi tru hoa hong (thanh toan qua Braintree vao tai khoan platform,
+// chua co he thong tra tien tu dong cho host - xem TODO.md). Sort code +
+// account number la chuan UK, khong can chuan hoa/bo dau ten chu tai khoan
+// nhu he thong VN truoc day (UK Faster Payments/BACS khong bat buoc ten
+// KHONG DAU nhu Napas).
+async function updateBankInfo(userId, { bankSortCode, bankAccountNumber, bankAccountHolder }) {
   const user = await prisma.user.update({
     where: { id: userId },
     data: {
-      bankCode,
+      bankSortCode,
       bankAccountNumber,
-      bankAccountHolder: normalizeBankAccountHolder(bankAccountHolder),
+      bankAccountHolder: bankAccountHolder.trim(),
     },
   });
   return sanitizeUser(user);

@@ -105,7 +105,7 @@ model User {
   idNumber            String?             @map("id_number")
   verificationStatus  VerificationStatus  @default(unverified) @map("verification_status")
   verificationNote    String?             @map("verification_note") @db.Text
-  bankCode            String?             @map("bank_code")
+  bankSortCode        String?             @map("bank_sort_code")
   bankAccountNumber   String?             @map("bank_account_number")
   bankAccountHolder   String?             @map("bank_account_holder")
   lockedReason        String?             @map("locked_reason") @db.Text

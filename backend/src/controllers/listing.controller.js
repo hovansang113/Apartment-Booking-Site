@@ -100,4 +100,11 @@ async function remove(req, res) {
   return ok(res, null, 'Listing deleted successfully');
 }
 
-module.exports = { mine, list, getOne, create, update, remove };
+// Host deletes a single image from a listing
+async function removeImage(req, res) {
+  const { id: listingId, imageId } = req.params;
+  await listingService.deleteListingImage({ listingId, imageId, hostId: req.user.id });
+  return ok(res, null, 'Image deleted successfully');
+}
+
+module.exports = { mine, list, getOne, create, update, remove, removeImage };

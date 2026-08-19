@@ -47,10 +47,10 @@ async function updateTaxInfo(req, res) {
   return ok(res, { user }, 'Submitted, awaiting verification');
 }
 
-// Host "Thong tin nhan tien" - tai khoan ngan hang de nhan payout
+// Host "Payout information" - tai khoan ngan hang UK de nhan payout
 async function updateBankInfo(req, res) {
-  const { bankCode, bankAccountNumber, bankAccountHolder } = req.body;
-  const user = await authService.updateBankInfo(req.user.id, { bankCode, bankAccountNumber, bankAccountHolder });
+  const { bankSortCode, bankAccountNumber, bankAccountHolder } = req.body;
+  const user = await authService.updateBankInfo(req.user.id, { bankSortCode, bankAccountNumber, bankAccountHolder });
   return ok(res, { user }, 'Payout details saved');
 }
 
