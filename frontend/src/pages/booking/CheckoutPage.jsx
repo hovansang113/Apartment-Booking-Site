@@ -287,9 +287,16 @@ export default function CheckoutPage() {
               </div>
             )}
 
+            {listing.cleaningFee > 0 && (
+              <div className="mt-3 flex justify-between border-t border-neutral-100 pt-3 text-xs text-neutral-500">
+                <span>{t('listing.booking.cleaningFee')}</span>
+                <span>{formatPrice(listing.cleaningFee)}</span>
+              </div>
+            )}
+
             <div className="mt-4 flex justify-between border-t border-neutral-200 pt-3 text-base font-semibold text-neutral-900">
               <span>{t('listing.booking.total')}</span>
-              <span>{formatPrice(subtotal)}</span>
+              <span>{formatPrice(subtotal + listing.cleaningFee)}</span>
             </div>
 
             <button

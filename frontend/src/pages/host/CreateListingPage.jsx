@@ -47,6 +47,7 @@ export default function CreateListingPage() {
   const [description, setDescription] = useState('');
   const [weekdayPrice, setWeekdayPrice] = useState(45);
   const [weekendPrice, setWeekendPrice] = useState(45);
+  const [cleaningFee, setCleaningFee] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function toggleAmenity(id) {
@@ -117,6 +118,7 @@ export default function CreateListingPage() {
       formData.append('address', address.trim());
       formData.append('weekdayPrice', weekdayPrice);
       formData.append('weekendPrice', weekendPrice);
+      formData.append('cleaningFee', cleaningFee);
       formData.append('guestCapacity', guestCapacity);
       formData.append('bedrooms', bedrooms);
       formData.append('beds', beds);
@@ -541,6 +543,24 @@ export default function CreateListingPage() {
                 </p>
               </div>
 
+              <div className="max-w-xl mx-auto mb-10 rounded-2xl border border-neutral-200 p-6 bg-white text-center shadow-sm">
+                <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+                  {t('createListing.step6.cleaningFeeLabel')}
+                </p>
+                <p className="text-xs text-neutral-400 mb-2">{t('createListing.step6.cleaningFeeHint')}</p>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-2xl font-bold text-neutral-900">£</span>
+                  <input
+                    type="number"
+                    step={5}
+                    min={0}
+                    value={cleaningFee}
+                    onChange={(e) => setCleaningFee(Number(e.target.value))}
+                    className="w-32 text-center text-3xl font-extrabold text-neutral-900 border-b-2 border-neutral-300 focus:border-neutral-900 outline-none pb-1"
+                  />
+                </div>
+              </div>
+
               {/* Summary Card */}
               <div className="rounded-2xl border border-neutral-200 p-6 bg-neutral-50">
                 <h3 className="font-bold text-neutral-900 mb-4">{t('createListing.step6.summaryHeading')}</h3>
@@ -551,6 +571,7 @@ export default function CreateListingPage() {
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryCapacity')}</span> {t('createListing.step6.summaryCapacityValue', { guests: guestCapacity, bedrooms, beds, bathrooms })}</p>
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryWeekdayPrice')}</span> {formatPrice(weekdayPrice)}</p>
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryWeekendPrice')}</span> {formatPrice(weekendPrice)}</p>
+                  <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryCleaningFee')}</span> {cleaningFee > 0 ? formatPrice(cleaningFee) : t('createListing.step6.summaryCleaningFeeNone')}</p>
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryAmenities')}</span> {t('createListing.step6.summaryAmenitiesValue', { count: selectedAmenities.length })}</p>
                   <p><span className="font-semibold text-neutral-900">{t('createListing.step6.summaryPhotos')}</span> {t('createListing.step6.summaryPhotosValue', { count: photos.length })}</p>
                 </div>

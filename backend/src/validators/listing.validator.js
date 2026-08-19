@@ -28,6 +28,13 @@ const weekendPriceRule = (optional) =>
     .isFloat({ gt: 0 })
     .withMessage('Weekend price must be a positive number');
 
+// Phi don dep co dinh, tuy chon - host khong bat buoc phai co (0/khong nhap
+// deu hop le), neu co thi phai >= 0.
+const cleaningFeeRule = body('cleaningFee')
+  .optional({ checkFalsy: true })
+  .isFloat({ min: 0 })
+  .withMessage('Cleaning fee must be a non-negative number');
+
 const intFieldRule = (field, optional) =>
   (optional ? body(field).optional() : body(field))
     .isInt({ min: 1 })
@@ -92,6 +99,7 @@ const createListingRules = [
   addressRule(false),
   weekdayPriceRule(false),
   weekendPriceRule(false),
+  cleaningFeeRule,
   intFieldRule('guestCapacity', false),
   intFieldRule('bedrooms', false),
   intFieldRule('beds', false),
@@ -109,6 +117,7 @@ const updateListingRules = [
   addressRule(true),
   weekdayPriceRule(true),
   weekendPriceRule(true),
+  cleaningFeeRule,
   intFieldRule('guestCapacity', true),
   intFieldRule('bedrooms', true),
   intFieldRule('beds', true),

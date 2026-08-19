@@ -222,7 +222,14 @@ export default function PaymentPage() {
           <p className="mt-1 text-xl font-bold tracking-widest text-neutral-900">{booking.bookingCode}</p>
         </div>
 
-        <div className="mt-4 flex justify-between border-t border-neutral-100 pt-3 text-sm font-semibold text-neutral-900">
+        {Number(booking.cleaningFee) > 0 && (
+          <div className="mt-4 flex justify-between border-t border-neutral-100 pt-3 text-xs text-neutral-500">
+            <span>{t('listing.booking.cleaningFee')}</span>
+            <span>{formatPrice(Number(booking.cleaningFee))}</span>
+          </div>
+        )}
+
+        <div className="mt-3 flex justify-between border-t border-neutral-100 pt-3 text-sm font-semibold text-neutral-900">
           <span>{t('listing.booking.total')}</span>
           <span>{formatPrice(Number(booking.totalPrice))}</span>
         </div>

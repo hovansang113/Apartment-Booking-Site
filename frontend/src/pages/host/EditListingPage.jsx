@@ -65,6 +65,7 @@ export default function EditListingPage() {
         address: listing.address || '',
         weekdayPrice: Number(listing.weekdayPrice),
         weekendPrice: Number(listing.weekendPrice),
+        cleaningFee: Number(listing.cleaningFee) || 0,
         guestCapacity: listing.guestCapacity,
         bedrooms: listing.bedrooms,
         beds: listing.beds,
@@ -253,6 +254,24 @@ export default function EditListingPage() {
                     className="w-full rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-neutral-900"
                   />
                 </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-neutral-200 p-5">
+              <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1.5">
+                {t('createListing.step6.cleaningFeeLabel')}
+              </label>
+              <p className="text-xs text-neutral-400 mb-2">{t('createListing.step6.cleaningFeeHint')}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-neutral-900">£</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={form.cleaningFee}
+                  onChange={(e) => setField('cleaningFee', Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-neutral-900"
+                />
               </div>
             </div>
 

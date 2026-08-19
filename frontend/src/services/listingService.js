@@ -19,6 +19,7 @@ function mapListing(raw) {
     pricePerNight: Math.min(weekdayPrice, weekendPrice),
     weekdayPrice,
     weekendPrice,
+    cleaningFee: Number(raw.cleaningFee) || 0,
     rating: null,
     guestCapacity: raw.guestCapacity,
     bedrooms: raw.bedrooms,

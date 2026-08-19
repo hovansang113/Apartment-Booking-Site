@@ -216,9 +216,15 @@ export default function BookingWidget({ listing, checkIn, checkOut }) {
                 <span>{formatPrice(subtotal)}</span>
               </div>
             )}
+            {listing.cleaningFee > 0 && (
+              <div className="flex justify-between">
+                <span>{t('listing.booking.cleaningFee')}</span>
+                <span>{formatPrice(listing.cleaningFee)}</span>
+              </div>
+            )}
             <div className="flex justify-between border-t border-neutral-200 pt-2 font-semibold text-neutral-900">
               <span>{t('listing.booking.total')}</span>
-              <span>{formatPrice(subtotal)}</span>
+              <span>{formatPrice(subtotal + listing.cleaningFee)}</span>
             </div>
           </div>
         )}

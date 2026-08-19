@@ -102,7 +102,13 @@ async function createBooking({
       phone: contactPhone,
     });
 
-    const totalPrice = await pricingService.calculateTotalPrice(tx, { listing, dates });
+    const nightlyTotal = await pricingService.calculateTotalPrice(tx, { listing, dates });
+    // Phi don dep cong 1 lan/booking (khong nhan theo so dem, khac tien phong) -
+    // luu snapshot vao Booking.cleaningFee, tinh hoa hong tren CA total gop
+    // (nightly + phi don), giong cach Airbnb/Booking.com xu ly hoa hong tren
+    // toan bo so tien khach tra, khong chi rieng tien phong.
+    const cleaningFee = Number(listing.cleaningFee);
+    const totalPrice = nightlyTotal + cleaningFee;
     const commissionAmount = Math.round(totalPrice * COMMISSION_RATE_PERCENT) / 100;
     const hostPayoutAmount = totalPrice - commissionAmount;
 
@@ -115,6 +121,7 @@ async function createBooking({
         adultsCount: adults,
         childrenCount: children || 0,
         totalPrice,
+        cleaningFee,
         status: BookingStatus.pending_payment,
         bookingCode: generateBookingCode(),
         commissionRate: COMMISSION_RATE_PERCENT,
