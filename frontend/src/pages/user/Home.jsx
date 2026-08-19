@@ -9,6 +9,10 @@ import { getPublicListings } from '../../services/listingService';
 import { mockListings } from '../../data/mockListings';
 import { filterListings } from '../../utils/filterListings';
 
+// An tam thanh loc category theo yeu cau Jason (19/8) - it listing that nen
+// chua can chia theo loai. Doi lai true khi can bat lai, khong xoa code.
+const SHOW_CATEGORY_TABS = false;
+
 function SkeletonCard() {
   return (
     <div className="animate-pulse">
@@ -60,7 +64,7 @@ export default function Home() {
     itemListElement: listings.map((listing, index) => ({
       '@type': 'ListItem',
       position: index + 1,
-      url: `https://example.com/listings/${listing.id}`,
+      url: `${window.location.origin}/listings/${listing.id}`,
       name: listing.title,
     })),
   };
@@ -74,7 +78,7 @@ export default function Home() {
         jsonLd={jsonLd}
       />
 
-      <CategoryTabs active={category} onChange={setCategory} />
+      {SHOW_CATEGORY_TABS && <CategoryTabs active={category} onChange={setCategory} />}
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <h1 className="sr-only">{t('home.srHeading')}</h1>
