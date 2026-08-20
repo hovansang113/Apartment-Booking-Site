@@ -18,6 +18,11 @@ const transporter = nodemailer.createTransport({
   auth: process.env.SMTP_USER
     ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
     : undefined,
+  // Postfix moi cai dung chung chi TLS tu ky (khong phai cua 1 CA that) cho
+  // STARTTLS co hoi - binh thuong voi 1 relay noi bo (container goi ve host
+  // qua mang rieng cua Docker, khong di qua internet cong khai), khong can
+  // xac thuc chung chi nhu 1 ket noi cong khai that.
+  tls: { rejectUnauthorized: false },
 });
 
 module.exports = transporter;
