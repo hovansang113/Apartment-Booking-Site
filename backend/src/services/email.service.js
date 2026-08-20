@@ -1,5 +1,5 @@
 const prisma = require('../config/prisma');
-const resend = require('../config/resend');
+const transporter = require('../config/mailer');
 
 // Gui email xac nhan booking (khach) + bao booking moi (host) ngay sau khi
 // thanh toan thanh cong (goi tu payment.service.js#checkout va #handleWebhook).
@@ -11,7 +11,7 @@ const resend = require('../config/resend');
 // nut "Send message" trong app (khong co he thong nhan tin) - thay bang hien
 // thang email/SDT lien he de host tu chu dong lien lac.
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'bookings@reservesmith.com';
+const FROM_EMAIL = process.env.SMTP_FROM_EMAIL || 'bookings@reservesmith.com';
 const BRAND_COLOR = '#0d9488';
 
 function formatGBP(amount) {
@@ -146,7 +146,7 @@ async function sendGuestConfirmation(booking) {
       </td>
     </tr>`;
 
-  return resend.emails.send({
+  return transporter.sendMail({
     from: `Reservesmith <${FROM_EMAIL}>`,
     to: booking.contactEmail,
     subject: `Booking confirmed — ${booking.listing.title}`,
@@ -220,7 +220,7 @@ async function sendHostNotification(booking) {
       </td>
     </tr>`;
 
-  return resend.emails.send({
+  return transporter.sendMail({
     from: `Reservesmith <${FROM_EMAIL}>`,
     to: booking.listing.host.email,
     subject: `New booking confirmed! ${booking.contactName} arrives ${formatDate(booking.checkIn)}`,

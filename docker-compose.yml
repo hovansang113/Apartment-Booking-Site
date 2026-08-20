@@ -23,6 +23,12 @@ services:
       - ./backend/.env
     expose:
       - '5000'
+    # De container goi duoc Postfix chay tren MAY HOST that (khong phai
+    # container khac) qua SMTP_HOST=host.docker.internal - xem DEPLOY.md muc
+    # "Postfix". Tren Linux can khai bao map nay ro, khong tu co san nhu
+    # Docker Desktop (Mac/Windows).
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     depends_on:
       mysql:
         condition: service_healthy

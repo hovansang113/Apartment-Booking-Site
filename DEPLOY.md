@@ -149,6 +149,97 @@ docker compose exec frontend nginx -s reload
 
 Nên đặt lịch (`crontab -e`) chạy 2 lệnh trên mỗi tháng 1 lần để không quên gia hạn.
 
+## Postfix (19/8, gửi email xác nhận booking — thay Resend theo yêu cầu Jason)
+
+Backend gửi email qua SMTP (`backend/src/config/mailer.js`) tới Postfix cài **thẳng trên máy host** (không phải container — Postfix không hợp chạy trong Docker vì cần systemd + ghi log/queue bền). `docker-compose.yml` đã có sẵn `extra_hosts: host.docker.internal:host-gateway` cho service `backend`, nên container gọi được vào Postfix trên host qua `SMTP_HOST=host.docker.internal`.
+
+**Lưu ý trước khi làm**: email tự gửi từ 1 VPS mới rất dễ rơi vào Spam/bị từ chối vì IP chưa có "danh tiếng" gửi mail — khác hẳn dịch vụ như Resend/SES đã có sẵn IP uy tín. Bắt buộc phải làm đủ SPF + DKIM + DMARC + PTR bên dưới, không chỉ cài Postfix xong là xong.
+
+### 1. Cài Postfix + OpenDKIM
+
+```bash
+apt-get update
+apt-get install -y postfix opendkim opendkim-tools
+# Luc cai se hoi "General type of mail configuration" - chon "Internet Site",
+# "System mail name" dien dung reservesmith.com
+```
+
+### 2. Cấu hình Postfix nhận request từ container (`/etc/postfix/main.cf`)
+
+```bash
+postconf -e "myhostname = reservesmith.com"
+postconf -e "mydomain = reservesmith.com"
+postconf -e "inet_interfaces = all"
+# CHI cho phep localhost + dai IP noi bo cua Docker duoc goi relay qua day -
+# thieu dong nay la thanh "open relay" cong khai, server se bi spam loi dung
+# va list den rat nhanh.
+postconf -e "mynetworks = 127.0.0.0/8, 172.16.0.0/12"
+postconf -e "milter_default_action = accept"
+postconf -e "milter_protocol = 6"
+postconf -e "smtpd_milters = inet:localhost:12301"
+postconf -e "non_smtpd_milters = inet:localhost:12301"
+systemctl restart postfix
+```
+
+### 3. Sinh khoá DKIM
+
+```bash
+mkdir -p /etc/opendkim/keys/reservesmith.com
+opendkim-genkey -b 2048 -d reservesmith.com -D /etc/opendkim/keys/reservesmith.com -s mail -v
+chown -R opendkim:opendkim /etc/opendkim/keys
+cat /etc/opendkim/keys/reservesmith.com/mail.txt   # noi dung ban ghi DNS DKIM can them, xem buoc 5
+```
+
+Cấu hình `/etc/opendkim.conf` (thêm/sửa các dòng):
+```
+Domain                  reservesmith.com
+KeyFile                 /etc/opendkim/keys/reservesmith.com/mail.private
+Selector                mail
+Socket                  inet:12301@localhost
+```
+
+```bash
+systemctl restart opendkim
+```
+
+### 4. Mở port 25 outbound
+
+```bash
+ufw allow out 25/tcp
+```
+
+Nhiều nhà cung cấp VPS **chặn sẵn port 25 ở tầng mạng** (ngoài firewall trong máy) để chống spam — nếu gửi thử vẫn không đi được dù đã mở `ufw`, cần liên hệ hỗ trợ nhà cung cấp VPS xin mở port 25 outbound cho IP server.
+
+### 5. Bản ghi DNS (thêm trong Cloudflare, domain `reservesmith.com`)
+
+| Loại | Tên | Giá trị |
+|---|---|---|
+| TXT | `@` | `v=spf1 ip4:154.91.1.216 ~all` |
+| TXT | `mail._domainkey` | nội dung trong `mail.txt` ở bước 3 (Cloudflare tự nối chuỗi bị cắt, dán nguyên) |
+| TXT | `_dmarc` | `v=DMARC1; p=quarantine; rua=mailto:admin@reservesmith.com` |
+
+**PTR (reverse DNS)** — không tự làm qua Cloudflare được vì đây là bản ghi phía nhà cung cấp VPS quản lý IP, phải vào control panel VPS (hoặc liên hệ hỗ trợ) đặt PTR của `154.91.1.216` trỏ về `reservesmith.com`. Thiếu bước này gần như chắc chắn bị Gmail/Outlook từ chối hoặc đưa vào Spam.
+
+### 6. Điền `.env` + deploy
+
+```bash
+sed -i \
+  -e 's/^SMTP_HOST=.*/SMTP_HOST=host.docker.internal/' \
+  -e 's/^SMTP_PORT=.*/SMTP_PORT=25/' \
+  backend/.env
+./deploy.sh
+```
+
+### 7. Test gửi thử
+
+```bash
+echo "Test email tu Postfix" | mail -s "Test" your-real-email@gmail.com
+# Kiem tra Postfix nhan dung request tu container:
+tail -f /var/log/mail.log
+```
+
+Gửi thử tới Gmail/Outlook thật rồi kiểm tra có vào hộp thư chính hay bị rơi Spam — nếu vẫn vào Spam sau khi đã làm đủ SPF/DKIM/DMARC/PTR, cần thêm thời gian "warm up" IP (gửi ít, tăng dần) trước khi các nhà cung cấp lớn tin tưởng IP mới.
+
 ## Chưa làm (ngoài phạm vi lần chuẩn bị này)
 
 - **CI/CD tự động** (vd GitHub Actions tự SSH deploy khi push `main`) — hiện đang deploy tay qua `deploy.sh`, có thể tự động hoá sau nếu cần.
