@@ -68,7 +68,7 @@ function MonthCalendar({ year, month, bookedSet, todayYMD, checkIn, checkOut, on
           } else if (isPast) {
             className += 'text-neutral-300 cursor-default';
           } else if (isBooked) {
-            className += 'bg-neutral-100 text-neutral-400 cursor-not-allowed relative overflow-hidden';
+            className += 'bg-red-50 text-red-400 cursor-not-allowed relative overflow-hidden';
           } else {
             className += 'text-neutral-800 hover:bg-teal-50 cursor-pointer';
           }
@@ -87,7 +87,7 @@ function MonthCalendar({ year, month, bookedSet, todayYMD, checkIn, checkOut, on
                 {isBooked && !isPast ? (
                   <span className="relative">
                     {date.getDate()}
-                    <span className="absolute inset-x-0 top-1/2 h-px bg-neutral-400 block" />
+                    <span className="absolute inset-x-0 top-1/2 h-px bg-red-400 block" />
                   </span>
                 ) : (
                   date.getDate()
@@ -134,8 +134,8 @@ export default function AvailabilityCalendar({ bookedRanges = [], checkIn, check
           {t('listing.calendar.selected')}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-4 h-4 rounded-full bg-neutral-100 inline-block relative overflow-hidden">
-            <span className="absolute inset-x-0 top-1/2 h-px bg-neutral-400 block" />
+          <span className="w-4 h-4 rounded-full bg-red-50 inline-block relative overflow-hidden">
+            <span className="absolute inset-x-0 top-1/2 h-px bg-red-400 block" />
           </span>
           {t('listing.calendar.booked')}
         </span>
