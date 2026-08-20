@@ -11,6 +11,7 @@ import BookingStepper from '../../components/booking/BookingStepper';
 import { getBookingById } from '../../services/bookingService';
 import { getClientToken, checkout } from '../../services/paymentService';
 import { formatPrice } from '../../utils/currency';
+import { CheckCircleIcon, SearchOffIcon } from '../../components/common/icons';
 
 // Dem nguoc toi paymentExpiresAt - chi de hien UI, KHONG tu huy booking o FE
 // (Phase 5 - job tu huy qua han van chua lam, xem TODO.md). Het gio o day chi
@@ -158,7 +159,7 @@ export default function PaymentPage() {
   if (isError || !booking) {
     return (
       <div className="mx-auto max-w-md px-4 py-20 text-center">
-        <p className="text-3xl">🔍</p>
+        <SearchOffIcon className="mx-auto h-10 w-10 text-neutral-300" />
         <p className="mt-2 text-lg font-semibold text-neutral-900">{t('payment.notFoundHeading')}</p>
         <button
           type="button"
@@ -177,7 +178,7 @@ export default function PaymentPage() {
   return (
     <div className="mx-auto max-w-md px-4 py-10">
       <Seo title={t('payment.pageTitle')} noindex />
-      <BookingStepper current="payment" />
+      <BookingStepper current="payment" completed={result?.status === 'success' || booking.status === 'confirmed'} />
 
       <h1 className="text-xl font-semibold text-neutral-900">{t('payment.heading')}</h1>
 
@@ -237,9 +238,18 @@ export default function PaymentPage() {
 
       {result?.status === 'success' ? (
         <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-4 text-center">
-          <p className="text-3xl">✅</p>
+          <CheckCircleIcon className="mx-auto h-10 w-10 text-green-600" />
           <p className="mt-2 text-sm font-semibold text-green-800">{t('payment.successHeading')}</p>
-          <p className="mt-1 text-sm text-green-700">{t('payment.successBody')}</p>
+          <p className="mt-1 text-sm text-green-700">
+            {t('payment.successBody', { email: booking.contactEmail })}
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="mt-4 rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-800"
+          >
+            {t('payment.backToHome')}
+          </button>
         </div>
       ) : (
         booking.status === 'confirmed' && (

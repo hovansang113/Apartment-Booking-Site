@@ -205,7 +205,8 @@
     "declinedFallback": "Payment was declined. Please check your card details and try again.",
     "threeDSecureNote": "You may be asked to confirm this payment through your bank's app.",
     "successHeading": "Payment successful!",
-    "successBody": "Your booking has been confirmed."
+    "successBody": "Your booking has been confirmed. A confirmation email with your booking details is on its way to {{email}}.",
+    "backToHome": "Back to home"
   },
   "auth": {
     "googleComingSoon": "Google sign-in is coming in a future release!",
