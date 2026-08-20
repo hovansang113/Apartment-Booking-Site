@@ -6,7 +6,7 @@ import { enUS } from 'date-fns/locale';
 import Seo from '../../components/common/Seo';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import { BookIllustration, CalculatorIcon } from '../../components/common/icons';
+import { BookIllustration, CalculatorIcon, CloseIcon } from '../../components/common/icons';
 import { getMyBookings } from '../../services/bookingService';
 import { formatDateRange } from '../../utils/formatDateRange';
 import { formatPrice } from '../../utils/currency';
@@ -73,7 +73,7 @@ function BookingDetail({ booking, hostName, onClose, t }) {
             className="rounded-full p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
             aria-label={t('host.today.close')}
           >
-            ✕
+            <CloseIcon className="h-4 w-4" />
           </button>
         </div>
 
@@ -187,7 +187,7 @@ export default function HostTodayPage() {
                 className="rounded-full p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
                 aria-label={t('host.taxNotice.close')}
               >
-                ✕
+                <CloseIcon className="h-4 w-4" />
               </button>
             </div>
           )}

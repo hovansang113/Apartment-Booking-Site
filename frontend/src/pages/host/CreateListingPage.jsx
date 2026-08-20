@@ -9,9 +9,13 @@ import {
   PlusIcon,
   MinusIcon,
   CloseIcon,
+  ChatIcon,
+  FileTextIcon,
+  CameraIcon,
 } from '../../components/common/icons';
 import { createListing as createListingApi } from '../../services/listingService';
 import { formatPrice } from '../../utils/currency';
+import logo from '../../assets/logo.png';
 
 const CATEGORY_IDS = ['apartment', 'house', 'villa', 'homestay', 'hotel_room'];
 const MAIN_AMENITY_IDS = ['wifi', 'tv', 'kitchen', 'washer', 'free_parking', 'air_conditioning', 'workspace'];
@@ -38,7 +42,7 @@ export default function CreateListingPage() {
 
   useEffect(() => {
     if (searchParams.get('draftId')) {
-      toast(t('createListing.draftToast'), { icon: '📝' });
+      toast(t('createListing.draftToast'), { icon: <FileTextIcon className="h-5 w-5 text-brand-600" /> });
     }
   }, [searchParams, t]);
 
@@ -150,14 +154,14 @@ export default function CreateListingPage() {
         {/* Top Minimal Header (Matching Header.jsx layout) */}
         <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
           <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            <Link to="/host/today" className="shrink-0 text-2xl font-bold text-brand-600 tracking-tight">
-              reservesmith
+            <Link to="/host/today" className="shrink-0">
+              <img src={logo} alt={t('common.brand')} className="h-8 w-auto sm:h-9" />
             </Link>
 
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => toast(t('createListing.supportToast'), { icon: '💬' })}
+                onClick={() => toast(t('createListing.supportToast'), { icon: <ChatIcon className="h-5 w-5 text-brand-600" /> })}
                 className="rounded-full border border-neutral-300 px-4 py-2 text-xs font-semibold text-neutral-700 hover:border-neutral-900 transition-colors"
               >
                 {t('createListing.support')}
@@ -418,7 +422,7 @@ export default function CreateListingPage() {
                   id="photo-upload-input"
                 />
                 <label htmlFor="photo-upload-input" className="cursor-pointer">
-                  <p className="text-4xl mb-2">📸</p>
+                  <CameraIcon className="mx-auto mb-2 h-10 w-10 text-neutral-400" />
                   <p className="font-bold text-neutral-900">{t('createListing.step4.dropzoneTitle')}</p>
                   <p className="text-xs text-neutral-500 mt-1">{t('createListing.step4.dropzoneSub')}</p>
                 </label>

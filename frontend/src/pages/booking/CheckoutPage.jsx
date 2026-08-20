@@ -11,6 +11,7 @@ import { getListingById } from '../../services/listingService';
 import { createBooking } from '../../services/bookingService';
 import { nightlyBreakdown } from '../../utils/bookingPricing';
 import { formatPrice } from '../../utils/currency';
+import { AlertTriangleIcon, ChevronRightIcon } from '../../components/common/icons';
 
 function Field({ label, required, error, children }) {
   return (
@@ -21,7 +22,7 @@ function Field({ label, required, error, children }) {
       {children}
       {error && (
         <p className="mt-1 flex items-center gap-1 text-xs text-red-600">
-          <span aria-hidden>⚠</span> {error}
+          <AlertTriangleIcon className="h-3.5 w-3.5 shrink-0" aria-hidden /> {error}
         </p>
       )}
     </div>
@@ -254,7 +255,7 @@ export default function CheckoutPage() {
                 <p className="text-xs text-neutral-400 capitalize">{format(checkInDate, 'EEEE', { locale: dateFnsLocale })}</p>
               </div>
               <div className="relative mx-1 h-px flex-1 bg-brand-500">
-                <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 text-brand-500">➜</span>
+                <ChevronRightIcon className="absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 translate-x-1/2 text-brand-500" />
               </div>
               <div className="text-right">
                 <p className="text-[10px] font-semibold uppercase text-neutral-400">{t('listing.booking.checkOut')}</p>

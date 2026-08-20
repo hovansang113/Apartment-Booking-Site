@@ -3,7 +3,8 @@ import Seo from '../../components/common/Seo';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import { ChevronRightIcon, HomePlusIcon } from '../../components/common/icons';
+import { ChevronRightIcon, HomePlusIcon, LightbulbIcon } from '../../components/common/icons';
+import logo from '../../assets/logo.png';
 
 export default function HostSetupChoicePage() {
   const { t } = useTranslation();
@@ -19,14 +20,14 @@ export default function HostSetupChoicePage() {
         {/* Top Minimal Header (Matching Header.jsx layout) */}
         <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
           <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            <Link to="/host/today" className="shrink-0 text-2xl font-bold text-brand-600 tracking-tight">
-              reservesmith
+            <Link to="/host/today" className="shrink-0">
+              <img src={logo} alt={t('common.brand')} className="h-8 w-auto sm:h-9" />
             </Link>
 
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => toast(t('host.setupChoice.supportToast'), { icon: '💡' })}
+                onClick={() => toast(t('host.setupChoice.supportToast'), { icon: <LightbulbIcon className="h-5 w-5 text-brand-600" /> })}
                 className="rounded-full border border-neutral-300 px-4 py-2 text-xs font-semibold text-neutral-700 hover:border-neutral-900 transition-colors"
               >
                 {t('host.setupChoice.support')}

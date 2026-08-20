@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { register as registerApi } from '../../services/authService';
-import { GoogleIcon } from '../../components/common/icons';
+import { GoogleIcon, LightbulbIcon } from '../../components/common/icons';
 import Seo from '../../components/common/Seo';
 import logoFull from '../../assets/logo-full.png';
 
@@ -30,7 +30,7 @@ export default function RegisterPage() {
 
   function handleGoogleLogin() {
     toast(t('auth.googleComingSoon'), {
-      icon: '💡',
+      icon: <LightbulbIcon className="h-5 w-5 text-brand-600" />,
     });
   }
 

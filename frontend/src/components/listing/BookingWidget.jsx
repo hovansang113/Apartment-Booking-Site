@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { format, parseISO } from 'date-fns';
 import { enUS } from 'date-fns/locale';
-import { StarIcon } from '../common/icons';
+import { StarIcon, PlusIcon, MinusIcon } from '../common/icons';
 import { nightlyBreakdown } from '../../utils/bookingPricing';
 import { formatPrice } from '../../utils/currency';
 
@@ -24,18 +24,18 @@ function Counter({ label, sub, value, onInc, onDec, disableInc, disableDec }) {
           type="button"
           onClick={onDec}
           disabled={disableDec}
-          className="w-7 h-7 rounded-full border border-neutral-300 text-neutral-600 flex items-center justify-center hover:border-neutral-500 disabled:opacity-30 disabled:cursor-default transition-colors text-lg leading-none"
+          className="w-7 h-7 rounded-full border border-neutral-300 text-neutral-600 flex items-center justify-center hover:border-neutral-500 disabled:opacity-30 disabled:cursor-default transition-colors"
         >
-          −
+          <MinusIcon className="h-3 w-3" />
         </button>
         <span className="w-4 text-center text-sm font-medium text-neutral-800">{value}</span>
         <button
           type="button"
           onClick={onInc}
           disabled={disableInc}
-          className="w-7 h-7 rounded-full border border-neutral-300 text-neutral-600 flex items-center justify-center hover:border-neutral-500 disabled:opacity-30 disabled:cursor-default transition-colors text-lg leading-none"
+          className="w-7 h-7 rounded-full border border-neutral-300 text-neutral-600 flex items-center justify-center hover:border-neutral-500 disabled:opacity-30 disabled:cursor-default transition-colors"
         >
-          +
+          <PlusIcon className="h-3 w-3" />
         </button>
       </div>
     </div>

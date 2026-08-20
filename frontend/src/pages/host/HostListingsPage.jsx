@@ -9,6 +9,7 @@ import {
   GridViewIcon,
   ListViewIcon,
   CalculatorIcon,
+  CloseIcon,
 } from '../../components/common/icons';
 import { getHostListings, deleteListing } from '../../services/listingService';
 import { formatPrice } from '../../utils/currency';
@@ -90,7 +91,7 @@ export default function HostListingsPage() {
                 className="rounded-full p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
                 aria-label={t('host.taxNotice.close')}
               >
-                ✕
+                <CloseIcon className="h-4 w-4" />
               </button>
             </div>
           )}

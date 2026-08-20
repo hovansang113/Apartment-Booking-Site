@@ -196,7 +196,17 @@ export function BookIllustration(props) {
 export function CalculatorIcon(props) {
   return (
     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-neutral-100 p-2.5 border border-neutral-200 shadow-sm shrink-0">
-      <span className="text-2xl" role="img" aria-label="calculator">🧮</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-neutral-600">
+        <rect x={4} y={2} width={16} height={20} rx={2} />
+        <line x1={8} y1={6} x2={16} y2={6} />
+        <line x1={8} y1={11} x2={8.01} y2={11} />
+        <line x1={12} y1={11} x2={12.01} y2={11} />
+        <line x1={16} y1={11} x2={16.01} y2={11} />
+        <line x1={8} y1={15} x2={8.01} y2={15} />
+        <line x1={12} y1={15} x2={12.01} y2={15} />
+        <line x1={16} y1={15} x2={16.01} y2={15} />
+        <line x1={8} y1={19} x2={16} y2={19} />
+      </svg>
     </div>
   );
 }
@@ -204,7 +214,15 @@ export function CalculatorIcon(props) {
 export function BankIcon(props) {
   return (
     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-neutral-100 p-2.5 border border-neutral-200 shadow-sm shrink-0">
-      <span className="text-2xl" role="img" aria-label="bank">🏦</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-neutral-600">
+        <path d="M3 10.5 12 4l9 6.5" />
+        <line x1={4} y1={10.5} x2={20} y2={10.5} />
+        <line x1={5} y1={10.5} x2={5} y2={19} />
+        <line x1={9} y1={10.5} x2={9} y2={19} />
+        <line x1={15} y1={10.5} x2={15} y2={19} />
+        <line x1={19} y1={10.5} x2={19} y2={19} />
+        <line x1={3} y1={20} x2={21} y2={20} />
+      </svg>
     </div>
   );
 }
@@ -252,11 +270,76 @@ export function HomePlusIcon(props) {
   );
 }
 
+export function CheckCircleIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx={12} cy={12} r={9.5} />
+      <path d="M8 12.4l2.6 2.6L16.5 9" />
+    </svg>
+  );
+}
+
+export function AlertTriangleIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 3.5 21.5 20h-19L12 3.5Z" />
+      <line x1={12} y1={9.5} x2={12} y2={14} />
+      <line x1={12} y1={17} x2={12.01} y2={17} />
+    </svg>
+  );
+}
+
+export function SearchOffIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx={10.5} cy={10.5} r={6.5} />
+      <line x1={20} y1={20} x2={15.8} y2={15.8} />
+      <line x1={7.5} y1={7.5} x2={13.5} y2={13.5} />
+    </svg>
+  );
+}
+
+export function LightbulbIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6v.5h5.4v-.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3Z" />
+    </svg>
+  );
+}
+
 export function DuplicateIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...props}>
       <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+export function ChatIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" />
+    </svg>
+  );
+}
+
+export function FileTextIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+      <path d="M14 2v6h6" />
+      <line x1="8" y1="13" x2="16" y2="13" />
+      <line x1="8" y1="17" x2="13" y2="17" />
+    </svg>
+  );
+}
+
+export function CameraIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
+      <circle cx="12" cy="14" r="3.5" />
     </svg>
   );
 }
