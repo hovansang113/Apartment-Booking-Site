@@ -39,4 +39,12 @@ export async function getBookingById(id) {
   return data.data;
 }
 
+// Cho HostTodayPage - danh sach booking da xac nhan (da thanh toan) cua tat
+// ca listing thuoc host dang dang nhap. Can token host that (cookie
+// httpOnly), khong dung duoc voi user mock preview.
+export async function getMyBookings() {
+  const { data } = await api.get('/bookings/mine');
+  return data.data;
+}
+
 // TODO: REQ_08, REQ_11 - goi API huy/tu choi booking (Phase 7)

@@ -183,4 +183,26 @@ async function getBookingById(id) {
   return booking;
 }
 
-module.exports = { createBooking, getBookingById };
+// Cho HostTodayPage - danh sach booking cua host, gop tu tat ca listing cua
+// ho. Chi lay status=confirmed (da thanh toan that qua Braintree) - loai bo
+// cac hold pending_payment con dang do (chua thanh toan/da het han, xem
+// PAYMENT_HOLD_MINUTES o tren) de khong lam nhieu danh sach voi booking chua
+// thanh cong.
+async function getBookingsByHost(hostId) {
+  return prisma.booking.findMany({
+    where: { listing: { hostId }, status: BookingStatus.confirmed },
+    include: {
+      listing: {
+        select: {
+          id: true,
+          title: true,
+          address: true,
+          images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+        },
+      },
+    },
+    orderBy: { checkIn: 'asc' },
+  });
+}
+
+module.exports = { createBooking, getBookingById, getBookingsByHost };

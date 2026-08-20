@@ -39,4 +39,10 @@ async function getOne(req, res) {
   return ok(res, booking);
 }
 
-module.exports = { create, getOne };
+// Cho HostTodayPage - danh sach booking da xac nhan cua host dang dang nhap.
+async function getMine(req, res) {
+  const bookings = await bookingService.getBookingsByHost(req.user.id);
+  return ok(res, bookings);
+}
+
+module.exports = { create, getOne, getMine };

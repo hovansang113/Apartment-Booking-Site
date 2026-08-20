@@ -290,7 +290,20 @@
       "emptyBodyDraft": "To get bookings, finish and publish your listing.",
       "emptyBodyNoDraft": "To get bookings, create and publish your first listing.",
       "finishListing": "Finish your listing",
-      "createListing": "Create new listing"
+      "createListing": "Create new listing",
+      "loading": "Loading your bookings...",
+      "loadErrorFallback": "Couldn't load your bookings",
+      "guestsCount_one": "{{count}} adult",
+      "guestsCount_other": "{{count}} adults",
+      "guestsCountWithChildren_one": "{{adults}}, {{count}} child",
+      "guestsCountWithChildren_other": "{{adults}}, {{count}} children",
+      "nightsTotal_one": "Total for {{count}} night",
+      "nightsTotal_other": "Total for {{count}} nights",
+      "hostedBy": "Hosted by {{name}}",
+      "bookingDate": "Booking date",
+      "confirmationCode": "Confirmation code",
+      "emailGuest": "Email guest",
+      "close": "Close"
     },
     "listings": {
       "pageTitle": "Your listings — Reservesmith Host",
