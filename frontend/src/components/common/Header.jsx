@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import SearchBar from './SearchBar';
 import { MenuIcon, UserCircleIcon } from './icons';
 import { useAuth } from '../../context/AuthContext';
+import logo from '../../assets/logo.png';
 
 // An tam nut/link "List your place" theo yeu cau Jason (17/8) - it listing
 // that nen chua can dan nguoi dung vao luong dang ky host. Doi lai true khi
@@ -48,8 +49,8 @@ export default function Header() {
       <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Brand Logo */}
-          <Link to="/host/today" className="shrink-0 text-2xl font-bold text-brand-600 tracking-tight">
-            {t('common.brand')}
+          <Link to="/host/today" className="shrink-0">
+            <img src={logo} alt={t('common.brand')} className="h-8 w-auto sm:h-9" />
           </Link>
 
           {/* Host Navigation Center Tabs */}
@@ -161,8 +162,8 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
       <div className="mx-auto flex h-20 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="shrink-0 text-2xl font-bold text-brand-600 tracking-tight">
-          {t('common.brand')}
+        <Link to="/" className="shrink-0">
+          <img src={logo} alt={t('common.brand')} className="h-8 w-auto sm:h-9" />
         </Link>
 
         <div className="hidden flex-1 justify-center md:flex">

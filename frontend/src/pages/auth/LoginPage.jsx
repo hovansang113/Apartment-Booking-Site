@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { login as loginApi } from '../../services/authService';
 import { GoogleIcon } from '../../components/common/icons';
 import Seo from '../../components/common/Seo';
+import logoFull from '../../assets/logo-full.png';
 
 // An tam nut Google login theo yeu cau (19/8) - chua noi OAuth that, chi hien
 // toast "coming soon". Doi lai true khi da co OAuth that, khong xoa code.
@@ -64,6 +65,7 @@ export default function LoginPage() {
       <Seo title={t('auth.login.pageTitle')} path="/auth/login" noindex />
       <div className="w-full max-w-md rounded-3xl border border-neutral-200 bg-white p-8 shadow-xl">
         <div className="text-center mb-6">
+          <img src={logoFull} alt={t('common.brand')} className="mx-auto mb-6 h-14 w-auto" />
           <h1 className="text-2xl font-bold text-neutral-900">{t('auth.login.title')}</h1>
           <p className="mt-2 text-sm text-neutral-500">
             {t('auth.login.subtitle')}
