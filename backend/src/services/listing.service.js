@@ -123,6 +123,24 @@ async function getPublicListings({ category, page }) {
 // REQ_06: guest xem chi tiet 1 listing cong khai - chi hien status approved
 // (listing dang pending/suspended tra ve 404 nhu khong ton tai, khong lo
 // trang thai noi bo cho guest).
+// Gop cac ngay le trong listing_calendar (1 dong/ngay, bat ke booked/blocked/
+// synced) thanh cac khoang lien tuc [start, end) - khop quy uoc dang dung o
+// booking.service.js#datesBetween, de AvailabilityCalendar.jsx (FE) to mau do
+// dung cac ngay khach khac da giu.
+function buildBookedRanges(calendarDates) {
+  const sorted = [...calendarDates].sort((a, b) => a - b);
+  const ranges = [];
+  for (const date of sorted) {
+    const last = ranges[ranges.length - 1];
+    if (last && last.end.getTime() === date.getTime()) {
+      last.end = new Date(date.getTime() + 24 * 60 * 60 * 1000);
+    } else {
+      ranges.push({ start: date, end: new Date(date.getTime() + 24 * 60 * 60 * 1000) });
+    }
+  }
+  return ranges;
+}
+
 async function getPublicListingById(listingId) {
   const listing = await prisma.listing.findFirst({
     where: { id: listingId, status: 'approved' },
@@ -135,7 +153,13 @@ async function getPublicListingById(listingId) {
   if (!listing) {
     throw new AppError(404, 'Listing not found');
   }
-  return listing;
+
+  const calendarRows = await prisma.listingCalendar.findMany({
+    where: { listingId },
+    select: { date: true },
+  });
+
+  return { ...listing, bookedRanges: buildBookedRanges(calendarRows.map((r) => r.date)) };
 }
 
 // REQ_02: host creates a listing
