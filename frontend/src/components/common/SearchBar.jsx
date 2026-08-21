@@ -71,11 +71,11 @@ export default function SearchBar() {
       <form
         role="search"
         aria-label={t('search.ariaLabel')}
-        className="flex items-center rounded-full border border-neutral-200 bg-white shadow-sm hover:shadow-md transition-shadow divide-x divide-neutral-200"
+        className="flex flex-col rounded-3xl border border-neutral-200 bg-white shadow-sm hover:shadow-md transition-shadow divide-y divide-neutral-200 sm:flex-row sm:items-center sm:rounded-full sm:divide-y-0 sm:divide-x"
         onSubmit={handleSubmit}
       >
         <label
-          className={`flex-1 min-w-[120px] cursor-pointer rounded-full px-5 py-2.5 transition-colors relative ${
+          className={`w-full cursor-pointer rounded-3xl px-5 py-2.5 transition-colors relative sm:flex-1 sm:min-w-[120px] sm:rounded-full ${
             active === 'location' ? 'bg-neutral-100' : 'hover:bg-neutral-50'
           }`}
         >
@@ -113,7 +113,7 @@ export default function SearchBar() {
             type="button"
             key={seg.key}
             onClick={() => setActive((cur) => (cur === seg.key ? null : seg.key))}
-            className={`flex-1 min-w-[120px] rounded-full px-5 py-2.5 text-left transition-colors ${
+            className={`w-full rounded-3xl px-5 py-2.5 text-left transition-colors sm:flex-1 sm:min-w-[120px] sm:rounded-full ${
               active === seg.key ? 'bg-neutral-100' : 'hover:bg-neutral-50'
             }`}
           >
@@ -123,7 +123,7 @@ export default function SearchBar() {
             </span>
           </button>
         ))}
-        <div className="pl-2 pr-2 flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 p-2 sm:pl-2 sm:pr-2 sm:py-0">
           {hasFilter && (
             <button
               type="button"
@@ -138,9 +138,10 @@ export default function SearchBar() {
           <button
             type="submit"
             aria-label={t('search.submit')}
-            className="flex items-center gap-2 rounded-full bg-brand-600 px-4 py-3 text-white hover:bg-brand-700 transition-colors"
+            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-brand-600 px-4 py-3 text-white hover:bg-brand-700 transition-colors sm:flex-initial"
           >
             <SearchIcon className="h-4 w-4" />
+            <span className="sm:hidden">{t('search.submit')}</span>
           </button>
         </div>
       </form>
