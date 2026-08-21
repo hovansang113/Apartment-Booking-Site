@@ -175,7 +175,7 @@ export default function EditListingPage() {
               <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
                 {(listing.images || []).map((img) => (
                   <div key={img.id} className="group relative aspect-square overflow-hidden rounded-xl border border-neutral-200">
-                    <img src={img.imageUrl} alt="" className="h-full w-full object-cover" />
+                    <img src={img.thumbUrl || img.imageUrl} alt="" className="h-full w-full object-cover" />
                     <button
                       type="button"
                       onClick={() => handleDeletePhoto(img.id)}

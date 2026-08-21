@@ -172,7 +172,7 @@ export default function PaymentPage() {
     );
   }
 
-  const thumbnail = booking.listing?.images?.[0]?.imageUrl;
+  const thumbnail = booking.listing?.images?.[0]?.thumbUrl || booking.listing?.images?.[0]?.imageUrl;
   const notPayable = ['expired', 'canceled', 'rejected'].includes(booking.status);
 
   return (

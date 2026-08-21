@@ -133,7 +133,7 @@ export default function HostListingsPage() {
                 >
                   <div className="relative aspect-4/3 overflow-hidden bg-neutral-100">
                     <img
-                      src={listing.images?.[0]?.imageUrl || 'https://placehold.co/800x600?text=No+image'}
+                      src={listing.images?.[0]?.thumbUrl || listing.images?.[0]?.imageUrl || 'https://placehold.co/800x600?text=No+image'}
                       alt={listing.title}
                       className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -193,7 +193,7 @@ export default function HostListingsPage() {
                   className="flex items-center gap-4 rounded-2xl border border-neutral-200 bg-white p-4 hover:border-neutral-900 hover:shadow-md transition-all"
                 >
                   <img
-                    src={listing.images?.[0]?.imageUrl || 'https://placehold.co/200x140?text=No+image'}
+                    src={listing.images?.[0]?.thumbUrl || listing.images?.[0]?.imageUrl || 'https://placehold.co/200x140?text=No+image'}
                     alt={listing.title}
                     className="h-20 w-28 rounded-xl object-cover shrink-0"
                   />

@@ -29,6 +29,8 @@ services:
     # Docker Desktop (Mac/Windows).
     extra_hosts:
       - 'host.docker.internal:host-gateway'
+    volumes:
+      - listing_images:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
@@ -46,8 +48,15 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
+      # Doc-only o day - chi backend duoc ghi (xem service backend o tren).
+      # nginx phuc vu thang file tu volume nay o /uploads/, khong qua Node -
+      # xem nginx.conf.
+      - listing_images:/usr/share/nginx/html/uploads:ro
     depends_on:
       - backend
 
 volumes:
   mysql_data:
+  # Anh listing luu local (khong con Cloudinary, 21/8) - volume rieng, ton tai
+  # doc lap voi container, khong mat khi build lai image luc deploy.
+  listing_images:

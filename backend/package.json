@@ -11,6 +11,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "node prisma/seed.js",
+    "migrate:images": "node scripts/migrateCloudinaryImages.js",
     "lint": "eslint src",
     "format": "prettier --write \"src/**/*.js\""
   },
@@ -18,7 +19,6 @@
     "@prisma/client": "^5.20.0",
     "bcrypt": "^5.1.1",
     "braintree": "^3.39.0",
-    "cloudinary": "^2.5.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -29,9 +29,9 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
-    "multer-storage-cloudinary": "^4.0.0",
     "node-ical": "^0.27.1",
-    "nodemailer": "^9.0.5"
+    "nodemailer": "^9.0.5",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "eslint": "^8.57.0",

@@ -1,71 +1,14 @@
 const prisma = require('../config/prisma');
-const cloudinary = require('../config/cloudinary');
 const AppError = require('../utils/appError');
+const { processAndSaveListingImage, deleteListingImageFiles } = require('../utils/imageProcessing');
 
-function uploadImageToCloudinary(file) {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder: 'booking-platform/listings' },
-      (error, result) => {
-        if (error) return reject(error);
-        resolve(result.secure_url);
-      },
-    );
-    stream.end(file.buffer);
-  });
-}
-
-/**
- * Trích xuất public_id từ Cloudinary URL để xóa ảnh trên Cloudinary
- * Ví dụ URL: https://res.cloudinary.com/demo/image/upload/v1234567/booking-platform/listings/sample.jpg
- * => public_id: booking-platform/listings/sample
- */
-function extractPublicId(imageUrl) {
-  if (!imageUrl || !imageUrl.includes('res.cloudinary.com')) {
-    return null;
-  }
-  try {
-    const parts = imageUrl.split('/upload/');
-    if (parts.length < 2) return null;
-    let pathAfterUpload = parts[1];
-    pathAfterUpload = pathAfterUpload.replace(/^v\d+\//, '');
-    const lastDotIndex = pathAfterUpload.lastIndexOf('.');
-    if (lastDotIndex !== -1) {
-      return pathAfterUpload.substring(0, lastDotIndex);
-    }
-    return pathAfterUpload;
-  } catch (error) {
-    console.error('Error extracting Cloudinary public_id:', error);
-    return null;
-  }
-}
-
-/**
- * Xóa 1 ảnh trên Cloudinary
- */
-async function deleteImageFromCloudinary(imageUrl) {
-  const publicId = extractPublicId(imageUrl);
-  if (!publicId) return;
-  try {
-    const result = await cloudinary.uploader.destroy(publicId);
-    console.log(`Cloudinary destroy [${publicId}]:`, result);
-    return result;
-  } catch (error) {
-    console.error(`Failed to delete Cloudinary image [${publicId}]:`, error);
-  }
-}
-
-/**
- * Xóa nhiều ảnh trên Cloudinary
- */
-async function deleteMultipleImagesFromCloudinary(imageUrls) {
-  if (!imageUrls || !imageUrls.length) return;
-  await Promise.all(imageUrls.map((url) => deleteImageFromCloudinary(url)));
-}
-
-async function uploadImages(files) {
-  const urls = await Promise.all(files.map(uploadImageToCloudinary));
-  return urls.map((imageUrl, index) => ({ imageUrl, sortOrder: index }));
+// files: chi la array cac buffer tu multer.memoryStorage() (xem
+// upload.middleware.js) - listingId phai co san TRUOC khi goi ham nay (anh
+// duoc luu vao thu muc rieng theo listingId, xem imageProcessing.js), khac
+// voi luc con Cloudinary (upload xong moi biet gan vao listing nao).
+async function uploadImages(files, listingId) {
+  const results = await Promise.all(files.map((file) => processAndSaveListingImage(file.buffer, listingId)));
+  return results.map((r, index) => ({ ...r, sortOrder: index }));
 }
 
 function toAmenityData(amenities) {
@@ -181,9 +124,11 @@ async function createListing({
   amenities,
   files,
 }) {
-  const imageData = await uploadImages(files);
-
-  return prisma.listing.create({
+  // Anh can biet listingId de luu dung thu muc (uploads/listings/{id}/...) -
+  // khac voi luc con Cloudinary (upload doc lap, gan URL vao sau). Nen tao
+  // listing TRUOC (chua co anh), roi moi xu ly + gan anh vao. Neu buoc xu ly
+  // anh loi, xoa listing vua tao de khong de lai ban ghi rong mo coi.
+  const listing = await prisma.listing.create({
     data: {
       hostId,
       title,
@@ -199,11 +144,21 @@ async function createListing({
       bedrooms,
       beds,
       bathrooms,
-      images: { create: imageData },
       amenities: amenities ? { create: toAmenityData(amenities) } : undefined,
     },
-    include: { images: true, amenities: true },
   });
+
+  try {
+    const imageData = await uploadImages(files, listing.id);
+    return await prisma.listing.update({
+      where: { id: listing.id },
+      data: { images: { create: imageData } },
+      include: { images: true, amenities: true },
+    });
+  } catch (err) {
+    await prisma.listing.delete({ where: { id: listing.id } }).catch(() => {});
+    throw err;
+  }
 }
 
 // REQ_02: host updates its own listing
@@ -232,16 +187,15 @@ async function deleteListing({ listingId, hostId }) {
   // Lấy tất cả ảnh thuộc về listing này trước khi xóa
   const existingImages = await prisma.listingImage.findMany({
     where: { listingId },
-    select: { imageUrl: true },
+    select: { imageUrl: true, thumbUrl: true },
   });
 
   // Xóa bài đăng trong DB
   await prisma.listing.delete({ where: { id: listingId } });
 
-  // Tự động xóa các ảnh tương ứng trên Cloudinary
-  const imageUrls = existingImages.map((img) => img.imageUrl);
-  deleteMultipleImagesFromCloudinary(imageUrls).catch((err) => {
-    console.error('Background Cloudinary cleanup error on delete listing:', err);
+  // Tự động xóa các file ảnh tương ứng trên đĩa (chạy nền, không chặn response)
+  Promise.all(existingImages.map(deleteListingImageFiles)).catch((err) => {
+    console.error('Background image cleanup error on delete listing:', err);
   });
 }
 
@@ -259,8 +213,8 @@ async function deleteListingImage({ listingId, imageId, hostId }) {
 
   await prisma.listingImage.delete({ where: { id: imageId } });
 
-  deleteImageFromCloudinary(image.imageUrl).catch((err) => {
-    console.error('Background Cloudinary cleanup error on delete image:', err);
+  deleteListingImageFiles(image).catch((err) => {
+    console.error('Background image cleanup error on delete image:', err);
   });
 
   return { success: true };
@@ -278,10 +232,10 @@ async function addListingImages({ listingId, hostId, files }) {
   });
   const startOrder = lastImage ? lastImage.sortOrder + 1 : 0;
 
-  const urls = await Promise.all(files.map(uploadImageToCloudinary));
-  const imageData = urls.map((imageUrl, index) => ({ listingId, imageUrl, sortOrder: startOrder + index }));
-
-  await prisma.listingImage.createMany({ data: imageData });
+  const imageData = await uploadImages(files, listingId);
+  await prisma.listingImage.createMany({
+    data: imageData.map((img, index) => ({ listingId, ...img, sortOrder: startOrder + index })),
+  });
   return prisma.listingImage.findMany({ where: { listingId }, orderBy: { sortOrder: 'asc' } });
 }
 
@@ -294,5 +248,4 @@ module.exports = {
   deleteListing,
   deleteListingImage,
   addListingImages,
-  deleteImageFromCloudinary,
 };

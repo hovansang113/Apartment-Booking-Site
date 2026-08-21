@@ -80,7 +80,13 @@ function emailLayout({ title, preheader, bodyHtml }) {
 }
 
 function bookingSummaryBlock(booking) {
-  const thumbnail = booking.listing.images?.[0]?.imageUrl;
+  // Anh gio la duong dan tuong doi ("/uploads/...", phuc vu boi nginx tren
+  // chinh domain minh) - khac Cloudinary truoc day la URL tuyet doi san. Email
+  // client khong co "origin" nhu trinh duyet nen phai tu ghep them siteUrl,
+  // khong thi anh se khong hien duoc trong hop thu.
+  const siteUrl = process.env.CLIENT_URL || '';
+  const rawThumbnail = booking.listing.images?.[0]?.imageUrl;
+  const thumbnail = rawThumbnail ? `${siteUrl}${rawThumbnail}` : null;
   return `
   ${thumbnail ? `<tr><td style="padding:0;"><img src="${escapeHtml(thumbnail)}" alt="${escapeHtml(booking.listing.title)}" width="600" style="display:block;width:100%;max-height:280px;object-fit:cover;" /></td></tr>` : ''}
   <tr>

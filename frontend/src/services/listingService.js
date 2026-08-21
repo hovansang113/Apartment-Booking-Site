@@ -6,6 +6,10 @@ import api from './api';
 // phai tu an di neu null, khong duoc bia so gia.
 function mapListing(raw) {
   const imageUrls = (raw.images || []).map((img) => img.imageUrl);
+  // Anh nho (thumb) rieng cho card/danh sach - anh lon (imageUrls o tren) chi
+  // dung cho gallery/trang chi tiet, dung anh lon lam thumbnail se nang trang
+  // vo ich (xem imageProcessing.js ben backend, 21/8).
+  const thumbUrls = (raw.images || []).map((img) => img.thumbUrl || img.imageUrl);
   const weekdayPrice = Number(raw.weekdayPrice);
   const weekendPrice = Number(raw.weekendPrice);
   return {
@@ -28,6 +32,7 @@ function mapListing(raw) {
     amenities: (raw.amenities || []).map((a) => a.amenity),
     host: raw.host ? { name: raw.host.fullName, isSuperhost: false } : null,
     image: imageUrls[0],
+    thumbnail: thumbUrls[0],
     images: imageUrls,
     bookedRanges: raw.bookedRanges || [],
   };

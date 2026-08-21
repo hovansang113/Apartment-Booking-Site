@@ -91,7 +91,7 @@ export default function AdminListingsPage() {
           {listings.map((listing) => (
             <div key={listing.id} className="flex items-center gap-4 rounded-2xl border border-neutral-200 bg-white p-4">
               <img
-                src={listing.images?.[0]?.imageUrl || 'https://placehold.co/100x100?text=No+image'}
+                src={listing.images?.[0]?.thumbUrl || listing.images?.[0]?.imageUrl || 'https://placehold.co/100x100?text=No+image'}
                 alt={listing.title}
                 className="h-16 w-20 shrink-0 rounded-xl object-cover bg-neutral-100"
               />

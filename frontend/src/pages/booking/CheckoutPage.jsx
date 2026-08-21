@@ -152,7 +152,7 @@ export default function CheckoutPage() {
     );
   }
 
-  const thumbnail = listing.images?.[0];
+  const thumbnail = listing.thumbnail || listing.images?.[0];
   const guestLabel = children > 0
     ? t('listing.booking.adultsChildrenLabel', { adults, children })
     : t('listing.booking.adultsLabel', { count: adults });

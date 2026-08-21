@@ -20,7 +20,7 @@ function nightsBetween(checkIn, checkOut) {
 }
 
 function BookingCard({ booking, onClick }) {
-  const thumbnail = booking.listing?.images?.[0]?.imageUrl;
+  const thumbnail = booking.listing?.images?.[0]?.thumbUrl || booking.listing?.images?.[0]?.imageUrl;
   return (
     <button
       type="button"

@@ -10,9 +10,7 @@ RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 COPY package*.json ./
-# --legacy-peer-deps: xung dot peer-dep co san giua cloudinary/multer-storage-cloudinary
-# (cung ly do da phai dung co nay luc npm install o local, xem TODO.md)
-RUN npm ci --legacy-peer-deps
+RUN npm ci
 
 COPY . .
 RUN npx prisma generate

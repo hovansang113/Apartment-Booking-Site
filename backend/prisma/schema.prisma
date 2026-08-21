@@ -154,10 +154,17 @@ model Listing {
   @@map("listings")
 }
 
+// Anh luu local tren server (khong con Cloudinary, 21/8 - tranh phu thuoc 1
+// dich vu ngoai lam sap ca site neu no down). Moi anh sinh 2 file AVIF luc
+// upload (xem utils/imageProcessing.js): imageUrl = ban lon (~1600px, dung
+// cho gallery/trang chi tiet), thumbUrl = ban nho (~480px, dung cho moi noi
+// hien card/danh sach/email). Ca 2 la duong dan tuong doi ("/uploads/...")
+// duoc nginx phuc vu thang, khong qua Node.
 model ListingImage {
   id        String   @id @default(uuid())
   listingId String   @map("listing_id")
   imageUrl  String   @map("image_url")
+  thumbUrl  String   @map("thumb_url")
   sortOrder Int      @default(0) @map("sort_order")
   createdAt DateTime @default(now()) @map("created_at")
 

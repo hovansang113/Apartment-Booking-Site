@@ -13,7 +13,7 @@ export default function ListingCard({ listing }) {
       <Link to={`/listings/${listing.id}`} className="block">
         <div className="relative aspect-square overflow-hidden rounded-xl bg-neutral-100">
           <img
-            src={listing.image}
+            src={listing.thumbnail || listing.image}
             alt={t('listing.imageAltIn', { title: listing.title, address: listing.address })}
             loading="lazy"
             width={800}
