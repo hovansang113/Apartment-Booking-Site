@@ -6,7 +6,7 @@ import { enUS } from 'date-fns/locale';
 import Seo from '../../components/common/Seo';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import { BookIllustration, CalculatorIcon, CloseIcon } from '../../components/common/icons';
+import { BookIllustration, CloseIcon } from '../../components/common/icons';
 import { getMyBookings } from '../../services/bookingService';
 import { formatDateRange } from '../../utils/formatDateRange';
 import { formatPrice } from '../../utils/currency';
@@ -133,7 +133,6 @@ export default function HostTodayPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('today'); // 'today' | 'upcoming'
-  const [showTaxNotice, setShowTaxNotice] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
 
   const { data: bookings, isLoading, isError } = useQuery({
@@ -167,31 +166,6 @@ export default function HostTodayPage() {
 
       <main className="min-h-[85vh] bg-white px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
-          {/* Top Banner Notice Card */}
-          {showTaxNotice && (
-            <div className="mb-10 flex items-center justify-between rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition-all sm:p-5">
-              <Link to="/host/settings/tax" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
-                <CalculatorIcon />
-                <div>
-                  <h2 className="text-base font-semibold text-neutral-900">
-                    {t('host.taxNotice.title')}
-                  </h2>
-                  <p className="text-xs text-neutral-500 sm:text-sm">
-                    {t('host.taxNotice.body')}
-                  </p>
-                </div>
-              </Link>
-              <button
-                type="button"
-                onClick={() => setShowTaxNotice(false)}
-                className="rounded-full p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
-                aria-label={t('host.taxNotice.close')}
-              >
-                <CloseIcon className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-
           {/* Sub-tabs Capsule Selectors */}
           <div className="mb-12 flex items-center justify-center gap-3">
             <button

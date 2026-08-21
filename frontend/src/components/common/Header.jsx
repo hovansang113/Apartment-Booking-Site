@@ -122,17 +122,6 @@ export default function Header() {
                   </Link>
 
                   <Link
-                    to="/host/settings"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center justify-between px-4 py-2.5 text-neutral-700 hover:bg-neutral-50 transition-colors"
-                  >
-                    {t('header.taxInfo')}
-                    {(!user.verificationStatus || user.verificationStatus === 'unverified') && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-label="unverified" />
-                    )}
-                  </Link>
-
-                  <Link
                     to="/"
                     onClick={() => setMenuOpen(false)}
                     className="block px-4 py-2.5 text-neutral-700 hover:bg-neutral-50 transition-colors"
