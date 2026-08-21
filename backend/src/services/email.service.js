@@ -71,11 +71,6 @@ function emailLayout({ title, preheader, bodyHtml }) {
             </td>
           </tr>
           ${bodyHtml}
-          <tr>
-            <td style="padding:20px 32px;background:#fafafa;border-top:1px solid #f0f0f0;">
-              <p style="margin:0;font-size:12px;color:#9ca3af;">Reservesmith — this is a learning project, not a real service.</p>
-            </td>
-          </tr>
         </table>
       </td>
     </tr>
