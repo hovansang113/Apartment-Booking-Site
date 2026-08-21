@@ -3,6 +3,7 @@ const { CalendarDayStatus, CalendarDaySource } = require('@prisma/client');
 const prisma = require('../config/prisma');
 const AppError = require('../utils/appError');
 const { getBasePrice } = require('../utils/pricing.util');
+const { assertPublicHttpUrl } = require('../utils/safeUrl');
 
 function pad(n) {
   return String(n).padStart(2, '0');
@@ -224,6 +225,11 @@ async function syncIcalSource({ listingId, hostId, syncId }) {
   if (!sync || sync.listingId !== listingId) {
     throw new AppError(404, 'Calendar sync source not found');
   }
+
+  // Chan SSRF - URL nay do host tu nhap, kiem tra ngay truoc khi server tu
+  // fetch (khong chi luc connect, vi refresh/update deu di qua day) de tranh
+  // bi loi dung do server lam proxy vao mang noi bo/metadata cloud.
+  await assertPublicHttpUrl(sync.icalUrl);
 
   let parsed;
   try {

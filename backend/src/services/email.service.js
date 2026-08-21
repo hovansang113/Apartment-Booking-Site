@@ -14,6 +14,19 @@ const transporter = require('../config/mailer');
 const FROM_EMAIL = process.env.SMTP_FROM_EMAIL || 'bookings@reservesmith.com';
 const BRAND_COLOR = '#0d9488';
 
+// Cac field trong booking (contactName/contactEmail/contactPhone, listing
+// title/address) deu do nguoi dung nhap, khong duoc trust khi nhet thang vao
+// HTML - escape truoc de tranh chen markup/link gia mao vao email host/khach
+// se doc va tin tuong.
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function formatGBP(amount) {
   return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(Number(amount));
 }
@@ -74,11 +87,11 @@ function emailLayout({ title, preheader, bodyHtml }) {
 function bookingSummaryBlock(booking) {
   const thumbnail = booking.listing.images?.[0]?.imageUrl;
   return `
-  ${thumbnail ? `<tr><td style="padding:0;"><img src="${thumbnail}" alt="${booking.listing.title}" width="600" style="display:block;width:100%;max-height:280px;object-fit:cover;" /></td></tr>` : ''}
+  ${thumbnail ? `<tr><td style="padding:0;"><img src="${escapeHtml(thumbnail)}" alt="${escapeHtml(booking.listing.title)}" width="600" style="display:block;width:100%;max-height:280px;object-fit:cover;" /></td></tr>` : ''}
   <tr>
     <td style="padding:24px 32px 8px;">
-      <p style="margin:0;font-size:16px;font-weight:700;color:#111827;">${booking.listing.title}</p>
-      <p style="margin:4px 0 0;font-size:13px;color:#6b7280;">${booking.listing.address}</p>
+      <p style="margin:0;font-size:16px;font-weight:700;color:#111827;">${escapeHtml(booking.listing.title)}</p>
+      <p style="margin:4px 0 0;font-size:13px;color:#6b7280;">${escapeHtml(booking.listing.address)}</p>
     </td>
   </tr>
   <tr>
@@ -129,7 +142,7 @@ async function sendGuestConfirmation(booking) {
     <tr>
       <td style="padding:24px 32px 0;">
         <p style="margin:0;font-size:20px;font-weight:700;color:#111827;">Booking confirmed!</p>
-        <p style="margin:6px 0 0;font-size:14px;color:#6b7280;">Thanks for booking, ${booking.contactName}. Here are your trip details.</p>
+        <p style="margin:6px 0 0;font-size:14px;color:#6b7280;">Thanks for booking, ${escapeHtml(booking.contactName)}. Here are your trip details.</p>
       </td>
     </tr>
     ${bookingSummaryBlock(booking)}
@@ -183,7 +196,7 @@ async function sendHostNotification(booking) {
     <tr>
       <td style="padding:24px 32px 0;">
         <p style="margin:0;font-size:20px;font-weight:700;color:#111827;">New booking confirmed!</p>
-        <p style="margin:6px 0 0;font-size:14px;color:#6b7280;">${booking.contactName} arrives ${formatDate(booking.checkIn)}.</p>
+        <p style="margin:6px 0 0;font-size:14px;color:#6b7280;">${escapeHtml(booking.contactName)} arrives ${formatDate(booking.checkIn)}.</p>
       </td>
     </tr>
     <tr>
@@ -191,11 +204,11 @@ async function sendHostNotification(booking) {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="padding-right:12px;">
-              <div style="width:40px;height:40px;border-radius:50%;background:${BRAND_COLOR};color:#ffffff;font-size:16px;font-weight:700;text-align:center;line-height:40px;">${(booking.contactName || '?').charAt(0).toUpperCase()}</div>
+              <div style="width:40px;height:40px;border-radius:50%;background:${BRAND_COLOR};color:#ffffff;font-size:16px;font-weight:700;text-align:center;line-height:40px;">${escapeHtml((booking.contactName || '?').charAt(0).toUpperCase())}</div>
             </td>
             <td>
-              <p style="margin:0;font-size:14px;font-weight:600;color:#111827;">${booking.contactName}</p>
-              <p style="margin:2px 0 0;font-size:13px;color:#6b7280;">${booking.contactEmail}${booking.contactPhone ? ` · ${booking.contactPhone}` : ''}</p>
+              <p style="margin:0;font-size:14px;font-weight:600;color:#111827;">${escapeHtml(booking.contactName)}</p>
+              <p style="margin:2px 0 0;font-size:13px;color:#6b7280;">${escapeHtml(booking.contactEmail)}${booking.contactPhone ? ` · ${escapeHtml(booking.contactPhone)}` : ''}</p>
             </td>
           </tr>
         </table>
