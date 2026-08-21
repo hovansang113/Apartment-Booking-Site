@@ -3,13 +3,6 @@ import * as authService from '../services/authService';
 
 const AuthContext = createContext(null);
 
-const MOCK_HOST_USER = {
-  id: 'demo-host-id',
-  fullName: 'Reservesmith Host',
-  email: 'host@reservesmith.com',
-  role: 'host',
-};
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -20,11 +13,7 @@ export function AuthProvider({ children }) {
     authService
       .getMe()
       .then((data) => setUser(data.user))
-      .catch(() => {
-        // Chua dang nhap that - fallback ve user gia de xem truoc giao dien
-        // host ma khong can dang nhap (giu nguyen hanh vi cu).
-        setUser(MOCK_HOST_USER);
-      })
+      .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, []);
 

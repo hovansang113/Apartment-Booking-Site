@@ -1,12 +1,10 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-// Truoc day luon render children bat ke role (che do preview UI) - gio kiem
-// tra that vi khu vuc admin can duoc bao ve dung o ca frontend, khong chi
-// dua vao backend tra 401/403. Khong pha vo hanh vi preview cua host: khi
-// chua dang nhap that, AuthContext van fallback ve MOCK_HOST_USER (role:
-// host) nen cac route host van vao duoc binh thuong - chi rieng route
-// roles={['admin']} moi thuc su chan mock user nay ra.
+// Kiem tra dang nhap that + role o ca frontend, khong chi dua vao backend
+// tra 401/403 (UX tot hon: redirect thang ve login thay vi hien trang loi).
+// AuthContext khong con fallback ve user gia nua (da bo 21/8) - chua dang
+// nhap that se luon bi day ve /auth/login o day.
 export default function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
   const location = useLocation();
