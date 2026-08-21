@@ -50,7 +50,7 @@ export default function Header() {
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Brand Logo */}
           <Link to="/host/today" className="shrink-0">
-            <img src={logo} alt={t('common.brand')} className="h-8 w-auto sm:h-9" />
+            <img src={logo} alt={t('common.brand')} className="h-10 w-auto sm:h-12" />
           </Link>
 
           {/* Host Navigation Center Tabs */}
@@ -163,7 +163,7 @@ export default function Header() {
     <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
       <div className="mx-auto flex h-20 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
         <Link to="/" className="shrink-0">
-          <img src={logo} alt={t('common.brand')} className="h-8 w-auto sm:h-9" />
+          <img src={logo} alt={t('common.brand')} className="h-10 w-auto sm:h-12" />
         </Link>
 
         <div className="hidden flex-1 justify-center md:flex">
