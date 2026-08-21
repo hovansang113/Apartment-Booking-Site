@@ -111,4 +111,14 @@ async function removeImage(req, res) {
   return ok(res, null, 'Image deleted successfully');
 }
 
-module.exports = { mine, list, getOne, create, update, remove, removeImage };
+// Host adds more images to an existing listing
+async function addImages(req, res) {
+  const images = await listingService.addListingImages({
+    listingId: req.params.id,
+    hostId: req.user.id,
+    files: req.files,
+  });
+  return ok(res, images, 'Images added successfully');
+}
+
+module.exports = { mine, list, getOne, create, update, remove, removeImage, addImages };

@@ -4,8 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import Seo from '../../components/common/Seo';
-import { CategoryIcon, AmenityIcon, PlusIcon, MinusIcon, ChevronLeftIcon } from '../../components/common/icons';
-import { getHostListings, updateListing } from '../../services/listingService';
+import { CategoryIcon, AmenityIcon, PlusIcon, MinusIcon, ChevronLeftIcon, CloseIcon, CameraIcon } from '../../components/common/icons';
+import { getHostListings, updateListing, addListingImages, deleteListingImage } from '../../services/listingService';
 
 const CATEGORY_IDS = ['apartment', 'house', 'villa', 'homestay', 'hotel_room'];
 const AMENITY_IDS = ['wifi', 'tv', 'kitchen', 'washer', 'free_parking', 'air_conditioning', 'workspace', 'pool'];
@@ -42,9 +42,10 @@ function Counter({ label, value, onChange, min = 1 }) {
 
 // Sua thong tin 1 tin dang da tao (19/8) - backend PUT /listings/:id da co san
 // tu truoc, chi thieu man hinh FE. Khong dung lai wizard 6 buoc cua
-// CreateListingPage.jsx (danh cho tao moi + upload anh) - trang nay la 1 form
-// don, chi sua field van ban/gia/tien nghi, KHONG dong cham anh (backend
-// updateListing() cung khong nhan anh - xem listing.service.js).
+// CreateListingPage.jsx (danh cho tao moi) - trang nay la 1 form don, sua
+// field van ban/gia/tien nghi qua PUT /listings/:id, va quan ly anh rieng qua
+// 2 endpoint doc lap (POST/DELETE /listings/:id/images - 21/8) vi them/xoa
+// anh xay ra ngay lap tuc, khong gop chung vao 1 lan submit nhu luc tao moi.
 export default function EditListingPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -84,6 +85,36 @@ export default function EditListingPage() {
     },
     onError: (err) => toast.error(errorMessage(err, t('host.listings.editErrorFallback'))),
   });
+
+  const addImagesMutation = useMutation({
+    mutationFn: (files) => addListingImages(id, files),
+    onSuccess: () => {
+      toast.success(t('host.listings.photosAdded'));
+      queryClient.invalidateQueries({ queryKey: ['host-listings'] });
+    },
+    onError: (err) => toast.error(errorMessage(err, t('host.listings.photosAddErrorFallback'))),
+  });
+
+  const deleteImageMutation = useMutation({
+    mutationFn: (imageId) => deleteListingImage(id, imageId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['host-listings'] });
+    },
+    onError: (err) => toast.error(errorMessage(err, t('host.listings.photoDeleteErrorFallback'))),
+  });
+
+  function handlePhotosSelected(e) {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    addImagesMutation.mutate(files);
+    e.target.value = '';
+  }
+
+  function handleDeletePhoto(imageId) {
+    if (window.confirm(t('host.listings.photoDeleteConfirm'))) {
+      deleteImageMutation.mutate(imageId);
+    }
+  }
 
   function setField(name, value) {
     setForm((f) => ({ ...f, [name]: value }));
@@ -137,6 +168,42 @@ export default function EditListingPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="rounded-2xl border border-neutral-200 p-5">
+              <label className="block text-xs font-semibold uppercase text-neutral-500 mb-3">
+                {t('host.listings.photosLabel')}
+              </label>
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                {(listing.images || []).map((img) => (
+                  <div key={img.id} className="group relative aspect-square overflow-hidden rounded-xl border border-neutral-200">
+                    <img src={img.imageUrl} alt="" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePhoto(img.id)}
+                      disabled={deleteImageMutation.isPending}
+                      className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-50"
+                      aria-label={t('host.listings.deletePhoto')}
+                    >
+                      <CloseIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-neutral-300 text-neutral-400 transition-colors hover:border-neutral-500 hover:text-neutral-600">
+                  <CameraIcon className="h-6 w-6" />
+                  <span className="text-[11px] font-semibold">
+                    {addImagesMutation.isPending ? t('common.loading') : t('host.listings.addPhotos')}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handlePhotosSelected}
+                    disabled={addImagesMutation.isPending}
+                  />
+                </label>
+              </div>
+            </div>
+
             <div className="rounded-2xl border border-neutral-200 p-5">
               <label className="block text-xs font-semibold uppercase text-neutral-500 mb-3">
                 {t('createListing.step1.title')}

@@ -67,3 +67,15 @@ export async function deleteListing(id) {
   const { data } = await api.delete(`/listings/${id}`);
   return data.data;
 }
+
+export async function addListingImages(id, files) {
+  const formData = new FormData();
+  for (const file of files) formData.append('images', file);
+  const { data } = await api.post(`/listings/${id}/images`, formData);
+  return data.data;
+}
+
+export async function deleteListingImage(id, imageId) {
+  const { data } = await api.delete(`/listings/${id}/images/${imageId}`);
+  return data.data;
+}

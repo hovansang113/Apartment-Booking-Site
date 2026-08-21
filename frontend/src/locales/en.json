@@ -331,7 +331,14 @@
       "saveChanges": "Save changes",
       "saving": "Saving...",
       "editSuccess": "Listing updated",
-      "editErrorFallback": "Couldn't save changes, please try again later"
+      "editErrorFallback": "Couldn't save changes, please try again later",
+      "photosLabel": "Photos",
+      "addPhotos": "Add photos",
+      "deletePhoto": "Delete photo",
+      "photosAdded": "Photos added",
+      "photosAddErrorFallback": "Couldn't upload photos, please try again later",
+      "photoDeleteConfirm": "Delete this photo? This can't be undone.",
+      "photoDeleteErrorFallback": "Couldn't delete photo, please try again later"
     },
     "setupChoice": {
       "pageTitle": "Create a new listing — Reservesmith Host",

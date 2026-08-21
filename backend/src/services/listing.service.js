@@ -266,6 +266,25 @@ async function deleteListingImage({ listingId, imageId, hostId }) {
   return { success: true };
 }
 
+// Host them anh moi vao 1 bai dang da co san (19/8, cung dot voi EditListingPage
+// - truoc gio chi co PUT /:id sua text/gia/tien nghi, khong dong cham anh).
+// sortOrder noi tiep tu anh cuoi cung hien co, khong ghi de tu 0.
+async function addListingImages({ listingId, hostId, files }) {
+  await assertOwnedByHost(listingId, hostId);
+
+  const lastImage = await prisma.listingImage.findFirst({
+    where: { listingId },
+    orderBy: { sortOrder: 'desc' },
+  });
+  const startOrder = lastImage ? lastImage.sortOrder + 1 : 0;
+
+  const urls = await Promise.all(files.map(uploadImageToCloudinary));
+  const imageData = urls.map((imageUrl, index) => ({ listingId, imageUrl, sortOrder: startOrder + index }));
+
+  await prisma.listingImage.createMany({ data: imageData });
+  return prisma.listingImage.findMany({ where: { listingId }, orderBy: { sortOrder: 'asc' } });
+}
+
 module.exports = {
   getMyListings,
   getPublicListings,
@@ -274,5 +293,6 @@ module.exports = {
   updateListing,
   deleteListing,
   deleteListingImage,
+  addListingImages,
   deleteImageFromCloudinary,
 };
