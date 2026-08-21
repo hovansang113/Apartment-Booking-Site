@@ -29,6 +29,7 @@ function mapListing(raw) {
     host: raw.host ? { name: raw.host.fullName, isSuperhost: false } : null,
     image: imageUrls[0],
     images: imageUrls,
+    bookedRanges: raw.bookedRanges || [],
   };
 }
 
