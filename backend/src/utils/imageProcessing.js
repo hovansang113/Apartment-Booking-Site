@@ -12,6 +12,13 @@ const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(__dirname, '../../uploa
 const LARGE_WIDTH = 1600; // trang chi tiet/gallery
 const THUMB_WIDTH = 480; // card/danh sach/email
 const AVIF_QUALITY = 60; // ~tuong duong JPEG 80 ve mat chat luong nhin, nhung nhe hon nhieu
+// "effort" (0-9, mac dinh sharp la 4) dieu khien AVIF nen ky den muc nao -
+// do lai luc dau: effort 4 mat ~4.4s/anh that (VPS yeu con lau hon), giam
+// xuong 2 chi con ~0.4s (nhanh gap 10 lan) ma dung luong file KHONG tang
+// (do da resize truoc khi nen, it chi tiet hon de "ky" lam gi). Day la ly do
+// "upload hoi lau" Jason bao (21/8) - khong phai loi code, ma AVIF von cham
+// hon JPEG de encode, chi can chinh tham so nay la du.
+const AVIF_EFFORT = 2;
 
 // REQ_02: xu ly 1 anh listing vua upload - resize + nen AVIF thanh 2 kich co
 // (Jason yeu cau 21/8: "downsized to different sizes for thumbnails, large
@@ -31,12 +38,12 @@ async function processAndSaveListingImage(buffer, listingId) {
     image
       .clone()
       .resize({ width: LARGE_WIDTH, withoutEnlargement: true })
-      .avif({ quality: AVIF_QUALITY })
+      .avif({ quality: AVIF_QUALITY, effort: AVIF_EFFORT })
       .toFile(path.join(dir, largeName)),
     image
       .clone()
       .resize({ width: THUMB_WIDTH, withoutEnlargement: true })
-      .avif({ quality: AVIF_QUALITY })
+      .avif({ quality: AVIF_QUALITY, effort: AVIF_EFFORT })
       .toFile(path.join(dir, thumbName)),
   ]);
 
