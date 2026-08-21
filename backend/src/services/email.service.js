@@ -183,7 +183,9 @@ async function sendHostNotification(booking) {
   const payoutRows = [
     priceRow('Total stay price', formatGBP(accommodation)),
     Number(booking.cleaningFee) > 0 ? priceRow('Cleaning fee', formatGBP(booking.cleaningFee)) : '',
-    priceRow(`Host service fee (${Number(booking.commissionRate)}%)`, `-${formatGBP(booking.commissionAmount)}`),
+    Number(booking.commissionRate) > 0
+      ? priceRow(`Host service fee (${Number(booking.commissionRate)}%)`, `-${formatGBP(booking.commissionAmount)}`)
+      : '',
     priceRow('You earn', formatGBP(booking.hostPayoutAmount), { bold: true }),
   ].join('');
 

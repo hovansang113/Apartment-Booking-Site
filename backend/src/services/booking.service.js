@@ -5,11 +5,11 @@ const AppError = require('../utils/appError');
 const pricingService = require('./pricing.service');
 const { findOrCreateGuestUser } = require('./auth.service');
 
-// Hoa hong nen tang (REQ_13-ish/luong thanh toan) - chot 15% sau khi doi
-// chieu Airbnb (host-only fee 15.5%, ap dung toan cau tu 2026) va Booking.com
-// (trung binh ~15%). Chua co UI cho admin doi so nay - hardcode 1 cho tam
-// thoi, muon doi thi sua o day.
-const COMMISSION_RATE_PERCENT = 15;
+// Hoa hong nen tang - tam thoi ve 0% theo yeu cau (21/8), vi hien tai chi co
+// 1 host duy nhat (chinh Jason) nen thu hoa hong tu chinh minh khong co y
+// nghia. Muc goc la 15% (doi chieu Airbnb/Booking.com) - doi lai khi co host
+// thu 2 tro len, chi can sua so nay.
+const COMMISSION_RATE_PERCENT = 0;
 
 // Thoi gian giu cho truoc khi tu huy neu khach chua thanh toan xong.
 const PAYMENT_HOLD_MINUTES = 15;
