@@ -1,90 +1,83 @@
-# Booking Platform — Setup
+# ReserveSmith
 
-Bộ khung (scaffold) đã setup sẵn cấu trúc thư mục + config + thư viện cho backend và frontend.
-Một số REQ đã có logic thật (auth, guest quick login, host listing CRUD + upload ảnh; frontend đã có trang chủ + trang chi tiết listing bằng mock data) — các REQ còn lại vẫn chỉ có comment TODO đánh dấu, xem tiến độ chi tiết trong [`TODO.md`](TODO.md).
+An Airbnb-style booking platform — guests can browse and book stays without creating an account, hosts manage listings/calendars/bookings from a dashboard, and payments run through Braintree with 3D Secure.
 
-## Cấu trúc
+Live at [reservesmith.com](https://reservesmith.com).
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Node.js, Express, Prisma ORM + MySQL, JWT auth (httpOnly cookies) |
+| Payments | Braintree (Drop-in UI, 3D Secure required) |
+| Images | Local disk storage — resized to thumbnail/large and encoded as AVIF on upload (`sharp`), served directly by nginx |
+| Email | Self-hosted Postfix + OpenDKIM (SPF/DKIM/DMARC configured), HTML templates via `nodemailer` |
+| Frontend | React 18, Vite, React Router, TanStack Query, React Hook Form, Tailwind CSS, i18next |
+| Infra | Docker Compose (MySQL + backend + nginx/frontend), Let's Encrypt via certbot |
+
+## What's implemented
+
+- Guest browsing and booking with no account required (auto-creates a lightweight guest user record from the contact details entered at checkout)
+- Real-time availability calendar per listing, with double-booking prevention enforced atomically at booking creation (`prisma.$transaction`)
+- Braintree payment flow with mandatory 3D Secure confirmation
+- Automatic booking confirmation emails to both guest and host on successful payment
+- Host dashboard: today/upcoming bookings, listing CRUD (including in-place photo add/remove), monthly calendar (manual block/unblock, per-day price overrides, min/max night rules)
+- Two-way iCal sync — pulls bookings in from external calendars (Airbnb/VRBO `.ics` links) and exports this platform's own calendar as a link hosts can paste elsewhere
+- Rate limiting on auth endpoints, per-request account-lock enforcement, SSRF guard on host-supplied iCal URLs, and other hardening from a full security pass (see commit history)
+
+## Project structure
 
 ```
-booking-platform/
+reservesmith/
 ├── backend/
 │   ├── src/
-│   │   ├── config/        # prisma client, cloudinary config
-│   │   ├── controllers/   # stub - TODO theo từng REQ
-│   │   ├── routes/        # stub - route đã comment sẵn path + REQ
-│   │   ├── middlewares/   # auth (JWT), role, upload (Cloudinary), error - đã setup sẵn
-│   │   ├── services/      # stub - TODO theo từng REQ
-│   │   ├── utils/         # jwt.util, response.util - đã setup sẵn
-│   │   ├── app.js         # đã wiring middleware + route, sẵn sàng chạy
-│   │   └── server.js
+│   │   ├── config/        # Prisma client, mailer, Braintree gateway
+│   │   ├── controllers/   # one per resource (auth, listing, booking, payment, calendar, admin)
+│   │   ├── routes/        # Express routers, one per resource
+│   │   ├── middlewares/   # auth (JWT), role-based access, rate limiting, upload, error handling
+│   │   ├── services/      # business logic — the actual behavior lives here, not in controllers
+│   │   └── utils/         # jwt, response shaping, image processing, SSRF-safe URL checks
 │   ├── prisma/
-│   │   └── schema.prisma  # đầy đủ 8 bảng theo DB đã thiết kế
-│   ├── .env.example
-│   └── package.json
+│   │   ├── schema.prisma
+│   │   └── migrations/
+│   └── scripts/           # one-off maintenance scripts (e.g. the Cloudinary → local image migration)
 └── frontend/
     ├── src/
-    │   ├── components/    # common, listing, booking, calendar (rỗng, chờ code)
-    │   ├── pages/         # auth, host, admin, user (rỗng, chờ code)
-    │   ├── context/       # AuthContext stub
-    │   ├── services/      # api.js, authService, listingService, bookingService (stub)
-    │   ├── routes/        # ProtectedRoute stub
-    │   ├── App.jsx
-    │   └── main.jsx
-    ├── .env.example
-    ├── vite.config.js
-    ├── tailwind.config.js
-    └── package.json
+    │   ├── pages/          # user, host, admin, auth, booking route pages
+    │   ├── components/     # shared UI (icons, header/footer, listing cards, calendars, forms)
+    │   ├── context/        # AuthContext
+    │   ├── services/       # one API client module per resource
+    │   └── locales/        # i18next translation files
+    └── nginx.conf           # serves the built SPA, proxies /api, serves /uploads directly
 ```
 
-## Cài đặt
+## Local development
 
-### 1. Backend
+Requires Docker (for MySQL) and Node.js 20+.
 
 ```bash
+# 1. Start MySQL
+docker compose up -d mysql
+
+# 2. Backend
 cd backend
 npm install
-copy .env.example .env      # Windows (hoặc: cp .env.example .env trên Mac/Linux)
-```
+cp .env.example .env        # fill in DATABASE_URL, JWT_SECRET, Braintree sandbox keys, etc.
+npx prisma migrate dev
+npm run dev                 # http://localhost:5000
 
-Mở `.env`, điền:
-- `DATABASE_URL` — connection string MySQL (vd: `mysql://root:password@localhost:3306/booking_platform`)
-- `JWT_SECRET` — chuỗi bí mật bất kỳ
-- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — lấy từ dashboard Cloudinary
-
-Tạo database và sinh bảng từ Prisma schema:
-
-```bash
-npx prisma migrate dev --name init
-npx prisma generate
-```
-
-Chạy server:
-
-```bash
-npm run dev
-```
-
-Server chạy tại `http://localhost:5000`, kiểm tra bằng `GET /health`.
-
-### 2. Frontend
-
-```bash
+# 3. Frontend (separate terminal)
 cd frontend
 npm install
-copy .env.example .env
-npm run dev
+cp .env.example .env
+npm run dev                 # http://localhost:5173
 ```
 
-Chạy tại `http://localhost:5173`.
+## Deploying
 
-## Thư viện đã cài sẵn
+See [`DEPLOY.md`](DEPLOY.md) for the full production deployment guide (Docker Compose, nginx/TLS setup, environment variables, Postfix email setup, Braintree webhook registration).
 
-**Backend:** express, @prisma/client + prisma, jsonwebtoken, bcrypt, cloudinary, multer + multer-storage-cloudinary, cors, dotenv, morgan, express-validator, express-async-errors, cookie-parser, nodemon (dev)
+## Further reading
 
-**Frontend:** react, react-router-dom, axios, @tanstack/react-query, react-hook-form, react-datepicker, date-fns, react-hot-toast, tailwindcss
-
-## Bước tiếp theo
-
-1. Setup MySQL local (hoặc dùng Docker) → chạy `prisma migrate dev`
-2. Code dần từng REQ theo sprint đã chia trong sheet — mỗi file stub đều có comment REQ tương ứng để dễ tra cứu
-3. REQ_09 (chống trùng lịch) là phần logic quan trọng nhất — booking giờ tự động `approved` ngay khi tạo (không cần host duyệt), nên phải dùng Prisma transaction (`prisma.$transaction`) ngay lúc **tạo booking** (kiểm tra `listing_calendar` còn trống rồi mới insert) để tránh race condition, thay vì kiểm tra ở bước approve
+- [`DEPLOY.md`](DEPLOY.md) — production deployment runbook
+- [`DATABASE.md`](DATABASE.md) — schema overview
