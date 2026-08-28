@@ -3,8 +3,8 @@
 # DEPLOY.md de biet lan dau setup can lam gi truoc khi chay script nay.
 set -e
 
-echo "==> Pull code moi nhat tu main"
-git pull origin main
+echo "==> Pull code moi nhat"
+git pull
 
 echo "==> Build lai image (chi rebuild phan da doi)"
 docker compose build
