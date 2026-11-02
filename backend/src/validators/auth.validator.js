@@ -35,6 +35,13 @@ const phoneRule = body('phone')
   .isMobilePhone('any')
   .withMessage('Invalid phone number');
 
+const requiredPhoneRule = body('phone')
+  .trim()
+  .notEmpty()
+  .withMessage('Phone number is required')
+  .isMobilePhone('any')
+  .withMessage('Invalid phone number');
+
 const registerRules = [
   emailRule,
   newPasswordRule,
@@ -48,7 +55,7 @@ const loginRules = [
   body('password').notEmpty().withMessage('Password is required'),
 ];
 
-const guestLoginRules = [emailRule, fullNameRule, phoneRule];
+const guestLoginRules = [emailRule, fullNameRule, requiredPhoneRule];
 
 const taxInfoRules = [
   body('legalName').trim().notEmpty().withMessage('Please enter your full legal name').isLength({ max: NAME_MAX }),

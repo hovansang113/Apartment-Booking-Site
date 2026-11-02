@@ -24,6 +24,8 @@ function mapListing(raw) {
     weekdayPrice,
     weekendPrice,
     cleaningFee: Number(raw.cleaningFee) || 0,
+    minNights: raw.minNights || null,
+    maxNights: raw.maxNights || null,
     rating: null,
     guestCapacity: raw.guestCapacity,
     bedrooms: raw.bedrooms,
@@ -35,6 +37,7 @@ function mapListing(raw) {
     thumbnail: thumbUrls[0],
     images: imageUrls,
     bookedRanges: raw.bookedRanges || [],
+    stayRules: (raw.stayRules || []).reduce((acc, r) => { acc[r.date] = r; return acc; }, {}),
   };
 }
 
@@ -42,15 +45,54 @@ function mapListing(raw) {
 // biet duoc "API that su loi" (fallback mock cho de dev) voi "API tra ve rong
 // vi chua co listing that nao duoc duyet" (phai hien dung trang thai rong,
 // khong duoc bia du lieu gia).
-export async function getPublicListings({ category, page } = {}) {
-  const { data } = await api.get('/listings', { params: { category, page } });
-  return { listings: data.data.listings.map(mapListing), total: data.data.total };
+export async function getPublicListings({
+  category,
+  page,
+  location,
+  guests,
+  amenities,
+  checkIn,
+  checkOut,
+  minPrice,
+  maxPrice,
+} = {}) {
+  const { data } = await api.get('/listings', {
+    params: {
+      category,
+      page,
+      location,
+      guests,
+      amenities: amenities?.length ? amenities.join(',') : undefined,
+      checkIn,
+      checkOut,
+      minPrice,
+      maxPrice,
+    },
+  });
+  return {
+    listings: data.data.listings.map(mapListing),
+    total: data.data.total,
+    page: data.data.page,
+    pageSize: data.data.pageSize,
+    totalPages: data.data.totalPages,
+  };
 }
 
 // REQ_06
 export async function getListingById(id) {
   const { data } = await api.get(`/listings/${id}`);
   return mapListing(data.data);
+}
+
+export async function getListingQuote(id, { checkIn, checkOut }) {
+  const { data } = await api.get(`/listings/${id}/quote`, { params: { checkIn, checkOut } });
+  return {
+    ...data.data,
+    nightlyTotal: Number(data.data.nightlyTotal),
+    cleaningFee: Number(data.data.cleaningFee),
+    total: Number(data.data.total),
+    nights: (data.data.nights || []).map((night) => ({ ...night, price: Number(night.price) })),
+  };
 }
 
 export async function getHostListings() {

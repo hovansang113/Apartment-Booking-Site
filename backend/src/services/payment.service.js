@@ -3,6 +3,7 @@ const prisma = require('../config/prisma');
 const gateway = require('../config/braintree');
 const AppError = require('../utils/appError');
 const emailService = require('./email.service');
+const { expireStalePaymentHolds } = require('./booking.service');
 
 // Trang thai giao dich Braintree coi la "thanh cong" (thang duoc uy quyen -
 // authorized - hoac da gui di settlement/da settle). "processor_declined"/
@@ -24,6 +25,7 @@ async function generateClientToken() {
 // dong bo: co ket qua thanh cong/that bai ngay trong response nay, khong can
 // trang "return" rieng nua.
 async function checkout({ bookingId, paymentMethodNonce, deviceData }) {
+  await expireStalePaymentHolds();
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: { payment: true, listing: { select: { title: true } } },
@@ -31,6 +33,9 @@ async function checkout({ bookingId, paymentMethodNonce, deviceData }) {
 
   if (!booking || !booking.payment) {
     throw new AppError(404, 'Booking not found');
+  }
+  if (booking.status === BookingStatus.expired) {
+    throw new AppError(410, 'Your reservation hold has expired, please book again');
   }
   if (booking.status !== 'pending_payment') {
     throw new AppError(409, 'This booking is no longer awaiting payment');
@@ -40,7 +45,7 @@ async function checkout({ bookingId, paymentMethodNonce, deviceData }) {
   }
   // Idempotent - tranh submit 2 lan (double-click, F5 sau khi da thanh cong)
   // vo tinh tru tien 2 lan.
-  if (booking.payment.status !== PaymentStatus.pending) {
+  if (booking.payment.status === PaymentStatus.success || booking.payment.status === PaymentStatus.refunded) {
     return {
       code: 'already_processed',
       paymentStatus: booking.payment.status,
@@ -48,21 +53,58 @@ async function checkout({ bookingId, paymentMethodNonce, deviceData }) {
       booking,
     };
   }
+  // Payment failed vẫn được phép thử lại bằng nonce/thẻ mới trong thời gian
+  // giữ chỗ. Chỉ giao dịch thành công mới là trạng thái cuối cần chặn lại.
 
-  const result = await gateway.transaction.sale({
-    amount: Number(booking.payment.amount).toFixed(2),
-    paymentMethodNonce,
-    deviceData,
-    orderId: booking.bookingCode,
-    options: {
-      submitForSettlement: true,
-      // Bat buoc nonce phai da qua xac thuc 3D Secure that (khop yeu cau
-      // Jason "extra step of confirming the payment through app") - Braintree
-      // se tu choi giao dich neu FE goi requestPaymentMethod() ma bo qua
-      // challenge 3DS.
-      three_d_secure: { required: true },
+  // Claim thanh toan bang mot update co dieu kien truoc khi goi sang cong
+  // Braintree. Hai request den cung luc (double-click, retry mang) khong
+  // duoc phep cung charge mot booking. `failed` van co the claim lai de
+  // khach thu the/nonce moi trong thoi gian giu cho.
+  const claim = await prisma.payment.updateMany({
+    where: {
+      id: booking.payment.id,
+      status: { in: [PaymentStatus.pending, PaymentStatus.failed] },
     },
+    data: { status: PaymentStatus.processing },
   });
+  if (claim.count !== 1) {
+    const currentPayment = await prisma.payment.findUnique({ where: { id: booking.payment.id } });
+    if (currentPayment?.status === PaymentStatus.success || currentPayment?.status === PaymentStatus.refunded) {
+      return {
+        code: 'already_processed',
+        paymentStatus: currentPayment.status,
+        bookingStatus: BookingStatus.confirmed,
+        booking: { ...booking, status: BookingStatus.confirmed },
+      };
+    }
+    throw new AppError(409, 'A payment attempt is already in progress');
+  }
+
+  let result;
+  try {
+    result = await gateway.transaction.sale({
+      amount: Number(booking.payment.amount).toFixed(2),
+      paymentMethodNonce,
+      deviceData,
+      orderId: booking.bookingCode,
+      options: {
+        submitForSettlement: true,
+        // Bat buoc nonce phai da qua xac thuc 3D Secure that (khop yeu cau
+        // Jason "extra step of confirming the payment through app") - Braintree
+        // se tu choi giao dich neu FE goi requestPaymentMethod() ma bo qua
+        // challenge 3DS.
+        three_d_secure: { required: true },
+      },
+    });
+  } catch (err) {
+    // Loi ket noi/SDK khong duoc de payment mac ket o processing, vi khi do
+    // khach se khong con cach thu lai trong thoi gian giu cho.
+    await prisma.payment.updateMany({
+      where: { id: booking.payment.id, status: PaymentStatus.processing },
+      data: { status: PaymentStatus.failed, braintreeStatus: 'gateway_error' },
+    });
+    throw err;
+  }
 
   const transaction = result.transaction;
   const isSuccess = result.success && SUCCESS_STATUSES.includes(transaction?.status);
@@ -128,7 +170,11 @@ async function handleWebhook({ btSignature, btPayload }) {
     return { handled: false, kind: notification.kind };
   }
 
-  if (notification.kind === 'transaction_settlement_declined' && payment.status === PaymentStatus.success) {
+  if (
+    notification.kind === 'transaction_settlement_declined' &&
+    payment.status !== PaymentStatus.failed &&
+    payment.status !== PaymentStatus.refunded
+  ) {
     await prisma.payment.update({
       where: { id: payment.id },
       data: { status: PaymentStatus.failed, braintreeStatus: notification.transaction.status },

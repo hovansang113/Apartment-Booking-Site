@@ -141,6 +141,9 @@ export default function ListingDetail() {
 
             <AvailabilityCalendar
               bookedRanges={listing.bookedRanges}
+              stayRules={listing.stayRules}
+              minNights={listing.minNights}
+              maxNights={listing.maxNights}
               checkIn={checkIn}
               checkOut={checkOut}
               onSelectDate={handleSelectDate}

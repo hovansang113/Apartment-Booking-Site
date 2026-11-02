@@ -52,6 +52,8 @@ export default function CreateListingPage() {
   const [weekdayPrice, setWeekdayPrice] = useState(45);
   const [weekendPrice, setWeekendPrice] = useState(45);
   const [cleaningFee, setCleaningFee] = useState(0);
+  const [minNights, setMinNights] = useState('');
+  const [maxNights, setMaxNights] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function toggleAmenity(id) {
@@ -123,6 +125,8 @@ export default function CreateListingPage() {
       formData.append('weekdayPrice', weekdayPrice);
       formData.append('weekendPrice', weekendPrice);
       formData.append('cleaningFee', cleaningFee);
+      if (minNights) formData.append('minNights', minNights);
+      if (maxNights) formData.append('maxNights', maxNights);
       formData.append('guestCapacity', guestCapacity);
       formData.append('bedrooms', bedrooms);
       formData.append('beds', beds);
@@ -561,6 +565,33 @@ export default function CreateListingPage() {
                     value={cleaningFee}
                     onChange={(e) => setCleaningFee(Number(e.target.value))}
                     className="w-32 text-center text-3xl font-extrabold text-neutral-900 border-b-2 border-neutral-300 focus:border-neutral-900 outline-none pb-1"
+                  />
+                </div>
+              </div>
+
+              <div className="max-w-xl mx-auto mb-10 grid grid-cols-2 gap-4">
+                <div className="rounded-2xl border border-neutral-200 p-5 bg-white shadow-sm">
+                  <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">Min nights</p>
+                  <p className="text-xs text-neutral-400 mb-2">Minimum stay (optional)</p>
+                  <input
+                    type="number"
+                    min={1}
+                    value={minNights}
+                    onChange={(e) => setMinNights(e.target.value)}
+                    placeholder="e.g. 2"
+                    className="w-full text-center text-2xl font-extrabold text-neutral-900 border-b-2 border-neutral-300 focus:border-neutral-900 outline-none pb-1"
+                  />
+                </div>
+                <div className="rounded-2xl border border-neutral-200 p-5 bg-white shadow-sm">
+                  <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">Max nights</p>
+                  <p className="text-xs text-neutral-400 mb-2">Maximum stay (optional)</p>
+                  <input
+                    type="number"
+                    min={1}
+                    value={maxNights}
+                    onChange={(e) => setMaxNights(e.target.value)}
+                    placeholder="e.g. 30"
+                    className="w-full text-center text-2xl font-extrabold text-neutral-900 border-b-2 border-neutral-300 focus:border-neutral-900 outline-none pb-1"
                   />
                 </div>
               </div>

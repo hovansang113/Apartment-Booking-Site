@@ -209,7 +209,14 @@ async function connectIcalSource({ listingId, hostId, icalUrl, label }) {
   await assertOwnedByHost(listingId, hostId);
 
   const sync = await prisma.listingCalendarSync.create({ data: { listingId, icalUrl, label } });
-  await syncIcalSource({ listingId, hostId, syncId: sync.id });
+  try {
+    await syncIcalSource({ listingId, hostId, syncId: sync.id });
+  } catch (err) {
+    // Khong de lai mot feed loi ma host khong biet sau khi lan dong bo dau
+    // tien that bai (URL sai, DNS loi, file ICS khong tai duoc...).
+    await prisma.listingCalendarSync.delete({ where: { id: sync.id } }).catch(() => {});
+    throw err;
+  }
   return prisma.listingCalendarSync.findUnique({ where: { id: sync.id } });
 }
 
@@ -295,7 +302,17 @@ async function updateSyncSource({ listingId, hostId, syncId, icalUrl, label }) {
     data: { icalUrl: icalUrl || existing.icalUrl, label: label || existing.label },
   });
 
-  await syncIcalSource({ listingId, hostId, syncId });
+  try {
+    await syncIcalSource({ listingId, hostId, syncId });
+  } catch (err) {
+    // Cap nhat URL/nhan la mot thao tac all-or-nothing tu goc nhin host.
+    // Neu feed moi khong hop le, giu lai cau hinh cu van dang hoat dong.
+    await prisma.listingCalendarSync.update({
+      where: { id: syncId },
+      data: { icalUrl: existing.icalUrl, label: existing.label },
+    }).catch(() => {});
+    throw err;
+  }
   return prisma.listingCalendarSync.findUnique({ where: { id: syncId } });
 }
 
@@ -330,7 +347,7 @@ function buildIcs({ listingId, listingTitle, ranges }) {
     'PRODID:-//Reservesmith//Booking Platform//EN',
     'VERSION:2.0',
     'CALSCALE:GREGORIAN',
-    `X-WR-CALNAME:${listingTitle}`,
+    `X-WR-CALNAME:${escapeIcsText(listingTitle)}`,
   ];
 
   ranges.forEach(({ start, end }, i) => {
@@ -347,6 +364,17 @@ function buildIcs({ listingId, listingTitle, ranges }) {
 
   lines.push('END:VCALENDAR');
   return lines.join('\r\n');
+}
+
+// RFC 5545 TEXT escaping. Listing title la du lieu do host nhap; neu khong
+// escape, CRLF hoac dau phay/cham phay co the lam hong feed hoac chen field
+// iCalendar ngoai y muon.
+function escapeIcsText(value) {
+  return String(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/\r\n|\r|\n/g, '\\n')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,');
 }
 
 // Xuat lich cua 1 listing ra dinh dang iCal cong khai - de host copy link nay

@@ -1,28 +1,35 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { Toaster } from 'react-hot-toast';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import Home from './pages/user/Home';
-import ListingDetail from './pages/user/ListingDetail';
-import LoginPage from './pages/auth/LoginPage';
-import RegisterPage from './pages/auth/RegisterPage';
-import BecomeHostPage from './pages/host/BecomeHostPage';
-import HostTodayPage from './pages/host/HostTodayPage';
-import HostListingsPage from './pages/host/HostListingsPage';
-import HostCalendarPage from './pages/host/HostCalendarPage';
-import HostSettingsPage from './pages/host/HostSettingsPage';
-import HostTaxSettingsPage from './pages/host/HostTaxSettingsPage';
-import HostPayoutSettingsPage from './pages/host/HostPayoutSettingsPage';
-import HostSetupChoicePage from './pages/host/HostSetupChoicePage';
-import CreateListingPage from './pages/host/CreateListingPage';
-import EditListingPage from './pages/host/EditListingPage';
-import AdminListingsPage from './pages/admin/AdminListingsPage';
-import AdminUsersPage from './pages/admin/AdminUsersPage';
-import AdminTaxVerificationPage from './pages/admin/AdminTaxVerificationPage';
-import CheckoutPage from './pages/booking/CheckoutPage';
-import PaymentPage from './pages/booking/PaymentPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
+
+// Dashboard, creation wizard and Braintree are not needed for browsing the
+// public catalogue. Loading them on demand makes the first page substantially
+// lighter while preserving the same routes.
+const ListingDetail = lazy(() => import('./pages/user/ListingDetail'));
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
+const BecomeHostPage = lazy(() => import('./pages/host/BecomeHostPage'));
+const HostTodayPage = lazy(() => import('./pages/host/HostTodayPage'));
+const HostListingsPage = lazy(() => import('./pages/host/HostListingsPage'));
+const HostCalendarPage = lazy(() => import('./pages/host/HostCalendarPage'));
+const HostSettingsPage = lazy(() => import('./pages/host/HostSettingsPage'));
+const HostTaxSettingsPage = lazy(() => import('./pages/host/HostTaxSettingsPage'));
+const HostPayoutSettingsPage = lazy(() => import('./pages/host/HostPayoutSettingsPage'));
+const HostSetupChoicePage = lazy(() => import('./pages/host/HostSetupChoicePage'));
+const CreateListingPage = lazy(() => import('./pages/host/CreateListingPage'));
+const EditListingPage = lazy(() => import('./pages/host/EditListingPage'));
+const AdminListingsPage = lazy(() => import('./pages/admin/AdminListingsPage'));
+const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'));
+const AdminTaxVerificationPage = lazy(() => import('./pages/admin/AdminTaxVerificationPage'));
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
+const CheckoutPage = lazy(() => import('./pages/booking/CheckoutPage'));
+const PaymentPage = lazy(() => import('./pages/booking/PaymentPage'));
+const GuestTripsPage = lazy(() => import('./pages/user/GuestTripsPage'));
 
 function HostHomeRoute() {
   const { user } = useAuth();
@@ -46,13 +53,22 @@ export default function App() {
       <Toaster position="bottom-center" />
       {!isStandalonePage && <Header />}
       <div className="flex-1">
-        <Routes>
+        <Suspense fallback={<div className="mx-auto max-w-lg px-4 py-20 text-center text-sm text-neutral-500">Loading…</div>}>
+          <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/listings/:id" element={<ListingDetail />} />
           <Route path="/listings/:id/checkout" element={<CheckoutPage />} />
 
           {/* Booking / Payment Routes */}
           <Route path="/booking/:bookingId/payment" element={<PaymentPage />} />
+          <Route
+            path="/bookings"
+            element={
+              <ProtectedRoute>
+                <GuestTripsPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Auth Routes */}
           <Route path="/auth/login" element={<LoginPage />} />
@@ -138,7 +154,7 @@ export default function App() {
             path="/admin"
             element={
               <ProtectedRoute roles={['admin']}>
-                <Navigate to="/admin/listings" replace />
+                <AdminDashboardPage />
               </ProtectedRoute>
             }
           />
@@ -169,7 +185,8 @@ export default function App() {
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+          </Routes>
+        </Suspense>
       </div>
       {!isStandalonePage && <Footer />}
     </div>

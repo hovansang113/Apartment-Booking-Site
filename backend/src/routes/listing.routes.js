@@ -8,6 +8,7 @@ const {
   createListingRules,
   updateListingRules,
   publicListRules,
+  quoteRules,
 } = require('../validators/listing.validator');
 const { validate } = require('../validators/validate.util');
 
@@ -15,6 +16,7 @@ router.get('/', publicListRules, validate, listingController.list); // REQ_05 - 
 
 router.get('/mine', authenticate, authorize(UserRole.host), listingController.mine); // prereq REQ_12
 
+router.get('/:id/quote', quoteRules, validate, listingController.quote);
 router.get('/:id', listingController.getOne); // REQ_06 - public, no auth
 
 router.post(

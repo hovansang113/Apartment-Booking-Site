@@ -8,7 +8,8 @@ const AppError = require('../utils/appError');
 const SALT_ROUNDS = 10;
 
 function sanitizeUser(user) {
-  const { passwordHash, ...safe } = user;
+  const safe = { ...user };
+  delete safe.passwordHash;
   return safe;
 }
 

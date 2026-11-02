@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import { login as loginApi } from '../../services/authService';
+import { guestLogin as guestLoginApi, login as loginApi } from '../../services/authService';
 import { GoogleIcon, LightbulbIcon } from '../../components/common/icons';
 import Seo from '../../components/common/Seo';
 import logoFull from '../../assets/logo-full.png';
@@ -20,9 +20,12 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [guestLoginMode, setGuestLoginMode] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const from = location.state?.from?.pathname || '/host/listings';
+  const requestedPath = location.state?.from?.pathname;
 
   function handleGoogleLogin() {
     toast(t('auth.googleComingSoon'), {
@@ -48,13 +51,33 @@ export default function LoginPage() {
       if (res.user.role === 'admin') {
         navigate('/admin', { replace: true });
       } else if (res.user.role === 'host') {
-        navigate(from, { replace: true });
+        navigate(requestedPath || '/host/listings', { replace: true });
       } else {
-        navigate('/', { replace: true });
+        navigate(requestedPath || '/bookings', { replace: true });
       }
     } catch (err) {
       const msg = err.response?.data?.message || t('auth.login.genericError');
       toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGuestLogin(e) {
+    e.preventDefault();
+    if (!email.trim() || !fullName.trim() || !phone.trim()) {
+      toast.error(t('auth.guestLogin.fillRequired'));
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await guestLoginApi({ email: email.trim(), fullName: fullName.trim(), phone: phone.trim() });
+      login(res.user);
+      toast.success(t('auth.guestLogin.welcome', { name: res.user.fullName }));
+      navigate(location.state?.from?.pathname || '/bookings', { replace: true });
+    } catch (err) {
+      toast.error(err.response?.data?.message || t('auth.guestLogin.genericError'));
     } finally {
       setLoading(false);
     }
@@ -72,8 +95,22 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Form Login First */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={guestLoginMode ? handleGuestLogin : handleSubmit} className="space-y-4">
+          {guestLoginMode && (
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase text-neutral-700">
+                {t('auth.guestLogin.fullName')} <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                autoComplete="name"
+                className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600"
+              />
+            </div>
+          )}
           <div>
             <label className="block text-xs font-semibold uppercase text-neutral-700 mb-1">
               {t('auth.login.email')} <span className="text-red-500">*</span>
@@ -88,33 +125,59 @@ export default function LoginPage() {
             />
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold uppercase text-neutral-700">
-                {t('auth.login.password')} <span className="text-red-500">*</span>
+          {guestLoginMode ? (
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase text-neutral-700">
+                {t('auth.guestLogin.phone')} <span className="text-red-500">*</span>
               </label>
-              <a href="#" onClick={(e) => e.preventDefault()} className="text-xs text-neutral-500 hover:underline">
-                {t('auth.login.forgotPassword')}
-              </a>
+              <input
+                type="tel"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                autoComplete="tel"
+                className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600"
+              />
             </div>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={t('auth.login.passwordPlaceholder')}
-              className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600"
-            />
-          </div>
+          ) : (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold uppercase text-neutral-700">
+                  {t('auth.login.password')} <span className="text-red-500">*</span>
+                </label>
+                <a href="#" onClick={(e) => e.preventDefault()} className="text-xs text-neutral-500 hover:underline">
+                  {t('auth.login.forgotPassword')}
+                </a>
+              </div>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={t('auth.login.passwordPlaceholder')}
+                className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600"
+              />
+            </div>
+          )}
 
           <button
             type="submit"
             disabled={loading}
             className="w-full rounded-xl bg-brand-600 py-3.5 text-sm font-semibold text-white hover:bg-brand-700 transition-colors disabled:opacity-50"
           >
-            {loading ? t('auth.login.submitting') : t('auth.login.submit')}
+            {loading
+              ? (guestLoginMode ? t('auth.guestLogin.submitting') : t('auth.login.submitting'))
+              : (guestLoginMode ? t('auth.guestLogin.submit') : t('auth.login.submit'))}
           </button>
         </form>
+
+        <button
+          type="button"
+          onClick={() => setGuestLoginMode((current) => !current)}
+          className="mt-4 w-full text-sm font-semibold text-brand-600 hover:underline"
+        >
+          {guestLoginMode ? t('auth.guestLogin.usePassword') : t('auth.guestLogin.useQuickLogin')}
+        </button>
 
         {SHOW_GOOGLE_LOGIN && (
           <>

@@ -80,8 +80,20 @@
     "seoDescription": "Find and book apartments, houses, villas, and homestays across the UK.",
     "srHeading": "Places to stay in the UK",
     "noResults": "No stays match your search",
+    "loadError": "Couldn't load stays right now.",
+    "tryAgain": "Try again",
     "clearFilters": "Clear filters",
-    "resultsAriaLabel": "Search results"
+    "resultsAriaLabel": "Search results",
+    "amenitiesFilter": "Amenities",
+    "priceRangeFilter": "Nightly base price",
+    "minimumPrice": "Minimum",
+    "maximumPrice": "Maximum",
+    "applyPriceRange": "Apply price",
+    "invalidPriceRange": "Maximum price must be greater than or equal to minimum price.",
+    "paginationAriaLabel": "Search result pages",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pageOf": "Page {{page}} of {{total}}"
   },
   "listing": {
     "imageAltIn": "{{title}} in {{address}}",
@@ -125,7 +137,12 @@
       "prevMonth": "Previous month",
       "nextMonth": "Next month",
       "bookedTitle": "Already booked",
-      "clickToSelect": "Click to select"
+      "clickToSelect": "Click to select",
+      "minNightsHint": "Minimum stay for this check-in date is {{count}} nights",
+      "maxNightsHint": "Maximum stay for this check-in date is {{count}} nights",
+      "stayRuleMin": "Minimum stay when checking in on this date: {{count}} nights",
+      "stayRuleMax": "Maximum stay when checking in on this date: {{count}} nights",
+      "stayRuleBoth": "Stay length when checking in on this date: {{min}}–{{max}} nights"
     },
     "booking": {
       "night": "/ night",
@@ -228,6 +245,17 @@
       "submit": "Log in",
       "noAccount": "Don't have a host account?",
       "registerNow": "Sign up now"
+    },
+    "guestLogin": {
+      "fillRequired": "Please enter your name and email address.",
+      "welcome": "Welcome, {{name}}!",
+      "genericError": "Guest login failed. Please try again.",
+      "fullName": "Full name",
+      "phone": "Phone number",
+      "submitting": "Continuing...",
+      "submit": "Continue to your trips",
+      "useQuickLogin": "Continue without a password",
+      "usePassword": "Log in with a password"
     },
     "register": {
       "fillRequired": "Please fill in all required fields",
@@ -625,11 +653,30 @@
   },
   "admin": {
     "layout": {
+      "tabOverview": "Overview",
       "tabListings": "Review listings",
       "tabUsers": "Users",
       "tabTax": "Tax profiles",
       "logout": "Log out",
       "logoutSuccess": "Logged out successfully"
+    },
+    "dashboard": {
+      "pageTitle": "Admin overview — Reservesmith Admin",
+      "heading": "Platform overview",
+      "subheading": "Current users, listings, bookings, and successful payment totals.",
+      "loading": "Loading platform metrics...",
+      "error": "Couldn't load platform metrics.",
+      "retry": "Try again",
+      "users": "Total users",
+      "hosts": "Hosts",
+      "guests": "Guests",
+      "listings": "Total listings",
+      "pendingListings": "Listings awaiting review",
+      "approvedListings": "Approved listings",
+      "confirmedBookings": "Confirmed bookings",
+      "pendingPaymentBookings": "Awaiting payment",
+      "pendingTaxProfiles": "Tax profiles awaiting review",
+      "successfulPaymentTotal": "Successful payments"
     },
     "reasonModal": {
       "close": "Close",
@@ -703,5 +750,24 @@
     "villa": "Villas",
     "homestay": "Homestays",
     "hotel_room": "Hotel rooms"
+  },
+  "trips": {
+    "pageTitle": "Your trips — Reservesmith",
+    "heading": "Your trips",
+    "loadError": "We couldn't load your trips. Please try again.",
+    "emptyTitle": "No trips yet",
+    "emptyBody": "Your bookings will appear here after you reserve a stay.",
+    "browseStays": "Browse stays",
+    "bookingCode": "Booking {{code}}",
+    "completePayment": "Complete payment",
+    "status": {
+      "pending": "Pending",
+      "pending_payment": "Awaiting payment",
+      "approved": "Approved",
+      "confirmed": "Confirmed",
+      "expired": "Expired",
+      "canceled": "Canceled",
+      "rejected": "Declined"
+    }
   }
 }

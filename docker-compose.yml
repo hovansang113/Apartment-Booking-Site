@@ -10,6 +10,10 @@ services:
       MYSQL_DATABASE: booking_platform
     volumes:
       - mysql_data:/var/lib/mysql
+    # Local-only: backend chay bang npm tren may co the ket noi, nhung MySQL
+    # khong bao gio bi expose ra Internet (chi bind loopback).
+    ports:
+      - '127.0.0.1:3306:3306'
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-proot', "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 5s

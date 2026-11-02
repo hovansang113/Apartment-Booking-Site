@@ -67,6 +67,8 @@ export default function EditListingPage() {
         weekdayPrice: Number(listing.weekdayPrice),
         weekendPrice: Number(listing.weekendPrice),
         cleaningFee: Number(listing.cleaningFee) || 0,
+        minNights: listing.minNights || '',
+        maxNights: listing.maxNights || '',
         guestCapacity: listing.guestCapacity,
         bedrooms: listing.bedrooms,
         beds: listing.beds,
@@ -133,7 +135,13 @@ export default function EditListingPage() {
       toast.error(t('createListing.errors.enterTitle'));
       return;
     }
-    saveMutation.mutate(form);
+    // Empty optional numeric fields must be sent as null, rather than an
+    // empty string that fails backend integer validation.
+    saveMutation.mutate({
+      ...form,
+      minNights: form.minNights === '' ? null : form.minNights,
+      maxNights: form.maxNights === '' ? null : form.maxNights,
+    });
   }
 
   if (isLoading || (listing && !form)) {
@@ -337,6 +345,39 @@ export default function EditListingPage() {
                   step={1}
                   value={form.cleaningFee}
                   onChange={(e) => setField('cleaningFee', Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-neutral-900"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-2xl border border-neutral-200 p-5">
+                <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1.5">
+                  Min nights
+                </label>
+                <p className="text-xs text-neutral-400 mb-2">Minimum stay for this listing (optional)</p>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={form.minNights}
+                  onChange={(e) => setField('minNights', e.target.value ? Number(e.target.value) : '')}
+                  placeholder="e.g. 2"
+                  className="w-full rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-neutral-900"
+                />
+              </div>
+              <div className="rounded-2xl border border-neutral-200 p-5">
+                <label className="block text-xs font-semibold uppercase text-neutral-500 mb-1.5">
+                  Max nights
+                </label>
+                <p className="text-xs text-neutral-400 mb-2">Maximum stay for this listing (optional)</p>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={form.maxNights}
+                  onChange={(e) => setField('maxNights', e.target.value ? Number(e.target.value) : '')}
+                  placeholder="e.g. 30"
                   className="w-full rounded-xl border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-neutral-900"
                 />
               </div>

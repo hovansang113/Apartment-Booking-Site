@@ -14,6 +14,7 @@ export default function AdminLayout({ children }) {
   const { user, logout } = useAuth();
 
   const TABS = [
+    { to: '/admin', label: t('admin.layout.tabOverview') },
     { to: '/admin/listings', label: t('admin.layout.tabListings') },
     { to: '/admin/users', label: t('admin.layout.tabUsers') },
     { to: '/admin/tax-verifications', label: t('admin.layout.tabTax') },
@@ -30,7 +31,7 @@ export default function AdminLayout({ children }) {
       <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-8">
-            <Link to="/admin/listings" className="text-xl font-bold text-neutral-900 tracking-tight">
+            <Link to="/admin" className="text-xl font-bold text-neutral-900 tracking-tight">
               reservesmith <span className="text-brand-600">admin</span>
             </Link>
             <nav className="hidden sm:flex items-center gap-6 text-sm font-semibold">

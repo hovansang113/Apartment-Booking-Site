@@ -1,7 +1,7 @@
 const multer = require('multer');
 
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
 // REQ_02: giu file trong memory (buffer), validate xong
 // (validators/listing.validator.js) moi that su resize + luu xuong dia trong

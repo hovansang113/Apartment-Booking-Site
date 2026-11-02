@@ -1,83 +1,86 @@
 # ReserveSmith
 
-An Airbnb-style booking platform — guests can browse and book stays without creating an account, hosts manage listings/calendars/bookings from a dashboard, and payments run through Braintree with 3D Secure.
+Nền tảng đặt phòng lưu trú theo phong cách Airbnb — khách có thể duyệt và đặt phòng mà không cần tạo tài khoản, chủ nhà (host) quản lý bài đăng/lịch/đơn đặt phòng từ bảng điều khiển (dashboard), và thanh toán qua cổng Braintree với xác thực 3D Secure bắt buộc.
 
-Live at [reservesmith.com](https://reservesmith.com).
+Trang web đang chạy tại: [reservesmith.com](https://reservesmith.com).
 
-## Tech stack
+## Công nghệ sử dụng (Tech Stack)
 
-| Layer | Technology |
+| Tầng (Layer) | Công nghệ |
 |---|---|
-| Backend | Node.js, Express, Prisma ORM + MySQL, JWT auth (httpOnly cookies) |
-| Payments | Braintree (Drop-in UI, 3D Secure required) |
-| Images | Local disk storage — resized to thumbnail/large and encoded as AVIF on upload (`sharp`), served directly by nginx |
-| Email | Self-hosted Postfix + OpenDKIM (SPF/DKIM/DMARC configured), HTML templates via `nodemailer` |
+| Backend | Node.js, Express, Prisma ORM + MySQL, xác thực JWT (qua httpOnly cookies) |
+| Thanh toán | Braintree (Drop-in UI, bắt buộc xác thực 3D Secure) |
+| Hình ảnh | Lưu trữ ổ đĩa cục bộ — tự động resize về thumbnail/large và nén chuẩn AVIF khi tải lên (`sharp`), Nginx phục vụ trực tiếp |
+| Email | Máy chủ Postfix tự lưu trữ + OpenDKIM (cấu hình chuẩn SPF/DKIM/DMARC), mẫu HTML qua `nodemailer` |
 | Frontend | React 18, Vite, React Router, TanStack Query, React Hook Form, Tailwind CSS, i18next |
-| Infra | Docker Compose (MySQL + backend + nginx/frontend), Let's Encrypt via certbot |
+| Hạ tầng (Infra) | Docker Compose (MySQL + backend + nginx/frontend), chứng chỉ Let's Encrypt qua Certbot |
 
-## What's implemented
+## Các tính năng đã hoàn thiện
 
-- Guest browsing and booking with no account required (auto-creates a lightweight guest user record from the contact details entered at checkout)
-- Real-time availability calendar per listing, with double-booking prevention enforced atomically at booking creation (`prisma.$transaction`)
-- Braintree payment flow with mandatory 3D Secure confirmation
-- Automatic booking confirmation emails to both guest and host on successful payment
-- Host dashboard: today/upcoming bookings, listing CRUD (including in-place photo add/remove), monthly calendar (manual block/unblock, per-day price overrides, min/max night rules)
-- Two-way iCal sync — pulls bookings in from external calendars (Airbnb/VRBO `.ics` links) and exports this platform's own calendar as a link hosts can paste elsewhere
-- Rate limiting on auth endpoints, per-request account-lock enforcement, SSRF guard on host-supplied iCal URLs, and other hardening from a full security pass (see commit history)
+- Khách có thể tìm kiếm, duyệt và đặt phòng mà không cần tạo tài khoản (hệ thống tự động tạo bản ghi khách vãng lai `is_guest: true` từ thông tin liên hệ khi thanh toán).
+- Lịch hiển thị tình trạng phòng thời gian thực, ngăn chặn đặt trùng phòng nguyên tử ở tầng cơ sở dữ liệu (`prisma.$transaction`).
+- Quy trình thanh toán Braintree bảo mật cao với bước xác thực thẻ 3D Secure bắt buộc.
+- Tự động gửi email xác nhận đặt phòng chuẩn HTML cho cả khách và chủ nhà ngay khi thanh toán thành công.
+- Bảng điều khiển cho chủ nhà: xem khách đến hôm nay/đơn sắp tới, CRUD bài đăng (thêm/xóa ảnh trực tiếp), lịch theo tháng (chặn/bỏ chặn ngày thủ công, ghi đè giá theo ngày, quy tắc số đêm tối thiểu/tối đa).
+- Đồng bộ lịch 2 chiều qua iCal — nhập lịch từ các nền tảng ngoài (liên kết `.ics` từ Airbnb/VRBO) và xuất liên kết lịch của hệ thống để chủ nhà dán sang nền tảng khác.
+- Giới hạn tần suất gọi API (Rate limiting) trên các endpoint xác thực, kiểm tra trạng thái khóa tài khoản trên từng request, chặn tấn công SSRF trên URL iCal do chủ nhà nhập, và các lớp bảo mật toàn diện khác.
 
-## Project structure
+## Cấu trúc dự án
 
 ```
 reservesmith/
 ├── backend/
 │   ├── src/
-│   │   ├── config/        # Prisma client, mailer, Braintree gateway
-│   │   ├── controllers/   # one per resource (auth, listing, booking, payment, calendar, admin)
-│   │   ├── routes/        # Express routers, one per resource
-│   │   ├── middlewares/   # auth (JWT), role-based access, rate limiting, upload, error handling
-│   │   ├── services/      # business logic — the actual behavior lives here, not in controllers
-│   │   └── utils/         # jwt, response shaping, image processing, SSRF-safe URL checks
+│   │   ├── config/        # Cấu hình Prisma client, mailer, Braintree gateway
+│   │   ├── controllers/   # Controller theo từng tài nguyên (auth, listing, booking, payment, calendar, admin)
+│   │   ├── routes/        # Router Express theo từng tài nguyên
+│   │   ├── middlewares/   # Xác thực (JWT), phân quyền theo vai trò, rate limiting, upload ảnh, xử lý lỗi
+│   │   ├── services/      # Logic nghiệp vụ chính — hành vi hệ thống được xử lý tại đây
+│   │   └── utils/         # jwt, định dạng phản hồi, xử lý ảnh, kiểm tra URL an toàn chống SSRF
 │   ├── prisma/
-│   │   ├── schema.prisma
-│   │   └── migrations/
-│   └── scripts/           # one-off maintenance scripts (e.g. the Cloudinary → local image migration)
+│   │   ├── schema.prisma  # Schema cơ sở dữ liệu
+│   │   └── migrations/    # Lịch sử migration Prisma
+│   └── scripts/           # Script bảo trì (ví dụ: chuyển đổi ảnh từ Cloudinary sang lưu trữ cục bộ)
 └── frontend/
     ├── src/
-    │   ├── pages/          # user, host, admin, auth, booking route pages
-    │   ├── components/     # shared UI (icons, header/footer, listing cards, calendars, forms)
-    │   ├── context/        # AuthContext
-    │   ├── services/       # one API client module per resource
-    │   └── locales/        # i18next translation files
-    └── nginx.conf           # serves the built SPA, proxies /api, serves /uploads directly
+    │   ├── pages/          # Các trang giao diện (người dùng, chủ nhà, admin, xác thực, đặt phòng)
+    │   ├── components/     # Component dùng chung (icons, header/footer, thẻ listing, lịch, biểu mẫu)
+    │   ├── context/        # AuthContext quản lý trạng thái đăng nhập
+    │   ├── services/       # Các module gọi API theo từng tài nguyên
+    │   └── locales/        # Tệp ngôn ngữ i18next
+    └── nginx.conf          # Phục vụ SPA build, reverse-proxy /api, phục vụ trực tiếp /uploads
 ```
 
-## Local development
+## Chạy dự án cục bộ (Local Development)
 
-Requires Docker (for MySQL) and Node.js 20+.
+Yêu cầu: Docker (cho MySQL) và Node.js phiên bản 20 trở lên.
 
 ```bash
-# 1. Start MySQL
+# 1. Khởi động MySQL
 docker compose up -d mysql
 
-# 2. Backend
+# 2. Cài đặt và khởi chạy Backend
 cd backend
 npm install
-cp .env.example .env        # fill in DATABASE_URL, JWT_SECRET, Braintree sandbox keys, etc.
+cp .env.example .env        # Điền DATABASE_URL, JWT_SECRET, khóa Braintree sandbox, v.v.
 npx prisma migrate dev
-npm run dev                 # http://localhost:5000
+npm run dev                 # Chạy tại http://localhost:5000
 
-# 3. Frontend (separate terminal)
+# 3. Cài đặt và khởi chạy Frontend (mở terminal riêng)
 cd frontend
 npm install
 cp .env.example .env
-npm run dev                 # http://localhost:5173
+npm run dev                 # Chạy tại http://localhost:5173
 ```
 
-## Deploying
+## Triển khai (Deploy)
 
-See [`DEPLOY.md`](DEPLOY.md) for the full production deployment guide (Docker Compose, nginx/TLS setup, environment variables, Postfix email setup, Braintree webhook registration).
+Xem tệp [`DEPLOY.md`](DEPLOY.md) để đọc hướng dẫn triển khai môi trường production hoàn chỉnh (Docker Compose, cấu hình Nginx/TLS, biến môi trường, thiết lập email Postfix, đăng ký webhook Braintree).
 
-## Further reading
+## Tài liệu tham khảo thêm
 
-- [`DEPLOY.md`](DEPLOY.md) — production deployment runbook
-- [`DATABASE.md`](DATABASE.md) — schema overview
+- [`REPORT.md`](REPORT.md) — Báo cáo tổng thể dự án & Đặc tả yêu cầu phần mềm (SRS)
+- [`usecase.md`](usecase.md) — Đặc tả Use Case & Sơ đồ Use Case chi tiết
+- [`DEPLOY.md`](DEPLOY.md) — Hướng dẫn triển khai production
+- [`DATABASE.md`](DATABASE.md) — Cấu trúc cơ sở dữ liệu chi tiết
+- [`FEATURES.md`](FEATURES.md) — Danh mục tính năng chi tiết

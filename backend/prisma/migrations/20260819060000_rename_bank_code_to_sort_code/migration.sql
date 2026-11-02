@@ -4,4 +4,4 @@
 -- hang/chi nhanh). Doi ten cot, giu nguyen kieu du lieu (VARCHAR(191) NULL) -
 -- gia tri cu (neu co) la ma ngan hang VN, khong con dung duoc nua nen khong
 -- can backfill/convert, host tu nhap lai sort code that.
-ALTER TABLE `users` RENAME COLUMN `bank_code` TO `bank_sort_code`;
+ALTER TABLE `users` CHANGE COLUMN `bank_code` `bank_sort_code` VARCHAR(191) NULL;

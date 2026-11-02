@@ -25,6 +25,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan('dev'));
 
+const { UPLOADS_DIR } = require('./utils/imageProcessing');
+
+app.use('/uploads', express.static(UPLOADS_DIR));
+
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 // O goc domain (khong phai /api) - dung chuan crawler/SEO tool tim dung vi

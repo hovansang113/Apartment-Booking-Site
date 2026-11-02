@@ -2,11 +2,13 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { StarIcon, PlusIcon, MinusIcon } from '../common/icons';
 import { nightlyBreakdown } from '../../utils/bookingPricing';
 import { formatPrice } from '../../utils/currency';
+import { getListingQuote } from '../../services/listingService';
 
 function scrollToCalendar() {
   document.getElementById('availability-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -61,6 +63,16 @@ export default function BookingWidget({ listing, checkIn, checkOut }) {
     [checkIn, checkOut, listing.weekdayPrice, listing.weekendPrice],
   );
   const maxGuests = listing.guestCapacity;
+  const { data: quote } = useQuery({
+    queryKey: ['listing-quote', listing.id, checkIn, checkOut],
+    queryFn: () => getListingQuote(listing.id, { checkIn, checkOut }),
+    enabled: Boolean(checkIn && checkOut),
+    retry: 1,
+    staleTime: 30_000,
+  });
+  const hasOverrides = quote?.nights?.some((night) => night.isOverride);
+  const displayedNightlyTotal = quote?.nightlyTotal ?? subtotal;
+  const displayedTotal = quote?.total ?? subtotal + listing.cleaningFee;
 
   // close dropdown on outside click
   useEffect(() => {
@@ -77,6 +89,18 @@ export default function BookingWidget({ listing, checkIn, checkOut }) {
     e.preventDefault();
     if (nights === 0) {
       toast.error(t('listing.booking.selectDatesError'));
+      return;
+    }
+    // Validate stay rule theo ngày check-in (per-day rule ưu tiên, fallback về listing default)
+    const perDayRule = listing.stayRules?.[checkIn];
+    const effectiveMin = perDayRule?.minNights ?? listing.minNights;
+    const effectiveMax = perDayRule?.maxNights ?? listing.maxNights;
+    if (effectiveMin && nights < effectiveMin) {
+      toast.error(t('listing.calendar.minNightsHint', { count: effectiveMin }));
+      return;
+    }
+    if (effectiveMax && nights > effectiveMax) {
+      toast.error(t('listing.calendar.maxNightsHint', { count: effectiveMax }));
       return;
     }
     const params = new URLSearchParams({ checkIn, checkOut, adults: String(adults), children: String(children) });
@@ -199,7 +223,12 @@ export default function BookingWidget({ listing, checkIn, checkOut }) {
 
         {nights > 0 && (
           <div className="mt-4 space-y-2 text-sm text-neutral-700">
-            {weekdayNights > 0 && weekendNights > 0 ? (
+            {hasOverrides ? (
+              <div className="flex justify-between">
+                <span>{t('checkout.nightsStay', { count: nights })}</span>
+                <span>{formatPrice(displayedNightlyTotal)}</span>
+              </div>
+            ) : weekdayNights > 0 && weekendNights > 0 ? (
               <>
                 <div className="flex justify-between">
                   <span>{t('listing.booking.subtotal', { price: formatPrice(listing.weekdayPrice), nights: weekdayNights })}</span>
@@ -224,7 +253,7 @@ export default function BookingWidget({ listing, checkIn, checkOut }) {
             )}
             <div className="flex justify-between border-t border-neutral-200 pt-2 font-semibold text-neutral-900">
               <span>{t('listing.booking.total')}</span>
-              <span>{formatPrice(subtotal + listing.cleaningFee)}</span>
+              <span>{formatPrice(displayedTotal)}</span>
             </div>
           </div>
         )}

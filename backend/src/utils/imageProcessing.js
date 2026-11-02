@@ -11,7 +11,8 @@ const sharp = require('sharp');
 const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(__dirname, '../../uploads');
 const LARGE_WIDTH = 1600; // trang chi tiet/gallery
 const THUMB_WIDTH = 480; // card/danh sach/email
-const AVIF_QUALITY = 60; // ~tuong duong JPEG 80 ve mat chat luong nhin, nhung nhe hon nhieu
+const LARGE_AVIF_QUALITY = 75;
+const THUMB_AVIF_QUALITY = 70;
 // "effort" (0-9, mac dinh sharp la 4) dieu khien AVIF nen ky den muc nao -
 // do lai luc dau: effort 4 mat ~4.4s/anh that (VPS yeu con lau hon), giam
 // xuong 2 chi con ~0.4s (nhanh gap 10 lan) ma dung luong file KHONG tang
@@ -38,12 +39,12 @@ async function processAndSaveListingImage(buffer, listingId) {
     image
       .clone()
       .resize({ width: LARGE_WIDTH, withoutEnlargement: true })
-      .avif({ quality: AVIF_QUALITY, effort: AVIF_EFFORT })
+      .avif({ quality: LARGE_AVIF_QUALITY, effort: AVIF_EFFORT })
       .toFile(path.join(dir, largeName)),
     image
       .clone()
       .resize({ width: THUMB_WIDTH, withoutEnlargement: true })
-      .avif({ quality: AVIF_QUALITY, effort: AVIF_EFFORT })
+      .avif({ quality: THUMB_AVIF_QUALITY, effort: AVIF_EFFORT })
       .toFile(path.join(dir, thumbName)),
   ]);
 

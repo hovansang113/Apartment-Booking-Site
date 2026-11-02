@@ -47,6 +47,7 @@ enum CalendarDaySource {
 
 enum PaymentStatus {
   pending
+  processing
   success
   failed
   refunded
@@ -130,6 +131,8 @@ model Listing {
   weekdayPrice   Decimal       @map("weekday_price") @db.Decimal(12, 2)
   weekendPrice   Decimal       @map("weekend_price") @db.Decimal(12, 2)
   cleaningFee    Decimal       @default(0) @map("cleaning_fee") @db.Decimal(12, 2)
+  minNights      Int?          @map("min_nights")
+  maxNights      Int?          @map("max_nights")
   guestCapacity  Int           @map("guest_capacity")
   bedrooms       Int
   beds           Int

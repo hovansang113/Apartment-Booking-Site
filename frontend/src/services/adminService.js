@@ -1,5 +1,10 @@
 import api from './api';
 
+export async function getDashboardAnalytics() {
+  const { data } = await api.get('/admin/analytics');
+  return data.data;
+}
+
 export async function getPendingListings() {
   const { data } = await api.get('/admin/listings', { params: { status: 'pending' } });
   return data.data;

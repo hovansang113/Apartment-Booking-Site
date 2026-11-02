@@ -8,6 +8,8 @@ const { validate } = require('../validators/validate.util');
 
 router.use(authenticate, authorize(UserRole.admin));
 
+router.get('/analytics', adminController.getDashboardAnalytics);
+
 // REQ_03
 router.get('/listings', adminController.listListings);
 router.patch('/listings/:id/approve', adminController.approveListing);

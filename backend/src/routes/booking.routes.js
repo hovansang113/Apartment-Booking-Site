@@ -13,6 +13,12 @@ router.post('/', createBookingRules, validate, bookingController.create);
 // Cho HostTodayPage - phai dung TRUOC /:id, khong thi Express se hieu "mine"
 // la 1 gia tri :id.
 router.get('/mine', authenticate, authorize(UserRole.host), bookingController.getMine);
+router.get(
+  '/mine/guest',
+  authenticate,
+  authorize(UserRole.user, UserRole.host, UserRole.admin),
+  bookingController.getGuestBookings,
+);
 
 // Cong khai (UUID khong doan duoc) - dung cho trang thanh toan rieng
 router.get('/:id', bookingController.getOne);

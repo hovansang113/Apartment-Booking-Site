@@ -3,7 +3,8 @@ const prisma = require('../config/prisma');
 const AppError = require('../utils/appError');
 
 function sanitizeUser(user) {
-  const { passwordHash, ...safe } = user;
+  const safe = { ...user };
+  delete safe.passwordHash;
   return safe;
 }
 
@@ -104,7 +105,50 @@ async function reviewTaxInfo(userId, { status, note }) {
   return sanitizeUser(updated);
 }
 
+async function getDashboardAnalytics() {
+  const [
+    usersTotal,
+    hostsTotal,
+    guestsTotal,
+    listingsTotal,
+    pendingListings,
+    approvedListings,
+    confirmedBookings,
+    pendingPaymentBookings,
+    pendingTaxProfiles,
+    successfulPayments,
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where: { role: UserRole.host } }),
+    prisma.user.count({ where: { role: UserRole.user } }),
+    prisma.listing.count(),
+    prisma.listing.count({ where: { status: ListingStatus.pending } }),
+    prisma.listing.count({ where: { status: ListingStatus.approved } }),
+    prisma.booking.count({ where: { status: 'confirmed' } }),
+    prisma.booking.count({ where: { status: 'pending_payment' } }),
+    prisma.user.count({ where: { verificationStatus: VerificationStatus.pending } }),
+    prisma.payment.aggregate({
+      where: { status: 'success' },
+      _sum: { amount: true },
+    }),
+  ]);
+
+  return {
+    usersTotal,
+    hostsTotal,
+    guestsTotal,
+    listingsTotal,
+    pendingListings,
+    approvedListings,
+    confirmedBookings,
+    pendingPaymentBookings,
+    pendingTaxProfiles,
+    successfulPaymentTotal: Number(successfulPayments._sum.amount || 0),
+  };
+}
+
 module.exports = {
+  getDashboardAnalytics,
   listListings,
   approveListing,
   suspendListing,

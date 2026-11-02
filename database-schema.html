@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Database Schema - ReserveSmith</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 30px; color: #222; }
+  h1 { color: #1a56db; border-bottom: 2px solid #1a56db; padding-bottom: 8px; }
+  h2 { color: #1e429f; margin-top: 32px; }
+  h3 { color: #374151; margin-top: 24px; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 16px; font-size: 13px; }
+  th { background: #1a56db; color: white; padding: 8px 10px; text-align: left; }
+  td { padding: 7px 10px; border: 1px solid #d1d5db; }
+  tr:nth-child(even) { background: #f3f4f6; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+  .pk { background: #fef3c7; color: #92400e; }
+  .fk { background: #dbeafe; color: #1e40af; }
+  .enum { background: #ede9fe; color: #5b21b6; }
+  .section { page-break-inside: avoid; }
+  .rel-table { margin-top: 8px; }
+  .rel-table td { background: #f9fafb; }
+  .diagram { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0; font-size: 12px; }
+  .diagram pre { margin: 0; font-family: monospace; line-height: 1.8; }
+  @media print {
+    body { margin: 15px; }
+    h2 { page-break-before: auto; }
+    .section { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<h1>📊 Database Schema — ReserveSmith</h1>
+<p>MySQL · Prisma ORM · 9 bảng chính</p>
+
+<h2>1. Enums dùng chung</h2>
+<div class="section">
+<table>
+  <tr><th>Enum</th><th>Giá trị</th><th>Dùng ở đâu</th></tr>
+  <tr><td><span class="badge enum">UserRole</span></td><td>admin, host, user</td><td>users.role — phân quyền</td></tr>
+  <tr><td><span class="badge enum">UserStatus</span></td><td>active, locked</td><td>users.status — admin khoá tài khoản</td></tr>
+  <tr><td><span class="badge enum">ListingStatus</span></td><td>pending, approved, suspended</td><td>listings.status — admin duyệt tin</td></tr>
+  <tr><td><span class="badge enum">BookingStatus</span></td><td>pending, pending_payment, approved, confirmed, rejected, expired, canceled</td><td>bookings.status</td></tr>
+  <tr><td><span class="badge enum">CalendarDayStatus</span></td><td>blocked, booked</td><td>listing_calendar.status</td></tr>
+  <tr><td><span class="badge enum">CalendarDaySource</span></td><td>manual, ical_sync, booking</td><td>listing_calendar.source</td></tr>
+  <tr><td><span class="badge enum">PaymentStatus</span></td><td>pending, success, failed, refunded</td><td>payments.status</td></tr>
+  <tr><td><span class="badge enum">Amenity</span></td><td>wifi, kitchen, washer, air_conditioning, free_parking, pool, tv, workspace</td><td>listing_amenities.amenity</td></tr>
+  <tr><td><span class="badge enum">TaxpayerType</span></td><td>individual, household_business, company</td><td>users.taxpayer_type</td></tr>
+  <tr><td><span class="badge enum">VerificationStatus</span></td><td>unverified, pending, verified, rejected</td><td>users.verification_status</td></tr>
+  <tr><td><span class="badge enum">ListingCategory</span></td><td>apartment, house, villa, homestay, hotel_room</td><td>listings.category</td></tr>
+</table>
+</div>
+
+<h2>2. Bảng: <code>users</code></h2>
+<div class="section">
+<p>Lưu mọi loại tài khoản: admin, host, user đăng ký, và guest tự động tạo khi đặt phòng không đăng nhập.</p>
+<table>
+  <tr><th>Cột</th><th>Kiểu</th><th>Nullable</th><th>Mô tả</th></tr>
+  <tr><td><span class="badge pk">PK</span> id</td><td>uuid</td><td>No</td><td>Primary key</td></tr>
+  <tr><td>email</td><td>varchar (unique)</td><td>No</td><td>Dùng để đăng nhập, nhận diện guest cũ</td></tr>
+  <tr><td>password_hash</td><td>text</td><td>Yes</td><td>bcrypt hash; guest có password random ẩn</td></tr>
+  <tr><td>full_name</td><td>varchar</td><td>No</td><td></td></tr>
+  <tr><td>phone</td><td>varchar</td><td>Yes</td><td></td></tr>
+  <tr><td>role</td><td>UserRole</td><td>No</td><td>Default: user</td></tr>
+  <tr><td>status</td><td>UserStatus</td><td>No</td><td>Default: active</td></tr>
+  <tr><td>is_guest</td><td>boolean</td><td>No</td><td>Default: false. true = tài khoản tự tạo khi đặt phòng</td></tr>
+  <tr><td>legal_name</td><td>varchar</td><td>Yes</td><td>Tên pháp lý cho xác minh thuế</td></tr>
+  <tr><td>tax_id</td><td>varchar</td><td>Yes</td><td>Mã số thuế</td></tr>
+  <tr><td>taxpayer_type</td><td>TaxpayerType</td><td>Yes</td><td></td></tr>
+  <tr><td>id_number</td><td>varchar</td><td>Yes</td><td>Số CCCD/hộ chiếu</td></tr>
+  <tr><td>verification_status</td><td>VerificationStatus</td><td>No</td><td>Default: unverified</td></tr>
+  <tr><td>verification_note</td><td>text</td><td>Yes</td><td>Ghi chú admin khi duyệt/từ chối</td></tr>
+  <tr><td>bank_sort_code</td><td>varchar</td><td>Yes</td><td>Mã ngân hàng</td></tr>
+  <tr><td>bank_account_number</td><td>varchar</td><td>Yes</td><td>Số tài khoản ngân hàng</td></tr>
+  <tr><td>bank_account_holder</td><td>varchar</td><td>Yes</td><td>Tên chủ tài khoản</td></tr>
+  <tr><td>locked_reason</td><td>text</td><td>Yes</td><td>Lý do admin khoá tài khoản</td></tr>
+  <tr><td>created_at</td><td>datetime</td><td>No</td><td>Default: now()</td></tr>
+  <tr><td>updated_at</td><td>datetime</td><td>No</td><td>Auto-update</td></tr>
+</table>
+<p><strong>Quan hệ:</strong> 1 user → nhiều <code>listings</code> (nếu là host) · 1 user → nhiều <code>bookings</code> (nếu là guest)</p>
+</div>
+
+<h2>3. Bảng: <code>listings</code></h2>
+<div class="section">
+<p>Tin đăng cho thuê do host tạo, phải được admin duyệt mới hiển thị công khai.</p>
+<table>
+  <tr><th>Cột</th><th>Kiểu</th><th>Nullable</th><th>Mô tả</th></tr>
+  <tr><td><span class="badge pk">PK</span> id</td><td>uuid</td><td>No</td><td>Primary key</td></tr>
+  <tr><td><span class="badge fk">FK</span> host_id</td><td>uuid</td><td>No</td><td>→ users.id (CASCADE delete)</td></tr>
+  <tr><td>title</td><td>varchar</td><td>No</td><td></td></tr>
+  <tr><td>description</td><td>text</td><td>Yes</td><td></td></tr>
+  <tr><td>category</td><td>ListingCategory</td><td>Yes</td><td>apartment, house, villa...</td></tr>
+  <tr><td>address</td><td>varchar</td><td>No</td><td></td></tr>
+  <tr><td>latitude</td><td>decimal(10,7)</td><td>Yes</td><td>Toạ độ bản đồ</td></tr>
+  <tr><td>longitude</td><td>decimal(10,7)</td><td>Yes</td><td>Toạ độ bản đồ</td></tr>
+  <tr><td>weekday_price</td><td>decimal(12,2)</td><td>No</td><td>Giá ngày thường/đêm</td></tr>
+  <tr><td>weekend_price</td><td>decimal(12,2)</td><td>No</td><td>Giá cuối tuần/đêm</td></tr>
+  <tr><td>cleaning_fee</td><td>decimal(12,2)</td><td>No</td><td>Default: 0</td></tr>
+  <tr><td>guest_capacity</td><td>int</td><td>No</td><td>Số khách tối đa</td></tr>
+  <tr><td>bedrooms</td><td>int</td><td>No</td><td></td></tr>
+  <tr><td>beds</td><td>int</td><td>No</td><td></td></tr>
+  <tr><td>bathrooms</td><td>int</td><td>No</td><td></td></tr>
+  <tr><td>status</td><td>ListingStatus</td><td>No</td><td>Default: pending</td></tr>
+  <tr><td>suspend_reason</td><td>text</td><td>Yes</td><td>Lý do admin đình chỉ</td></tr>
+  <tr><td>ical_token</td><td>uuid (unique)</td><td>No</td><td>Token export lịch iCal</td></tr>
+  <tr><td>created_at</td><td>datetime</td><td>No</td><td></td></tr>
+  <tr><td>updated_at</td><td>datetime</td><td>No</td><td></td></tr>
+</table>
+<p><strong>Index:</strong> host_id, status</p>
+<p><strong>Quan hệ:</strong> 1 listing → nhiều listing_images · listing_amenities · listing_price_overrides · listing_stay_rules · listing_calendar · listing_calendar_sync · bookings</p>
+</div>
+
+<h2>4. Bảng: <code>listing_images</code></h2>
+<div class="section">
+<p>Ảnh của tin đăng — lưu local, sinh 2 file AVIF (large + thumbnail) khi upload.</p>
+<table>
+  <tr><th>Cột</th><th>Kiểu</th><th>Nullable</th><th>Mô tả</th></tr>
+  <tr><td><span class="badge pk">PK</span> id</td><td>uuid</td><td>No</td><td></td></tr>
+  <tr><td><span class="badge fk">FK</span> listing_id</td><td>uuid</td><td>No</td><td>→ listings.id (CASCADE delete)</td></tr>
+  <tr><td>image_url</td><td>varchar</td><td>No</td><td>Đường dẫn ảnh lớn (~1600px)</td></tr>
+  <tr><td>thumb_url</td><td>varchar</td><td>No</td><td>Đường dẫn thumbnail (~480px)</td></tr>
+  <tr><td>sort_order</td><td>int</td><td>No</td><td>Default: 0. Ảnh đại diện = 0</td></tr>
+  <tr><td>created_at</td><td>datetime</td><td>No</td><td></td></tr>
+</table>
+</div>
+
+<h2>5. Bảng: <code>listing_amenities</code></h2>
+<div class="section">
+<p>Tiện nghi của listing — bảng nối đơn giản, mỗi dòng = 1 listing có 1 tiện nghi.</p>
+<table>
+  <tr><th>Cột</th><th>Kiểu</th><th>Nullable</th><th>Mô tả</th></tr>
+  <tr><td><span class="badge pk">PK</span> id</td><td>uuid</td><td>No</td><td></td></tr>
+  <tr><td><span class="badge fk">FK</span> listing_id</td><td>uuid</td><td>No</td><td>→ listings.id (CASCADE delete)</td></tr>
+  <tr><td>amenity</td><td>Amenity</td><td>No</td><td>wifi, kitchen, pool...</td></tr>
+</table>
+<p><strong>Unique:</strong> (listing_id, amenity)</p>
+</div>
+
+<h2>6. Bảng: <code>listing_price_overrides</code></h2>
+<div class="section">
+<p>Override giá theo ngày cụ thể (lễ, Tết...). Ưu tiên hơn weekday/weekend_price.</p>
+<table>
+  <tr><th>Cột</th><th>Kiểu</th><th>Nullable</th><th>Mô tả</th></tr>
+  <tr><td><span class="badge pk">PK</span> id</td><td>uuid</td><td>No</td><td></td></tr>
+  <tr><td><span class="badge fk">FK</span> listing_id</td><td>uuid</td><td>No</td><td>→ listings.id (CASCADE delete)</td></tr>
+  <tr><td>date</td><td>date</td><td>No</td><td>Ngày áp dụng giá riêng</td></tr>
+  <tr><td>price</td><td>decimal(12,2)</td><td>No</td><td>Giá override cho ngày đó</td></tr>
+  <tr><td>created_at</td><td>datetime</td><td>No</td><td></td></tr>
+</table>
+<p><strong>Unique:</strong> (listing_id, date)</p>
+</div>
+
+<h2>7. Bảng: <code>listing_stay_rules</code></h2>
+<div class="section">
+<p>Quy tắc min/max đêm theo ngày check-in cụ thể.</p>
+<table>
+  <tr><th>Cột</th><th>Kiểu</th><th>Nullable</th><th>Mô tả</th></tr>
+  <tr><td><span class="badge pk">PK</span> id</td><td>uuid</td><td>No</td><td></td></tr>
+  <tr><td><span class="badge fk">FK</span> listing_id</td><td>uuid</td><td>No</td><td>→ listings.id (CASCADE delete)</td></tr>
+  <tr><td>date</td><td>date</td><td>No</td><td>Ngày check-in áp dụng rule</td></tr>
+  <tr><td>min_nights</td><td>int</td><td>Yes</td><td>Số đêm tối thiểu</td></tr>
+  <tr><td>max_nights</td><td>int</td><td>Yes</td><td>Số đêm tối đa</td></tr>
+  <tr><td>created_at</td><td>datetime</td><td>No</td><td></td></tr>
+</table>
+<p><strong>Unique:</strong> (listing_id, date)</p>
+</div>
+
+<h2>8. Bảng: <code>bookings</code></h2>
+<div class="section">
+<p>Yêu cầu đặt phòng. Mặc định status = approved ngay khi tạo — không cần chờ host duyệt.</p>
+<table>
+  <tr><th>Cột</th><th>Kiểu</th><th>Nullable</th><th>Mô tả</th></tr>
+  <tr><td><span class="badge pk">PK</span> id</td><td>uuid</td><td>No</td><td></td></tr>
+  <tr><td><span class="badge fk">FK</span> listing_id</td><td>uuid</td><td>No</td><td>→ listings.id (CASCADE delete)</td></tr>
+  <tr><td><span class="badge fk">FK</span> guest_id</td><td>uuid</td><td>No</td><td>→ users.id (CASCADE delete)</td></tr>
+  <tr><td>check_in</td><td>date</td><td>No</td><td></td></tr>
+  <tr><td>check_out</td><td>date</td><td>No</td><td></td></tr>
+  <tr><td>adults_count</td><td>int</td><td>No</td><td>Default: 1</td></tr>
+  <tr><td>children_count</td><td>int</td><td>No</td><td>Default: 0</td></tr>
+  <tr><td>total_price</td><td>decimal(12,2)</td><td>No</td><td>Tổng tiền phòng</td></tr>
+  <tr><td>cleaning_fee</td><td>decimal(12,2)</td><td>No</td><td>Default: 0</td></tr>
+  <tr><td>status</td><td>BookingStatus</td><td>No</td><td>Default: approved</td></tr>
+  <tr><td>booking_code</td><td>varchar (unique)</td><td>No</td><td>Mã đặt phòng hiển thị cho khách</td></tr>
+  <tr><td>commission_rate</td><td>decimal(5,2)</td><td>No</td><td>Tỷ lệ hoa hồng</td></tr>
+  <tr><td>commission_amount</td><td>decimal(12,2)</td><td>No</td><td>Số tiền hoa hồng</td></tr>
+  <tr><td>host_payout_amount</td><td>decimal(12,2)</td><td>No</td><td>Số tiền host nhận</td></tr>
+  <tr><td>payment_expires_at</td><td>datetime</td><td>Yes</td><td>Hạn thanh toán</td></tr>
+  <tr><td>contact_name</td><td>varchar</td><td>No</td><td>Thông tin liên hệ tại thời điểm đặt</td></tr>
+  <tr><td>contact_email</td><td>varchar</td><td>No</td><td></td></tr>
+  <tr><td>contact_phone</td><td>varchar</td><td>Yes</td><td></td></tr>
+  <tr><td>contact_address</td><td>varchar</td><td>Yes</td><td></td></tr>
+  <tr><td>contact_city</td><td>varchar</td><td>Yes</td><td></td></tr>
+  <tr><td>contact_postcode</td><td>varchar</td><td>Yes</td><td></td></tr>
+  <tr><td>rejected_reason</td><td>text</td><td>Yes</td><td>Lý do host từ chối/huỷ</td></tr>
+  <tr><td>created_at</td><td>datetime</td><td>No</td><td></td></tr>
+  <tr><td>updated_at</td><td>datetime</td><td>No</td><td></td></tr>
+  <tr><td>approved_at</td><td>datetime</td><td>Yes</td><td>Set ngay lúc tạo (auto-approve)</td></tr>
+  <tr><td>canceled_at</td><td>datetime</td><td>Yes</td><td>Set khi guest huỷ</td></tr>
+</table>
+<p><strong>Index:</strong> listing_id, guest_id, status</p>
+<p><strong>Quan hệ:</strong> 1 booking → nhiều listing_calendar · 1 booking → 1 payment</p>
+<p><strong>Business rule:</strong> Kiểm tra trùng lịch trong prisma.$transaction khi tạo booking để tránh race condition.</p>
+</div>
+
+<h2>9. Bảng: <code>listing_calendar</code></h2>
+<div class="section">
+<p>Nguồn sự thật duy nhất cho "ngày nào còn trống" — mỗi dòng là 1 (listing_id, date) unique.</p>
+<table>
+  <tr><th>Cột</th><th>Kiểu</th><th>Nullable</th><th>Mô tả</th></tr>
+  <tr><td><span class="badge pk">PK</span> id</td><td>uuid</td><td>No</td><td></td></tr>
+  <tr><td><span class="badge fk">FK</span> listing_id</td><td>uuid</td><td>No</td><td>→ listings.id (CASCADE delete)</td></tr>
+  <tr><td>date</td><td>date</td><td>No</td><td>Ngày bị chiếm</td></tr>
+  <tr><td>status</td><td>CalendarDayStatus</td><td>No</td><td>blocked hoặc booked</td></tr>
+  <tr><td>source</td><td>CalendarDaySource</td><td>No</td><td>manual / ical_sync / booking</td></tr>
+  <tr><td>note</td><td>text</td><td>Yes</td><td>Ghi chú khi host block tay</td></tr>
+  <tr><td><span class="badge fk">FK</span> booking_id</td><td>uuid</td><td>Yes</td><td>→ bookings.id (SET NULL on delete)</td></tr>
+  <tr><td><span class="badge fk">FK</span> calendar_sync_id</td><td>uuid</td><td>Yes</td><td>→ listing_calendar_sync.id (SET NULL)</td></tr>
+  <tr><td>created_at</td><td>datetime</td><td>No</td><td></td></tr>
+</table>
+<p><strong>Unique:</strong> (listing_id, date)</p>
+</div>
+
+<h2>10. Bảng: <code>listing_calendar_sync</code></h2>
+<div class="section">
+<p>Cấu hình đồng bộ lịch 2 chiều với nguồn ngoài (Airbnb/VRBO) qua iCal URL.</p>
+<table>
+  <tr><th>Cột</th><th>Kiểu</th><th>Nullable</th><th>Mô tả</th></tr>
+  <tr><td><span class="badge pk">PK</span> id</td><td>uuid</td><td>No</td><td></td></tr>
+  <tr><td><span class="badge fk">FK</span> listing_id</td><td>uuid</td><td>No</td><td>→ listings.id (CASCADE delete)</td></tr>
+  <tr><td>ical_url</td><td>varchar</td><td>No</td><td>Link .ics host nhập vào</td></tr>
+  <tr><td>label</td><td>varchar</td><td>Yes</td><td>Tên nguồn (vd: "Airbnb")</td></tr>
+  <tr><td>last_synced_at</td><td>datetime</td><td>Yes</td><td>Lần đồng bộ gần nhất</td></tr>
+  <tr><td>created_at</td><td>datetime</td><td>No</td><td></td></tr>
+</table>
+</div>
+
+<h2>11. Bảng: <code>payments</code></h2>
+<div class="section">
+<p>Ghi nhận thanh toán Braintree (3D Secure) cho 1 booking. 1 booking chỉ có tối đa 1 payment.</p>
+<table>
+  <tr><th>Cột</th><th>Kiểu</th><th>Nullable</th><th>Mô tả</th></tr>
+  <tr><td><span class="badge pk">PK</span> id</td><td>uuid</td><td>No</td><td></td></tr>
+  <tr><td><span class="badge fk">FK</span> booking_id</td><td>uuid (unique)</td><td>No</td><td>→ bookings.id (CASCADE delete)</td></tr>
+  <tr><td>amount</td><td>decimal(12,2)</td><td>No</td><td>Số tiền thanh toán</td></tr>
+  <tr><td>status</td><td>PaymentStatus</td><td>No</td><td>pending / success / failed / refunded</td></tr>
+  <tr><td>braintree_transaction_id</td><td>varchar</td><td>Yes</td><td>ID giao dịch từ Braintree</td></tr>
+  <tr><td>confirmed_at</td><td>datetime</td><td>Yes</td><td>Thời điểm thanh toán thành công</td></tr>
+  <tr><td>created_at</td><td>datetime</td><td>No</td><td></td></tr>
+  <tr><td>updated_at</td><td>datetime</td><td>No</td><td></td></tr>
+</table>
+</div>
+
+<h2>12. Sơ đồ quan hệ (ERD)</h2>
+<div class="diagram">
+<pre>
+┌─────────────────┐         ┌──────────────────────┐
+│     users       │ 1     * │      listings        │
+│─────────────────│─────────│──────────────────────│
+│ PK id           │         │ PK id                │
+│    email        │         │ FK host_id → users   │
+│    role         │         │    title             │
+│    status       │         │    weekday_price      │
+│    is_guest     │         │    weekend_price      │
+└────────┬────────┘         │    status            │
+         │                  └──────────┬───────────┘
+         │ 1                           │ 1
+         │                    ┌────────┼────────────────────────────────┐
+         │ *                  │ *      │ *          │ *       │ *       │ *
+┌────────┴────────┐  ┌────────┴──┐ ┌──┴──────┐ ┌──┴──────┐ ┌┴───────┐ ┌┴──────────────┐
+│    bookings     │  │listing_   │ │listing_ │ │listing_ │ │listing_│ │listing_       │
+│─────────────────│  │images     │ │amenities│ │price_   │ │stay_   │ │calendar_sync  │
+│ PK id           │  │───────────│ │─────────│ │overrides│ │rules   │ │───────────────│
+│ FK listing_id   │  │FK listing_│ │FK listing│ │─────────│ │────────│ │FK listing_id  │
+│ FK guest_id     │  │   id      │ │   _id   │ │FK listing│ │FK list.│ │   ical_url    │
+│    check_in     │  │image_url  │ │amenity  │ │   _id   │ │   _id  │ │last_synced_at │
+│    check_out    │  │thumb_url  │ │         │ │date     │ │date    │ └───────────────┘
+│    status       │  └───────────┘ └─────────┘ │price    │ │min/max │
+│    total_price  │                             └─────────┘ │nights  │
+└────────┬────────┘                                         └────────┘
+         │ 1
+    ┌────┴────┐
+    │         │
+    │ *       │ 1
+┌───┴──────┐ ┌┴──────────┐
+│listing_  │ │ payments  │
+│calendar  │ │───────────│
+│──────────│ │PK id      │
+│FK listing│ │FK booking_│
+│   _id    │ │   id      │
+│FK booking│ │amount     │
+│   _id    │ │status     │
+│date      │ │confirmed_ │
+│status    │ │   at      │
+│source    │ └───────────┘
+└──────────┘
+</pre>
+</div>
+
+<h2>13. Tóm tắt quan hệ</h2>
+<div class="section">
+<table>
+  <tr><th>Từ bảng</th><th>Quan hệ</th><th>Đến bảng</th><th>On Delete</th></tr>
+  <tr><td>listings</td><td>N → 1</td><td>users (host_id)</td><td>CASCADE</td></tr>
+  <tr><td>listing_images</td><td>N → 1</td><td>listings</td><td>CASCADE</td></tr>
+  <tr><td>listing_amenities</td><td>N → 1</td><td>listings</td><td>CASCADE</td></tr>
+  <tr><td>listing_price_overrides</td><td>N → 1</td><td>listings</td><td>CASCADE</td></tr>
+  <tr><td>listing_stay_rules</td><td>N → 1</td><td>listings</td><td>CASCADE</td></tr>
+  <tr><td>listing_calendar</td><td>N → 1</td><td>listings</td><td>CASCADE</td></tr>
+  <tr><td>listing_calendar</td><td>N → 1</td><td>bookings (booking_id)</td><td>SET NULL</td></tr>
+  <tr><td>listing_calendar</td><td>N → 1</td><td>listing_calendar_sync</td><td>SET NULL</td></tr>
+  <tr><td>listing_calendar_sync</td><td>N → 1</td><td>listings</td><td>CASCADE</td></tr>
+  <tr><td>bookings</td><td>N → 1</td><td>listings</td><td>CASCADE</td></tr>
+  <tr><td>bookings</td><td>N → 1</td><td>users (guest_id)</td><td>CASCADE</td></tr>
+  <tr><td>payments</td><td>1 → 1</td><td>bookings</td><td>CASCADE</td></tr>
+</table>
+</div>
+
+<script>
+window.onload = function() { window.print(); }
+</script>
+</body>
+</html>

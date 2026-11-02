@@ -30,15 +30,29 @@ function getCalendarDays(year, month) {
   return days;
 }
 
-function MonthCalendar({ year, month, bookedSet, todayYMD, checkIn, checkOut, onSelectDate, weekdays, dateFnsLocale, t }) {
+function MonthCalendar({ year, month, bookedSet, todayYMD, checkIn, checkOut, stayRules, minNights, maxNights, onSelectDate, weekdays, dateFnsLocale, t }) {
   const days = useMemo(() => getCalendarDays(year, month), [year, month]);
+
+  const validCheckoutRange = useMemo(() => {
+    if (!checkIn || checkOut) return null;
+    const rule = stayRules?.[checkIn];
+    const effectiveMin = rule?.minNights ?? minNights;
+    const effectiveMax = rule?.maxNights ?? maxNights;
+    if (!effectiveMin && !effectiveMax) return null;
+    const base = new Date(checkIn);
+    return {
+      earliest: effectiveMin ? toYMD(new Date(base.getTime() + effectiveMin * 86400000)) : null,
+      latest: effectiveMax ? toYMD(new Date(base.getTime() + effectiveMax * 86400000)) : null,
+      minNights: effectiveMin,
+      maxNights: effectiveMax,
+    };
+  }, [checkIn, checkOut, stayRules, minNights, maxNights]);
 
   return (
     <div className="flex-1 min-w-0">
       <p className="text-center font-semibold text-neutral-800 mb-3 capitalize">
         {format(new Date(year, month, 1), 'LLLL yyyy', { locale: dateFnsLocale })}
       </p>
-      {/* Weekday headers */}
       <div className="grid grid-cols-7 mb-1">
         {weekdays.map((d) => (
           <div key={d} className="text-center text-[11px] font-medium text-neutral-400 py-1">
@@ -46,7 +60,6 @@ function MonthCalendar({ year, month, bookedSet, todayYMD, checkIn, checkOut, on
           </div>
         ))}
       </div>
-      {/* Days */}
       <div className="grid grid-cols-7 gap-y-0.5">
         {days.map((date, i) => {
           if (!date) return <div key={`empty-${i}`} />;
@@ -54,10 +67,17 @@ function MonthCalendar({ year, month, bookedSet, todayYMD, checkIn, checkOut, on
           const isToday = ymd === todayYMD;
           const isPast = ymd < todayYMD;
           const isBooked = bookedSet.has(ymd);
-
           const isCheckIn = ymd === checkIn;
           const isCheckOut = ymd === checkOut;
           const isInRange = checkIn && checkOut && ymd > checkIn && ymd < checkOut;
+
+          // Ngày vi phạm min/max nights khi đang chọn checkout
+          const isOutOfStayRange =
+            checkIn && !checkOut && ymd > checkIn && validCheckoutRange &&
+            ((validCheckoutRange.earliest && ymd < validCheckoutRange.earliest) ||
+             (validCheckoutRange.latest && ymd > validCheckoutRange.latest));
+
+          const isDisabled = isPast || isBooked || isOutOfStayRange;
 
           let className = 'flex items-center justify-center h-9 w-full rounded-full text-sm transition-colors ';
 
@@ -69,6 +89,8 @@ function MonthCalendar({ year, month, bookedSet, todayYMD, checkIn, checkOut, on
             className += 'text-neutral-300 cursor-default';
           } else if (isBooked) {
             className += 'bg-red-50 text-red-400 cursor-not-allowed relative overflow-hidden';
+          } else if (isOutOfStayRange) {
+            className += 'text-neutral-300 cursor-not-allowed';
           } else {
             className += 'text-neutral-800 hover:bg-teal-50 cursor-pointer';
           }
@@ -77,12 +99,23 @@ function MonthCalendar({ year, month, bookedSet, todayYMD, checkIn, checkOut, on
             className += ' ring-2 ring-teal-500 font-semibold';
           }
 
+          let title = '';
+          if (isBooked) title = t('listing.calendar.bookedTitle');
+          else if (isOutOfStayRange) {
+            if (validCheckoutRange?.earliest && ymd < validCheckoutRange.earliest)
+              title = t('listing.calendar.minNightsHint', { count: validCheckoutRange.minNights });
+            else if (validCheckoutRange?.latest && ymd > validCheckoutRange.latest)
+              title = t('listing.calendar.maxNightsHint', { count: validCheckoutRange.maxNights });
+          } else if (!isPast) {
+            title = t('listing.calendar.clickToSelect');
+          }
+
           return (
             <div key={ymd} className="flex justify-center py-0.5">
               <div
-                onClick={() => !isPast && !isBooked && onSelectDate && onSelectDate(ymd)}
+                onClick={() => !isDisabled && onSelectDate && onSelectDate(ymd)}
                 className={className}
-                title={isBooked ? t('listing.calendar.bookedTitle') : isPast ? '' : t('listing.calendar.clickToSelect')}
+                title={title}
               >
                 {isBooked && !isPast ? (
                   <span className="relative">
@@ -101,7 +134,7 @@ function MonthCalendar({ year, month, bookedSet, todayYMD, checkIn, checkOut, on
   );
 }
 
-export default function AvailabilityCalendar({ bookedRanges = [], checkIn, checkOut, onSelectDate }) {
+export default function AvailabilityCalendar({ bookedRanges = [], stayRules = {}, minNights, maxNights, checkIn, checkOut, onSelectDate }) {
   const { t } = useTranslation();
   const weekdays = t('dateRangePicker.weekdays', { returnObjects: true });
   const dateFnsLocale = enUS;
@@ -113,6 +146,8 @@ export default function AvailabilityCalendar({ bookedRanges = [], checkIn, check
 
   const bookedSet = useMemo(() => buildBookedSet(bookedRanges), [bookedRanges]);
 
+  const activeRule = checkIn ? stayRules[checkIn] : null;
+
   const month1 = new Date(today.getFullYear(), today.getMonth() + offset, 1);
   const month2 = new Date(today.getFullYear(), today.getMonth() + offset + 1, 1);
 
@@ -122,6 +157,17 @@ export default function AvailabilityCalendar({ bookedRanges = [], checkIn, check
     <section id="availability-calendar" className="py-8 border-t border-neutral-200 scroll-mt-24">
       <h2 className="text-xl font-semibold text-neutral-900 mb-1">{t('listing.calendar.heading')}</h2>
       <p className="text-sm text-neutral-500 mb-5">{t('listing.calendar.hint')}</p>
+
+      {/* Default min/max nights hint */}
+      {(minNights || maxNights) && (
+        <div className="mb-5 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-800">
+          {minNights && maxNights
+            ? `Minimum ${minNights} nights — Maximum ${maxNights} nights per stay`
+            : minNights
+            ? `Minimum stay: ${minNights} nights`
+            : `Maximum stay: ${maxNights} nights`}
+        </div>
+      )}
 
       {/* Legend */}
       <div className="flex gap-5 mb-6 text-xs text-neutral-600">
@@ -173,6 +219,9 @@ export default function AvailabilityCalendar({ bookedRanges = [], checkIn, check
           todayYMD={todayYMD}
           checkIn={checkIn}
           checkOut={checkOut}
+          stayRules={stayRules}
+          minNights={minNights}
+          maxNights={maxNights}
           onSelectDate={onSelectDate}
           weekdays={weekdays}
           dateFnsLocale={dateFnsLocale}
@@ -186,12 +235,31 @@ export default function AvailabilityCalendar({ bookedRanges = [], checkIn, check
           todayYMD={todayYMD}
           checkIn={checkIn}
           checkOut={checkOut}
+          stayRules={stayRules}
+          minNights={minNights}
+          maxNights={maxNights}
           onSelectDate={onSelectDate}
           weekdays={weekdays}
           dateFnsLocale={dateFnsLocale}
           t={t}
         />
       </div>
+
+      {checkIn && !checkOut && (() => {
+        const rule = stayRules[checkIn];
+        const effectiveMin = rule?.minNights ?? minNights;
+        const effectiveMax = rule?.maxNights ?? maxNights;
+        if (!effectiveMin && !effectiveMax) return null;
+        return (
+          <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+            {effectiveMin && effectiveMax
+              ? t('listing.calendar.stayRuleBoth', { min: effectiveMin, max: effectiveMax })
+              : effectiveMin
+              ? t('listing.calendar.stayRuleMin', { count: effectiveMin })
+              : t('listing.calendar.stayRuleMax', { count: effectiveMax })}
+          </div>
+        );
+      })()}
     </section>
   );
 }

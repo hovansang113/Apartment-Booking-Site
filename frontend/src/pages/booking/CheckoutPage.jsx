@@ -7,7 +7,7 @@ import { format, parseISO } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import Seo from '../../components/common/Seo';
 import BookingStepper from '../../components/booking/BookingStepper';
-import { getListingById } from '../../services/listingService';
+import { getListingById, getListingQuote } from '../../services/listingService';
 import { createBooking } from '../../services/bookingService';
 import { nightlyBreakdown } from '../../utils/bookingPricing';
 import { formatPrice } from '../../utils/currency';
@@ -78,6 +78,18 @@ export default function CheckoutPage() {
     retry: false,
   });
 
+  const {
+    data: quote,
+    isLoading: isQuoteLoading,
+    isError: isQuoteError,
+  } = useQuery({
+    queryKey: ['listing-quote', listingId, checkIn, checkOut],
+    queryFn: () => getListingQuote(listingId, { checkIn, checkOut }),
+    enabled: Boolean(listing && checkIn && checkOut),
+    retry: 1,
+    staleTime: 30_000,
+  });
+
   const { weekdayNights, weekendNights, nights, total: subtotal } = useMemo(
     () => (listing ? nightlyBreakdown(checkIn, checkOut, listing.weekdayPrice, listing.weekendPrice) : { nights: 0, total: 0 }),
     [listing, checkIn, checkOut],
@@ -96,6 +108,10 @@ export default function CheckoutPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!quote) {
+      toast.error(t('listing.booking.submitErrorFallback'));
+      return;
+    }
     if (!validate()) {
       toast.error(t('listing.booking.contactRequired'));
       return;
@@ -158,6 +174,10 @@ export default function CheckoutPage() {
     : t('listing.booking.adultsLabel', { count: adults });
   const checkInDate = parseISO(checkIn);
   const checkOutDate = parseISO(checkOut);
+  const hasOverrides = quote?.nights?.some((night) => night.isOverride);
+  const displayedNightlyTotal = quote?.nightlyTotal ?? subtotal;
+  const displayedCleaningFee = quote?.cleaningFee ?? listing.cleaningFee;
+  const displayedTotal = quote?.total ?? subtotal + listing.cleaningFee;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
@@ -271,11 +291,18 @@ export default function CheckoutPage() {
                   <p className="font-medium text-neutral-900">{listing.title}</p>
                   <p className="text-xs text-neutral-500">{guestLabel}</p>
                 </div>
-                <span className="whitespace-nowrap font-semibold text-neutral-900">{formatPrice(subtotal)}</span>
+                <span className="whitespace-nowrap font-semibold text-neutral-900">
+                  {isQuoteLoading ? t('common.loading') : formatPrice(displayedNightlyTotal)}
+                </span>
               </div>
             </div>
 
-            {nights > 0 && weekdayNights > 0 && weekendNights > 0 && (
+            {hasOverrides ? (
+              <div className="mt-3 flex justify-between border-t border-neutral-100 pt-3 text-xs text-neutral-500">
+                <span>{t('checkout.nightsStay', { count: nights })}</span>
+                <span>{formatPrice(displayedNightlyTotal)}</span>
+              </div>
+            ) : nights > 0 && weekdayNights > 0 && weekendNights > 0 && (
               <div className="mt-3 space-y-1 border-t border-neutral-100 pt-3 text-xs text-neutral-500">
                 <div className="flex justify-between">
                   <span>{t('listing.booking.subtotal', { price: formatPrice(listing.weekdayPrice), nights: weekdayNights })}</span>
@@ -288,22 +315,22 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            {listing.cleaningFee > 0 && (
+            {displayedCleaningFee > 0 && (
               <div className="mt-3 flex justify-between border-t border-neutral-100 pt-3 text-xs text-neutral-500">
                 <span>{t('listing.booking.cleaningFee')}</span>
-                <span>{formatPrice(listing.cleaningFee)}</span>
+                <span>{formatPrice(displayedCleaningFee)}</span>
               </div>
             )}
 
             <div className="mt-4 flex justify-between border-t border-neutral-200 pt-3 text-base font-semibold text-neutral-900">
               <span>{t('listing.booking.total')}</span>
-              <span>{formatPrice(subtotal + listing.cleaningFee)}</span>
+              <span>{isQuoteLoading ? t('common.loading') : formatPrice(displayedTotal)}</span>
             </div>
 
             <button
               type="submit"
               form="checkout-form"
-              disabled={submitting}
+              disabled={submitting || isQuoteLoading || isQuoteError || !quote}
               className="mt-4 w-full rounded-lg bg-brand-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
             >
               {submitting ? t('listing.booking.submitting') : t('checkout.continue')}

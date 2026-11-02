@@ -10,10 +10,14 @@ const createBookingRules = [
   body('listingId').isUUID().withMessage('Invalid listingId'),
   body('checkIn')
     .matches(/^\d{4}-\d{2}-\d{2}$/)
-    .withMessage('checkIn must be in YYYY-MM-DD format'),
+    .withMessage('checkIn must be in YYYY-MM-DD format')
+    .isISO8601({ strict: true, strictSeparator: true })
+    .withMessage('checkIn must be a real calendar date'),
   body('checkOut')
     .matches(/^\d{4}-\d{2}-\d{2}$/)
-    .withMessage('checkOut must be in YYYY-MM-DD format'),
+    .withMessage('checkOut must be in YYYY-MM-DD format')
+    .isISO8601({ strict: true, strictSeparator: true })
+    .withMessage('checkOut must be a real calendar date'),
   body('contactName')
     .trim()
     .notEmpty()

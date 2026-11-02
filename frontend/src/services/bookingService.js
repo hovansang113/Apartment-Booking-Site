@@ -47,4 +47,9 @@ export async function getMyBookings() {
   return data.data;
 }
 
+export async function getMyGuestBookings() {
+  const { data } = await api.get('/bookings/mine/guest');
+  return data.data;
+}
+
 // TODO: REQ_08, REQ_11 - goi API huy/tu choi booking (Phase 7)

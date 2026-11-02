@@ -1,6 +1,11 @@
 const adminService = require('../services/admin.service');
 const { ok } = require('../utils/response.util');
 
+async function getDashboardAnalytics(req, res) {
+  const analytics = await adminService.getDashboardAnalytics();
+  return ok(res, analytics);
+}
+
 // REQ_03 - duyet/tam dung tin dang
 async function listListings(req, res) {
   const listings = await adminService.listListings({ status: req.query.status });
@@ -46,6 +51,7 @@ async function reviewTaxInfo(req, res) {
 }
 
 module.exports = {
+  getDashboardAnalytics,
   listListings,
   approveListing,
   suspendListing,

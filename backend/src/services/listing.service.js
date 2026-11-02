@@ -1,6 +1,9 @@
 const prisma = require('../config/prisma');
 const AppError = require('../utils/appError');
 const { processAndSaveListingImage, deleteListingImageFiles } = require('../utils/imageProcessing');
+const pricingService = require('./pricing.service');
+const { getBasePrice } = require('../utils/pricing.util');
+const MAX_STAY_NIGHTS = 365;
 
 // files: chi la array cac buffer tu multer.memoryStorage() (xem
 // upload.middleware.js) - listingId phai co san TRUOC khi goi ham nay (anh
@@ -13,6 +16,12 @@ async function uploadImages(files, listingId) {
 
 function toAmenityData(amenities) {
   return amenities.map((amenity) => ({ amenity }));
+}
+
+function toPublicListing(listing) {
+  const publicListing = { ...listing };
+  delete publicListing.icalToken;
+  return publicListing;
 }
 
 async function assertOwnedByHost(listingId, hostId) {
@@ -42,15 +51,50 @@ const PUBLIC_PAGE_SIZE = 20;
 // REQ_05: guest xem danh sach listing cong khai - chi hien status approved,
 // khong lo thong tin host ngoai ten hien thi. Loc theo category neu co, phan
 // trang bang page/pageSize co dinh.
-async function getPublicListings({ category, page }) {
+async function getPublicListings({
+  category,
+  page,
+  location,
+  guests,
+  amenities = [],
+  checkIn,
+  checkOut,
+  minPrice,
+  maxPrice,
+}) {
   const pageNum = Number(page) > 0 ? Number(page) : 1;
-  const where = { status: 'approved', ...(category ? { category } : {}) };
+  const filters = amenities.map((amenity) => ({ amenities: { some: { amenity } } }));
+  if (minPrice !== undefined) {
+    filters.push({ weekdayPrice: { gte: minPrice }, weekendPrice: { gte: minPrice } });
+  }
+  if (maxPrice !== undefined) {
+    filters.push({
+      OR: [{ weekdayPrice: { lte: maxPrice } }, { weekendPrice: { lte: maxPrice } }],
+    });
+  }
+  const where = {
+    status: 'approved',
+    ...(category ? { category } : {}),
+    ...(location ? { address: { contains: location.trim() } } : {}),
+    ...(guests ? { guestCapacity: { gte: Number(guests) } } : {}),
+    ...(filters.length ? { AND: filters } : {}),
+    ...(checkIn && checkOut
+      ? {
+          calendarDays: {
+            none: {
+              date: { gte: new Date(checkIn), lt: new Date(checkOut) },
+            },
+          },
+        }
+      : {}),
+  };
 
   const [listings, total] = await Promise.all([
     prisma.listing.findMany({
       where,
       include: {
         images: { orderBy: { sortOrder: 'asc' } },
+        amenities: true,
         host: { select: { fullName: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -60,7 +104,13 @@ async function getPublicListings({ category, page }) {
     prisma.listing.count({ where }),
   ]);
 
-  return { listings, total };
+  return {
+    listings: listings.map(toPublicListing),
+    total,
+    page: pageNum,
+    pageSize: PUBLIC_PAGE_SIZE,
+    totalPages: Math.ceil(total / PUBLIC_PAGE_SIZE),
+  };
 }
 
 // REQ_06: guest xem chi tiet 1 listing cong khai - chi hien status approved
@@ -97,33 +147,89 @@ async function getPublicListingById(listingId) {
     throw new AppError(404, 'Listing not found');
   }
 
-  const calendarRows = await prisma.listingCalendar.findMany({
-    where: { listingId },
-    select: { date: true },
-  });
+  const [calendarRows, stayRuleRows] = await Promise.all([
+    prisma.listingCalendar.findMany({ where: { listingId }, select: { date: true } }),
+    prisma.listingStayRule.findMany({ where: { listingId }, select: { date: true, minNights: true, maxNights: true } }),
+  ]);
 
-  return { ...listing, bookedRanges: buildBookedRanges(calendarRows.map((r) => r.date)) };
+  const stayRules = stayRuleRows.map((r) => ({
+    date: r.date.toISOString().slice(0, 10),
+    minNights: r.minNights,
+    maxNights: r.maxNights,
+  }));
+
+  return {
+    ...toPublicListing(listing),
+    bookedRanges: buildBookedRanges(calendarRows.map((r) => r.date)),
+    stayRules,
+  };
+}
+
+function datesBetween(checkIn, checkOut) {
+  const dates = [];
+  const cursor = new Date(checkIn);
+  const end = new Date(checkOut);
+  while (cursor < end) {
+    dates.push(cursor.toISOString().slice(0, 10));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return dates;
+}
+
+// Bao gia cong khai, khong tao hold va khong tiet lo ly do ngay khong trong.
+// Tao booking van tinh lai trong transaction de chong gia/lịch thay doi giua
+// luc khach xem gia va luc thanh toan.
+async function getPublicListingQuote({ listingId, checkIn, checkOut }) {
+  const checkInDate = new Date(checkIn);
+  const checkOutDate = new Date(checkOut);
+  if (!(checkOutDate > checkInDate)) {
+    throw new AppError(422, 'checkOut must be at least 1 night after checkIn');
+  }
+  if ((checkOutDate - checkInDate) / (24 * 60 * 60 * 1000) > MAX_STAY_NIGHTS) {
+    throw new AppError(422, `A stay cannot exceed ${MAX_STAY_NIGHTS} nights`);
+  }
+
+  const listing = await prisma.listing.findFirst({
+    where: { id: listingId, status: 'approved' },
+  });
+  if (!listing) {
+    throw new AppError(404, 'Listing not found');
+  }
+
+  const dates = datesBetween(checkIn, checkOut);
+  const nightlyTotal = await pricingService.calculateTotalPrice(prisma, { listing, dates });
+  const overrides = await prisma.listingPriceOverride.findMany({
+    where: { listingId, date: { in: dates.map((date) => new Date(date)) } },
+    select: { date: true, price: true },
+  });
+  const overrideByDate = new Map(overrides.map((row) => [row.date.toISOString().slice(0, 10), Number(row.price)]));
+  const nights = dates.map((date) => ({
+    date,
+    price: overrideByDate.get(date) ?? getBasePrice(listing, date),
+    isOverride: overrideByDate.has(date),
+  }));
+  const cleaningFee = Number(listing.cleaningFee);
+
+  return {
+    nights,
+    nightlyTotal,
+    cleaningFee,
+    total: nightlyTotal + cleaningFee,
+  };
 }
 
 // REQ_02: host creates a listing
 async function createListing({
-  hostId,
-  title,
-  description,
-  category,
-  address,
-  latitude,
-  longitude,
-  weekdayPrice,
-  weekendPrice,
-  cleaningFee,
-  guestCapacity,
-  bedrooms,
-  beds,
-  bathrooms,
-  amenities,
-  files,
+  hostId, title, description, category, address, latitude, longitude,
+  weekdayPrice, weekendPrice, cleaningFee, minNights, maxNights,
+  guestCapacity, bedrooms, beds, bathrooms, amenities, files,
 }) {
+  if (!files || files.length === 0) {
+    throw new AppError(422, 'At least 1 image is required');
+  }
+  if (minNights && maxNights && minNights > maxNights) {
+    throw new AppError(422, 'minNights cannot be greater than maxNights');
+  }
   // Anh can biet listingId de luu dung thu muc (uploads/listings/{id}/...) -
   // khac voi luc con Cloudinary (upload doc lap, gan URL vao sau). Nen tao
   // listing TRUOC (chua co anh), roi moi xu ly + gan anh vao. Neu buoc xu ly
@@ -140,6 +246,8 @@ async function createListing({
       weekdayPrice,
       weekendPrice,
       cleaningFee,
+      minNights: minNights || null,
+      maxNights: maxNights || null,
       guestCapacity,
       bedrooms,
       beds,
@@ -162,13 +270,22 @@ async function createListing({
 }
 
 // REQ_02: host updates its own listing
-async function updateListing({ listingId, hostId, amenities, ...fields }) {
-  await assertOwnedByHost(listingId, hostId);
+async function updateListing({ listingId, hostId, amenities, minNights, maxNights, ...fields }) {
+  const currentListing = await assertOwnedByHost(listingId, hostId);
+  const nextMinNights = minNights === undefined ? currentListing.minNights : minNights;
+  const nextMaxNights = maxNights === undefined ? currentListing.maxNights : maxNights;
+  if (nextMinNights && nextMaxNights && nextMinNights > nextMaxNights) {
+    throw new AppError(422, 'minNights cannot be greater than maxNights');
+  }
 
   return prisma.listing.update({
     where: { id: listingId },
     data: {
       ...fields,
+      // API có thể không gửi hai field này. Khi đó phải giữ giá trị cũ,
+      // không được âm thầm xóa quy tắc số đêm của chủ nhà.
+      minNights: minNights === undefined ? undefined : minNights || null,
+      maxNights: maxNights === undefined ? undefined : maxNights || null,
       ...(amenities ? { amenities: { deleteMany: {}, create: toAmenityData(amenities) } } : {}),
     },
     include: { images: true, amenities: true },
@@ -211,6 +328,11 @@ async function deleteListingImage({ listingId, imageId, hostId }) {
     throw new AppError(404, 'Image not found');
   }
 
+  const imageCount = await prisma.listingImage.count({ where: { listingId } });
+  if (imageCount <= 1) {
+    throw new AppError(422, 'A listing must keep at least 1 image');
+  }
+
   await prisma.listingImage.delete({ where: { id: imageId } });
 
   deleteListingImageFiles(image).catch((err) => {
@@ -225,6 +347,15 @@ async function deleteListingImage({ listingId, imageId, hostId }) {
 // sortOrder noi tiep tu anh cuoi cung hien co, khong ghi de tu 0.
 async function addListingImages({ listingId, hostId, files }) {
   await assertOwnedByHost(listingId, hostId);
+
+  if (!files || files.length === 0) {
+    throw new AppError(422, 'Please select at least 1 image');
+  }
+
+  const imageCount = await prisma.listingImage.count({ where: { listingId } });
+  if (imageCount + files.length > 10) {
+    throw new AppError(422, 'A listing can have at most 10 images');
+  }
 
   const lastImage = await prisma.listingImage.findFirst({
     where: { listingId },
@@ -243,6 +374,7 @@ module.exports = {
   getMyListings,
   getPublicListings,
   getPublicListingById,
+  getPublicListingQuote,
   createListing,
   updateListing,
   deleteListing,

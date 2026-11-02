@@ -45,4 +45,9 @@ async function getMine(req, res) {
   return ok(res, bookings);
 }
 
-module.exports = { create, getOne, getMine };
+async function getGuestBookings(req, res) {
+  const bookings = await bookingService.getBookingsByGuest(req.user.id);
+  return ok(res, bookings);
+}
+
+module.exports = { create, getOne, getMine, getGuestBookings };

@@ -3,3 +3,12 @@ node_modules/
 dist/
 *.log
 TODO.md
+reports/
+.database-scheme.html
+usecase.md
+REPORT.md
+FEATURE.md
+PROJECT.md
+PROJECT_VL.md
+anh.png
+DATABASE.md

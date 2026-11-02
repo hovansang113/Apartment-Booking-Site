@@ -1,4 +1,4 @@
-function notFound(req, res, next) {
+function notFound(req, res, _next) {
   res.status(404).json({ success: false, message: 'Endpoint not found' });
 }
 
@@ -8,7 +8,7 @@ const AppError = require('../utils/appError');
 // password") - loi bat ngo (Prisma constraint, driver, ...) co the chua ten
 // bang/cot hay chi tiet noi bo, luon tra message chung cho client, log day
 // du server-side de debug.
-function errorHandler(err, req, res, next) {
+function errorHandler(err, req, res, _next) {
   console.error(err);
   const isKnown = err instanceof AppError;
   const status = isKnown ? err.statusCode : 500;

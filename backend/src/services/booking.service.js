@@ -13,6 +13,7 @@ const COMMISSION_RATE_PERCENT = 0;
 
 // Thoi gian giu cho truoc khi tu huy neu khach chua thanh toan xong.
 const PAYMENT_HOLD_MINUTES = 15;
+const MAX_STAY_NIGHTS = 365;
 
 function toYMD(date) {
   return date.toISOString().slice(0, 10);
@@ -38,6 +39,36 @@ function generateBookingCode() {
   return crypto.randomBytes(4).toString('hex').toUpperCase();
 }
 
+// Hủy các lượt giữ chỗ đã quá hạn và trả ngày về trạng thái trống. Hai việc
+// phải chạy cùng lúc: nếu chỉ đổi booking sang expired mà còn giữ lịch, khách
+// khác vẫn không thể đặt các ngày đó.
+async function expireStalePaymentHolds(now = new Date()) {
+  return prisma.$transaction(async (tx) => {
+    const expired = await tx.booking.findMany({
+      where: {
+        status: BookingStatus.pending_payment,
+        paymentExpiresAt: { lt: now },
+      },
+      select: { id: true },
+    });
+
+    if (expired.length === 0) return 0;
+
+    const bookingIds = expired.map((booking) => booking.id);
+    await tx.listingCalendar.deleteMany({
+      where: {
+        bookingId: { in: bookingIds },
+        source: CalendarDaySource.booking,
+      },
+    });
+    await tx.booking.updateMany({
+      where: { id: { in: bookingIds } },
+      data: { status: BookingStatus.expired },
+    });
+    return bookingIds.length;
+  });
+}
+
 // REQ_07 (luong "chuan production" da duyet 14/8): khach dat phong KHONG can
 // dang nhap - tu tim/tao tai khoan isGuest (dung chung logic voi REQ_14
 // guestLogin qua findOrCreateGuestUser). Booking tao ra o trang thai
@@ -46,7 +77,8 @@ function generateBookingCode() {
 // thanh toan. Payment tao san o trang thai pending (chua co
 // braintreeTransactionId - chi co sau khi khach nhap the that qua Braintree
 // Drop-in tren PaymentPage, xem payment.service.js#checkout); job rieng
-// (Phase 5, chua lam) se tu huy booking qua han paymentExpiresAt chua thanh toan.
+// hold qua han duoc don luc server khoi dong, moi phut va truoc cac thao tac
+// dat/checkout de ngay het han duoc giai phong dung luc.
 async function createBooking({
   listingId,
   checkIn,
@@ -60,14 +92,30 @@ async function createBooking({
   adults,
   children,
 }) {
+  const checkInDate = new Date(checkIn);
+  const checkOutDate = new Date(checkOut);
+  if (!(checkOutDate > checkInDate)) {
+    throw new AppError(422, 'checkOut must be at least 1 night after checkIn');
+  }
+  if ((checkOutDate - checkInDate) / (24 * 60 * 60 * 1000) > MAX_STAY_NIGHTS) {
+    throw new AppError(422, `A stay cannot exceed ${MAX_STAY_NIGHTS} nights`);
+  }
   const dates = datesBetween(checkIn, checkOut);
   if (dates.length === 0) {
     throw new AppError(422, 'checkOut must be at least 1 night after checkIn');
   }
 
-  return prisma.$transaction(async (tx) => {
-    const listing = await tx.listing.findUnique({ where: { id: listingId } });
+  // Không chờ tối đa một phút đến lượt cron: lượt giữ chỗ vừa hết hạn phải
+  // được trả lại ngay trước khi khách khác kiểm tra lịch.
+  await expireStalePaymentHolds();
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const listing = await tx.listing.findUnique({ where: { id: listingId } });
     if (!listing) {
+      throw new AppError(404, 'Listing not found');
+    }
+    if (listing.status !== 'approved') {
       throw new AppError(404, 'Listing not found');
     }
 
@@ -84,16 +132,18 @@ async function createBooking({
       throw new AppError(409, `${toYMD(conflicts[0].date)} is already booked or blocked`);
     }
 
-    // "Custom settings" (REQ_12) - so dem toi thieu/toi da NEU check-in dung
-    // ngay checkIn nay. Chi ap dung rule cua ngay check-in, giong Airbnb that.
+    // Validate default min/max nights cua listing (ap dung cho moi booking
+    // neu khong co stay rule rieng cho ngay check-in do).
     const stayRule = await tx.listingStayRule.findUnique({
       where: { listingId_date: { listingId, date: new Date(checkIn) } },
     });
-    if (stayRule?.minNights && dates.length < stayRule.minNights) {
-      throw new AppError(422, `Check-in on ${checkIn} requires a minimum stay of ${stayRule.minNights} nights`);
+    const effectiveMin = stayRule?.minNights ?? listing.minNights;
+    const effectiveMax = stayRule?.maxNights ?? listing.maxNights;
+    if (effectiveMin && dates.length < effectiveMin) {
+      throw new AppError(422, `This listing requires a minimum stay of ${effectiveMin} nights`);
     }
-    if (stayRule?.maxNights && dates.length > stayRule.maxNights) {
-      throw new AppError(422, `Check-in on ${checkIn} allows a maximum stay of ${stayRule.maxNights} nights`);
+    if (effectiveMax && dates.length > effectiveMax) {
+      throw new AppError(422, `This listing allows a maximum stay of ${effectiveMax} nights`);
     }
 
     const guest = await findOrCreateGuestUser(tx, {
@@ -154,8 +204,16 @@ async function createBooking({
       })),
     });
 
-    return booking;
-  });
+      return booking;
+    });
+  } catch (err) {
+    // unique(listing_id, date) la hang rao cuoi cung khi 2 request den cung
+    // luc. Chuyen loi unique constraint thanh 409 thay vi de client nhan 500.
+    if (err.code === 'P2002') {
+      throw new AppError(409, 'One or more selected dates are already booked or blocked');
+    }
+    throw err;
+  }
 }
 
 // Cho trang thanh toan (payment page) - cong khai qua UUID khong doan duoc,
@@ -164,6 +222,7 @@ async function createBooking({
 // thanh toan luon dieu huong toi day ngay sau khi tao booking nen chi can
 // UUID la du an toan cho quy mo du an nay.
 async function getBookingById(id) {
+  await expireStalePaymentHolds();
   const booking = await prisma.booking.findUnique({
     where: { id },
     include: {
@@ -189,6 +248,7 @@ async function getBookingById(id) {
 // PAYMENT_HOLD_MINUTES o tren) de khong lam nhieu danh sach voi booking chua
 // thanh cong.
 async function getBookingsByHost(hostId) {
+  await expireStalePaymentHolds();
   return prisma.booking.findMany({
     where: { listing: { hostId }, status: BookingStatus.confirmed },
     include: {
@@ -205,4 +265,37 @@ async function getBookingsByHost(hostId) {
   });
 }
 
-module.exports = { createBooking, getBookingById, getBookingsByHost };
+async function getBookingsByGuest(guestId) {
+  await expireStalePaymentHolds();
+  return prisma.booking.findMany({
+    where: { guestId },
+    select: {
+      id: true,
+      bookingCode: true,
+      checkIn: true,
+      checkOut: true,
+      adultsCount: true,
+      childrenCount: true,
+      totalPrice: true,
+      status: true,
+      paymentExpiresAt: true,
+      listing: {
+        select: {
+          id: true,
+          title: true,
+          address: true,
+          images: { orderBy: { sortOrder: 'asc' }, take: 1 },
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+}
+
+module.exports = {
+  createBooking,
+  getBookingById,
+  getBookingsByHost,
+  getBookingsByGuest,
+  expireStalePaymentHolds,
+};

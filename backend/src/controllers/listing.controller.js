@@ -9,8 +9,18 @@ async function mine(req, res) {
 
 // REQ_05 - guest xem danh sach listing cong khai (chi approved)
 async function list(req, res) {
-  const { category, page } = req.query;
-  const result = await listingService.getPublicListings({ category, page });
+  const { category, page, location, guests, amenities = [], checkIn, checkOut, minPrice, maxPrice } = req.query;
+  const result = await listingService.getPublicListings({
+    category,
+    page,
+    location,
+    guests,
+    amenities: Array.isArray(amenities) ? amenities : (amenities ? [amenities] : []),
+    checkIn,
+    checkOut,
+    minPrice,
+    maxPrice,
+  });
   return ok(res, result);
 }
 
@@ -20,40 +30,30 @@ async function getOne(req, res) {
   return ok(res, listing);
 }
 
+// Bao gia la nguon su that duy nhat cho frontend: no dung chinh dong logic
+// price override theo ngay ma checkout dung, de khach khong thay mot gia roi
+// bi charge mot gia khac.
+async function quote(req, res) {
+  const quoteData = await listingService.getPublicListingQuote({
+    listingId: req.params.id,
+    checkIn: req.query.checkIn,
+    checkOut: req.query.checkOut,
+  });
+  return ok(res, quoteData);
+}
+
 // REQ_02 - host creates a listing
 async function create(req, res) {
   const {
-    title,
-    description,
-    category,
-    address,
-    latitude,
-    longitude,
-    weekdayPrice,
-    weekendPrice,
-    cleaningFee,
-    guestCapacity,
-    bedrooms,
-    beds,
-    bathrooms,
-    amenities,
+    title, description, category, address, latitude, longitude,
+    weekdayPrice, weekendPrice, cleaningFee, minNights, maxNights,
+    guestCapacity, bedrooms, beds, bathrooms, amenities,
   } = req.body;
   const listing = await listingService.createListing({
     hostId: req.user.id,
-    title,
-    description,
-    category,
-    address,
-    latitude,
-    longitude,
-    weekdayPrice,
-    weekendPrice,
-    cleaningFee,
-    guestCapacity,
-    bedrooms,
-    beds,
-    bathrooms,
-    amenities,
+    title, description, category, address, latitude, longitude,
+    weekdayPrice, weekendPrice, cleaningFee, minNights, maxNights,
+    guestCapacity, bedrooms, beds, bathrooms, amenities,
     files: req.files,
   });
   return created(res, listing, 'Listing created successfully, pending admin approval');
@@ -62,38 +62,16 @@ async function create(req, res) {
 // REQ_02 - host updates its own listing
 async function update(req, res) {
   const {
-    title,
-    description,
-    category,
-    address,
-    latitude,
-    longitude,
-    weekdayPrice,
-    weekendPrice,
-    cleaningFee,
-    guestCapacity,
-    bedrooms,
-    beds,
-    bathrooms,
-    amenities,
+    title, description, category, address, latitude, longitude,
+    weekdayPrice, weekendPrice, cleaningFee, minNights, maxNights,
+    guestCapacity, bedrooms, beds, bathrooms, amenities,
   } = req.body;
   const listing = await listingService.updateListing({
     listingId: req.params.id,
     hostId: req.user.id,
-    title,
-    description,
-    category,
-    address,
-    latitude,
-    longitude,
-    weekdayPrice,
-    weekendPrice,
-    cleaningFee,
-    guestCapacity,
-    bedrooms,
-    beds,
-    bathrooms,
-    amenities,
+    title, description, category, address, latitude, longitude,
+    weekdayPrice, weekendPrice, cleaningFee, minNights, maxNights,
+    guestCapacity, bedrooms, beds, bathrooms, amenities,
   });
   return ok(res, listing, 'Listing updated successfully');
 }
@@ -121,4 +99,4 @@ async function addImages(req, res) {
   return ok(res, images, 'Images added successfully');
 }
 
-module.exports = { mine, list, getOne, create, update, remove, removeImage, addImages };
+module.exports = { mine, list, getOne, quote, create, update, remove, removeImage, addImages };
