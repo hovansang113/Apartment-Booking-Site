@@ -87,13 +87,31 @@ curl http://localhost/api/../health  # hoac curl http://localhost:5000/health tu
 
 ## 4. Tạo tài khoản admin
 
-Không có `prisma/seed.js` (chưa viết — xem TODO.md) — admin luôn được tạo tay, đúng pattern đã dùng lúc dev local:
+Script tạo admin đã có sẵn trong `backend/scripts/seedAdmin.js` và được khai
+báo qua npm script `seed:admin`. Chạy trong container backend:
 
 ```bash
-docker compose exec backend npx prisma studio
-# hoac viet 1 script node nho goi bcrypt.hash + prisma.user.create truc tiep,
-# giong cach da tao tai khoan admin demo luc dev local
+docker compose exec backend npm run seed:admin
 ```
+
+Mặc định script tạo:
+
+- Email: `admin@reservesmith.com`
+- Mật khẩu: `Admin@123`
+
+Nên đổi mật khẩu ngay khi tạo bằng biến môi trường (không dùng mật khẩu mặc
+định trên production):
+
+```bash
+docker compose exec \
+  -e ADMIN_EMAIL=admin@your-domain.com \
+  -e ADMIN_PASSWORD='MatKhauManh123!' \
+  -e ADMIN_NAME='Quản trị viên' \
+  backend npm run seed:admin
+```
+
+Script có tính idempotent: nếu email admin đã tồn tại, script chỉ thông báo và
+không tạo trùng.
 
 ## 5. Deploy lại (sau lần đầu)
 

@@ -4,8 +4,9 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = 'admin@reservesmith.com';
-  const password = 'Admin@123';
+  const email = process.env.ADMIN_EMAIL || 'admin@reservesmith.com';
+  const password = process.env.ADMIN_PASSWORD || 'Admin@123';
+  const fullName = process.env.ADMIN_NAME || 'Admin';
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -18,7 +19,7 @@ async function main() {
     data: {
       email,
       passwordHash,
-      fullName: 'Admin',
+      fullName,
       role: 'admin',
       status: 'active',
     },
