@@ -1,3 +1,4 @@
+const { ListingCategory } = require('@prisma/client');
 const prisma = require('../config/prisma');
 const AppError = require('../utils/appError');
 const { processAndSaveListingImage, deleteListingImageFiles } = require('../utils/imageProcessing');
@@ -71,6 +72,11 @@ async function getPublicListings({
     filters.push({
       OR: [{ weekdayPrice: { lte: maxPrice } }, { weekendPrice: { lte: maxPrice } }],
     });
+  }
+  // UC06 / BR-GUEST-03: chi 5 danh muc hop le. Category khong hop le phai bi
+  // tu choi voi HTTP 400 "Invalid category", khong phai tra ve 200 + [].
+  if (category && !Object.values(ListingCategory).includes(category)) {
+    throw new AppError(400, 'Invalid category');
   }
   const where = {
     status: 'approved',

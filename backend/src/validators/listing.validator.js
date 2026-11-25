@@ -147,7 +147,7 @@ const updateListingRules = [
 
 // REQ_05: query params cua danh sach listing cong khai
 const publicListRules = [
-  query('category').optional({ checkFalsy: true }).isIn(Object.values(ListingCategory)).withMessage('Invalid category'),
+  query('category').optional({ checkFalsy: true }).isString().withMessage('Invalid category'),
   query('page').optional({ checkFalsy: true }).isInt({ min: 1 }).withMessage('Page must be a positive integer').toInt(),
   query('location').optional({ checkFalsy: true }).isString().isLength({ max: ADDRESS_MAX }).withMessage('Location is too long'),
   query('guests').optional({ checkFalsy: true }).isInt({ min: 1 }).withMessage('Guests must be a positive integer').toInt(),

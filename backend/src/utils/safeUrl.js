@@ -34,29 +34,29 @@ async function assertPublicHttpUrl(rawUrl) {
   try {
     parsed = new URL(rawUrl);
   } catch {
-    throw new AppError(422, 'Invalid URL');
+    throw new AppError(400, 'Invalid URL');
   }
   if (!['http:', 'https:'].includes(parsed.protocol)) {
-    throw new AppError(422, 'URL must use http or https');
+    throw new AppError(400, 'URL must use http or https');
   }
   const hostname = parsed.hostname.toLowerCase();
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
-    throw new AppError(422, 'This URL is not allowed');
+    throw new AppError(400, 'This URL is not allowed');
   }
 
   let addresses;
   try {
     addresses = await dns.lookup(hostname, { all: true, verbatim: true });
   } catch {
-    throw new AppError(422, 'Could not resolve this URL');
+    throw new AppError(400, 'Could not resolve this URL');
   }
   if (addresses.length === 0) {
-    throw new AppError(422, 'Could not resolve this URL');
+    throw new AppError(400, 'Could not resolve this URL');
   }
   for (const { address, family } of addresses) {
     const blocked = family === 4 ? isPrivateIPv4(address) : isPrivateIPv6(address);
     if (blocked) {
-      throw new AppError(422, 'This URL points to a restricted network and cannot be used');
+      throw new AppError(400, 'This URL points to a restricted network and cannot be used');
     }
   }
 }

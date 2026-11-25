@@ -1,5 +1,5 @@
 const { body } = require('express-validator');
-const { UserRole, TaxpayerType } = require('@prisma/client');
+const { TaxpayerType } = require('@prisma/client');
 
 const EMAIL_MAX = 191; // matches VARCHAR(191) column
 const NAME_MAX = 191; // matches VARCHAR(191) column
@@ -47,7 +47,7 @@ const registerRules = [
   newPasswordRule,
   fullNameRule,
   phoneRule,
-  body('role').optional({ checkFalsy: true }).isIn([UserRole.user, UserRole.host]).withMessage('Invalid role'),
+  body('role').optional({ checkFalsy: true }).isString().withMessage('Invalid role'),
 ];
 
 const loginRules = [

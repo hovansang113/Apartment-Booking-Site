@@ -20,6 +20,11 @@ function issueSession(user) {
 
 // REQ_01: register a user/host account
 async function register({ email, password, fullName, phone, role }) {
+  // REQ_01: public register must never be able to create an admin account.
+  // Reject privilege escalation with 403 (Forbidden) instead of a generic 422.
+  if (role && ![UserRole.user, UserRole.host].includes(role)) {
+    throw new AppError(403, 'Invalid role');
+  }
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     throw new AppError(409, 'Email is already in use');

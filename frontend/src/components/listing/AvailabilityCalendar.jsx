@@ -3,8 +3,13 @@ import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 
+// cac ngay tren lich duoc tao bang new Date(year, month, day) (local midnight).
+// doc theo gio local de khong bi lui 1 ngay o moi UTC+ (vd VN UTC+7) nhu toISOString().
 function toYMD(date) {
-  return date.toISOString().slice(0, 10);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 function buildBookedSet(bookedRanges) {
@@ -13,8 +18,9 @@ function buildBookedSet(bookedRanges) {
     const cur = new Date(start);
     const endDate = new Date(end);
     while (cur < endDate) {
-      set.add(toYMD(cur));
-      cur.setDate(cur.getDate() + 1);
+      // bookedRanges la ISO UTC tu backend - doc truc tiep theo UTC.
+      set.add(cur.toISOString().slice(0, 10));
+      cur.setUTCDate(cur.getUTCDate() + 1);
     }
   }
   return set;
